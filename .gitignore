@@ -4,3 +4,4 @@
 .DS_*
 .vscode
 .vagrant
+venv
