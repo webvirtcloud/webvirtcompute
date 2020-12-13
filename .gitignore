@@ -1,0 +1,6 @@
+*.pyc
+*.pyo
+.idea
+.DS_*
+.vscode
+.vagrant
