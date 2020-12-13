@@ -1,8 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from auth import basic_auth
+
 
 app = FastAPI()
 
 
-@app.get("/")
-def index():
-    return {"Hello": "World"}
+@app.get("/", dependencies=[Depends(basic_auth)])
+def root():
+    return {"root": "success"}
+
+@app.get("/instances/", dependencies=[Depends(basic_auth)])
+def create_item():
+    return {'get': 'test'}
+
+@app.post("/instances/", dependencies=[Depends(basic_auth)])
+def create_item():
+    return {'post': 'test'}
