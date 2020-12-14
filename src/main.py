@@ -16,3 +16,23 @@ def create_item():
 @app.post("/instances/", dependencies=[Depends(basic_auth)])
 def create_item():
     return {'post': 'test'}
+
+@app.get("/instances/{instance_id}/", dependencies=[Depends(basic_auth)])
+def create_item(instance_id):
+    return {'get': instance_id}
+
+@app.post("/instances/{instance_id}/", dependencies=[Depends(basic_auth)])
+def create_item(instance_id):
+    return {'post': instance_id}
+
+@app.delete("/instances/{instance_id}/", dependencies=[Depends(basic_auth)])
+def create_item(instance_id):
+    return {'post': instance_id}
+
+@app.post("/floating_ips/{foating_ip}", dependencies=[Depends(basic_auth)])
+def create_item(foating_ip):
+    return {'get': foating_ip}
+
+@app.delete("/floating_ips/{foating_ip}", dependencies=[Depends(basic_auth)])
+def create_item():
+    return {'get': foating_ip}
