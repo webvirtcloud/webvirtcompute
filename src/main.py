@@ -1,8 +1,23 @@
-from fastapi import FastAPI, Depends
 from auth import basic_auth
+from fastapi import FastAPI, Depends
+from lib import network, backup, fwall, images
+from lib.logger import VirtmgrdLogger, function_logger
+from settings import HOSTVIRTMGR_PORT, HOSTVIRTMGR_IPADDR, MAX_HEADER_LINE
 
 
 app = FastAPI()
+logger = VirtmgrdLogger()
+
+
+@function_logger()
+def result(err_msg=None, **kwargs):
+    if err_msg:
+        return {'result': 'fail', 'message': err_msg.encode()}
+    else:
+        res = {'result': 'success'}
+        if kwargs:
+            res.update(kwargs)
+        return res
 
 
 @app.get("/", dependencies=[Depends(basic_auth)])

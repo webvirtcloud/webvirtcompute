@@ -83,13 +83,13 @@ class FirewallMgr(object):
     @method_logger()
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write('True')
+        f.write('1')
         f.close()
 
     @method_logger()
     def unset_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write('False')
+        f.write('0')
         f.close()
 
     @method_logger()
@@ -99,7 +99,7 @@ class FirewallMgr(object):
             f_data = f.read()
             f.close()
             if f_data:
-                state = eval(f_data)
+                state = bool(f_data)
             else:
                 self.unset_state()
                 state = False

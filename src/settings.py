@@ -21,8 +21,8 @@ conf = configparser.ConfigParser()
 conf.read(options.config)
 
 # Daemon settings
-VIRTMGRD_PORT = conf.getint('daemon', 'port', fallback=8884)
-VIRTMGRD_IPADDR = conf.get('daemon', 'address', fallback='0.0.0.0')
+HOSTVIRTMGR_PORT = conf.getint('daemon', 'port', fallback=8884)
+HOSTVIRTMGR_IPADDR = conf.get('daemon', 'address', fallback='0.0.0.0')
 
 # Transfer max header
 MAX_HEADER_LINE = conf.getint('daemon', 'header_size', fallback=16384)
@@ -34,7 +34,7 @@ CACHE_DIR = conf.get('cache', 'directory', fallback='/var/lib/libvirt/template_c
 BRIDGE_EXT = conf.get('bridge', 'external', fallback='br-ext')
 
 # Backup settings
-BACKUP_USER = conf.get('backup', 'user', fallback='virtmgr')
+BACKUP_USER = conf.get('backup', 'user', fallback='hostvirtmgr')
 BACKUP_KEY_FILE = conf.get('backup', 'file', fallback='private.pem')
 
 # Firewall rule name
