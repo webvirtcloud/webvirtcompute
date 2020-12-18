@@ -1,0 +1,19 @@
+desc = "RedHat based eth0 interface file template for public cloud"
+data = """DEVICE=eth0
+TYPE=Ethernet
+BOOTPROTO=none
+ONBOOT=yes
+IPADDR={ipv4_addr}
+NETMASK={ipv4_mask}
+GATEWAY={ipv4_gw}
+NM_CONTROLLED=yes
+IPADDR2={ipv4anch_addr}
+PREFIX2={ipv4anch_mask}
+IPV6INIT=yes
+IPV6ADDR={ipv6_addr}/{ipv6_mask}
+IPV6_DEFAULTGW={ipv6_gw}
+IPV6_AUTOCONF=no
+DNS1={ipv4_dns1}
+DNS2={ipv4_dns2}
+#DNS1={ipv6_dns1}
+#DNS2={ipv6_dns2}"""
