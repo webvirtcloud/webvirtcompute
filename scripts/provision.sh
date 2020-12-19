@@ -18,7 +18,7 @@ if [[ -d dist || -d build ]]; then
 fi
 
 echo "Creating hostvirtmgr binary..."
-/usr/local/bin/pyinstaller --onefile main.py
+/usr/local/bin/pyinstaller --onefile hostvirtmgr.py
 
 # Copy INI files
 cp ../conf/hostvirtmgr.ini dist/
