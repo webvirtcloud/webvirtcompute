@@ -21,11 +21,8 @@ conf = configparser.ConfigParser()
 conf.read(options.config)
 
 # Daemon settings
-HOSTVIRTMGR_PORT = conf.getint('daemon', 'port', fallback=8884)
-HOSTVIRTMGR_IPADDR = conf.get('daemon', 'address', fallback='0.0.0.0')
-
-# Transfer max header
-MAX_HEADER_LINE = conf.getint('daemon', 'header_size', fallback=16384)
+PORT = conf.getint('daemon', 'port', fallback=8884)
+HOST = conf.get('daemon', 'host', fallback='0.0.0.0')
 
 # Cache path
 CACHE_DIR = conf.get('cache', 'directory', fallback='/var/lib/libvirt/template_cache')

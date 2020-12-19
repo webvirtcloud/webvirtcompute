@@ -2,7 +2,6 @@ from auth import basic_auth
 from fastapi import FastAPI, Depends
 from lib import network, backup, fwall, images
 from lib.logger import VirtmgrdLogger, function_logger
-from settings import HOSTVIRTMGR_PORT, HOSTVIRTMGR_IPADDR, MAX_HEADER_LINE
 
 
 app = FastAPI()

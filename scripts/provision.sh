@@ -8,13 +8,8 @@ dnf install -y bash-completion python36 python3-libvirt python3-requests python3
 # Update pip
 pip3 install -U pip
 
-# Install pyinstaller
-if [[ ! -f /usr/local/bin/pyinstaller ]]; then
-  pip3 install pyinstaller
-fi
-
 # Install fastapi
-pip3 install fastapi
+pip3 install pyinstaller fastapi uvicorn
 
 # Cleanup directory
 cd /vagrant/src
@@ -26,7 +21,7 @@ echo "Creating hostvirtmgr binary..."
 /usr/local/bin/pyinstaller --onefile main.py
 
 # Copy INI files
-cp ../conf/ini/hostvirtmgr.ini dist/
+cp ../conf/hostvirtmgr.ini dist/
 
 # Check release folder
 if [[ ! -d ../release ]]; then
