@@ -2,7 +2,6 @@
 # vi: set ft=ruby :
 
 KVM_CPUS = 2
-KVM_NODES = 1
 KVM_MEMORY = 4096
 KVM_BOX = 'bento/centos-8.2'
 HOME_DIR = ENV['HOME']
@@ -11,6 +10,7 @@ Vagrant.configure('2') do |config|
     config.ssh.insert_key = false
     config.vm.box = KVM_BOX
     config.vm.hostname = "host01"
+    config.vm.provision "shell", path: "scripts/provision.sh"
     config.vm.network "private_network", ip: "172.32.16.10", auto_config: true
 
     # Virtualbox
