@@ -20,6 +20,9 @@ parser.add_option("-c",
 conf = configparser.ConfigParser()
 conf.read(options.config)
 
+# Token settings
+TOKEN = conf.get('daemon', 'token', fallback='')
+
 # Daemon settings
 PORT = conf.getint('daemon', 'port', fallback=8884)
 HOST = conf.get('daemon', 'host', fallback='0.0.0.0')
