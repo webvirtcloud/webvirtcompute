@@ -1,7 +1,10 @@
 *.pyc
 *.pyo
+*.spec
 .idea
 .DS_*
 .vscode
 .vagrant
 venv
+dist
+build
