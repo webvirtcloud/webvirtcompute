@@ -19,12 +19,15 @@ def result(err_msg=None, **kwargs):
         return res
 
 
-@app.get("/", dependencies=[Depends(basic_auth)])
-def root():
-    return {"root": "success"}
+@app.get("/create_instance/", dependencies=[Depends(basic_auth)])
+def create_instance():
+    conn = libvrt.LibVrt()
+    print(conn.get_networks())
+    return result()
 
-@app.get("/instances/{instance_id}/", dependencies=[Depends(basic_auth)])
-def instance_item(instance_id):
-    libvrt.
-    return {'instance': instance_id}
 
+@app.get("/instances/{instance_id}/status", dependencies=[Depends(basic_auth)])
+def instance(instance_id):
+
+
+    return result()
