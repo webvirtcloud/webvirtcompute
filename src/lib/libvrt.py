@@ -10,19 +10,16 @@ from .logger import method_logger
 
 
 class wvmConnect(object):
-    @method_logger()
+
     def __init__(self):
         self.wvm = libvirt.open('qemu:///system')
 
-    @method_logger()
     def get_cap_xml(self):
         return self.wvm.getCapabilities()
 
-    @method_logger()
     def is_kvm_supported(self):
         return util.is_kvm_available(self.get_cap_xml())
 
-    @method_logger()
     def get_host_info(self):
         nodeinfo = self.wvm.getInfo()
         processor = util.get_xml_data(self.wvm.getSysinfo(0), 'processor/entry[6]')
@@ -35,11 +32,9 @@ class wvmConnect(object):
             'connection': self.wvm.getURI()
         }
 
-    @method_logger()
     def get_host_type(self):
         return util.get_xml_data(self.get_cap_xml(), 'guest/arch/domain', 'type')
 
-    @method_logger()
     def get_host_mem_usage(self):
         hostemem = self.wvm.getInfo()[1] * (1024**2)
         freemem = self.wvm.getMemoryStats(-1, 0)
@@ -51,7 +46,6 @@ class wvmConnect(object):
             return {'size': hostmem, 'usage': usage, 'percent': round(percent)}
         return {'size': 0, 'usage': 0, 'percent': 0}
 
-    @method_logger()
     def get_host_cpu_usage(self):
         prev_idle = prev_total = diff_usage = 0
         cpu = self.wvm.getCPUStats(-1, 0)
@@ -70,7 +64,6 @@ class wvmConnect(object):
                     diff_usage = 0
         return {'usage': round(diff_usage)}
 
-    @method_logger()
     def get_storages(self):
         storages = []
         for pool in self.wvm.listStoragePools():
@@ -79,11 +72,9 @@ class wvmConnect(object):
             storages.append(pool)
         return storages
 
-    @method_logger()
     def get_storage(self, name):
         return self.wvm.storagePoolLookupByName(name)
 
-    @method_logger()
     def get_storage_usage(self, name):
         pool = self.get_storage(name)
         pool.refresh()
@@ -95,7 +86,6 @@ class wvmConnect(object):
             return {'size': size, 'used': used, 'percent': percent}
         return {'size': 0, 'used': 0, 'percent': 0}
 
-    @method_logger()
     def get_networks(self):
         virtnet = []
         for net in self.wvm.listNetworks():
@@ -104,13 +94,11 @@ class wvmConnect(object):
             virtnet.append(net)
         return virtnet
 
-    @method_logger()
     def refresh_storages(self):
         for pool in self.wvm.listStoragePools():
             stg = self.wvm.storagePoolLookupByName(pool)
             stg.refresh()
 
-    @method_logger()
     def get_ifaces(self):
         interface = []
         for inface in self.wvm.listInterfaces():
@@ -119,36 +107,28 @@ class wvmConnect(object):
             interface.append(inface)
         return interface
 
-    @method_logger()
     def get_iface(self, name):
         return self.wvm.interfaceLookupByName(name)
 
-    @method_logger()
     def get_secrets(self):
         return self.wvm.listSecrets()
 
-    @method_logger()
     def get_secret(self, uuid):
         return self.wvm.secretLookupByUUIDString(uuid)
 
-    @method_logger()
     def get_volume_by_path(self, path):
         return self.wvm.storageVolLookupByPath(path)
 
-    @method_logger()
     def get_network(self, net):
         return self.wvm.networkLookupByName(net)
 
-    @method_logger()
     def get_instance(self, name):
         return self.wvm.lookupByName(name)
 
-    @method_logger()
     def get_instance_status(self, name):
         dom = self.wvm.lookupByName(name)
         return dom.info()[0]
 
-    @method_logger()
     def get_instances(self):
         instances = []
         for inst_id in self.wvm.listDomainsID():
@@ -158,7 +138,6 @@ class wvmConnect(object):
             instances.append(name)
         return instances
 
-    @method_logger()
     def get_snapshots(self):
         instance = []
         for snap_id in self.wvm.listDomainsID():
@@ -171,7 +150,6 @@ class wvmConnect(object):
                 instance.append(dom.name())
         return instance
 
-    @method_logger()
     def get_net_device(self):
         netdevice = []
         for dev in self.wvm.listAllDevices(0):
@@ -180,7 +158,6 @@ class wvmConnect(object):
                 netdevice.append(util.get_xml_data(xml, 'capability/interface'))
         return netdevice
 
-    @method_logger()
     def get_host_instances(self):
         vname = []
         for name in self.get_instances():
@@ -195,7 +172,6 @@ class wvmConnect(object):
             vname.append({'name': dom.name(), 'status': dom.info()[0], 'uuid': dom.UUIDString(), 'vcpu': vcpu, 'memory': mem})
         return vname
 
-    @method_logger()
     def close(self):
         self.wvm.close()
 

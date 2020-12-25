@@ -1,32 +1,17 @@
 import json
+from model import AddPool
 from auth import basic_auth
 from libvirt import libvirtError
 from fastapi import FastAPI, Depends, HTTPException
 from lib import network, backup, fwall, images, libvrt
 from lib.logger import VirtmgrdLogger, function_logger
-from pydantic import BaseModel
-from typing import Optional
 
 app = FastAPI()
-logger = VirtmgrdLogger()
 
 
 def error_msg(msg):
     raise HTTPException(status_code=400, detail=json.dumps(str(msg)))
 
-
-class AddPool(BaseModel):
-    name: str
-    type: str
-    target: Optional[str] = None
-    source: Optional[str] = None
-    user: Optional[str] = None
-    pool: Optional[str] = None
-    host: Optional[str] = None
-    host2: Optional[str] = None
-    host3: Optional[str] = None
-    format: Optional[str] = None
-    secret: Optional[str] = None
 
 
 @app.get("/host/", dependencies=[Depends(basic_auth)])
@@ -79,11 +64,9 @@ def storage(name):
             },
             'autostart': conn.get_autostart()
         }
-        print(storage)
         conn.close()    
     except libvirtError as err:
         error_msg(err)
-        
     return {'storage': storage}
 
 
