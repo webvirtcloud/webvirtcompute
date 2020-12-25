@@ -4,7 +4,7 @@ from auth import basic_auth
 from libvirt import libvirtError
 from fastapi import FastAPI, Depends, HTTPException
 from lib import network, backup, fwall, images, libvrt
-from lib.logger import VirtmgrdLogger, function_logger
+
 
 app = FastAPI()
 

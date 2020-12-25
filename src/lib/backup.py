@@ -1,6 +1,6 @@
 import os
 import paramiko
-from .common import md5sum
+from .util import md5sum
 from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 from subprocess import call, STDOUT
