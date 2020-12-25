@@ -270,24 +270,24 @@ class wvmStorages(wvmConnect):
         if host3:
             xml += f"""<host name='{host3}' port='6789'/>"""
 
-        xml += """<auth username='%s' type='ceph'>
-                        <secret uuid='%s'/>
+        xml += f"""<auth username='{user}' type='ceph'>
+                        <secret uuid='{secret}'/>
                     </auth>
                 </source>
-                </pool>""" % (user, secret)
+                </pool>"""
         self.define_storage(xml, 0)
         stg = self.get_storage(name)
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_netfs(self, name, netfs_host, source, source_format, target):
+    def create_storage_netfs(self, name, host, source, s_format, target):
         xml = f"""
                 <pool type='nfs'>
                 <name>{name}</name>
                 <source>
-                    <host name='{netfs_host}'/>
+                    <host name='{host}'/>
                     <dir path='{source}'/>
-                    <format type='{source_format}'/>
+                    <format type='{s_format}'/>
                 </source>
                 <target>
                     <path>{target}</path>
