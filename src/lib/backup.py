@@ -4,7 +4,6 @@ from .common import md5sum
 from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 from subprocess import call, STDOUT
-from .logger import method_logger
 from settings import BACKUP_USER, BACKUP_KEY_FILE
 try:
     from subprocess import DEVNULL
@@ -16,12 +15,11 @@ ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
 
 
 class Backup(object):
-    @method_logger()
+
     def __init__(self, backup_image_path, image_path):
         self.backup_image_path = backup_image_path
         self.image_path = image_path
 
-    @method_logger()
     def transfer(self, node):
         """
         usage:
@@ -53,7 +51,6 @@ class Backup(object):
 
         return err_msg
 
-    @method_logger()
     def restore(self, disk_size, distro, image_md5sum):
         backup_image_md5 = None
         err_msg = None
@@ -71,7 +68,6 @@ class Backup(object):
 
         return err_msg
 
-    @method_logger()
     def deploy(self, template_name, template_md5sum, networks, cloud, public_key, hostname, root_password, disk_size):
         err_msg = 'MD5 sum mismatch'
         resize_disk = False
@@ -107,7 +103,6 @@ class Backup(object):
 
         return err_msg
 
-    @method_logger()
     def _prepare_image(self, disk_size, distro, clearfix=False):
         err_msg = None
         resize_disk = False
@@ -139,7 +134,6 @@ class Backup(object):
 
         return err_msg
 
-    @method_logger()
     def create(self):
         image_md5 = None
         image_size = None

@@ -6,7 +6,6 @@
 import os
 import time
 import socket
-from .logger import method_logger
 import gi; gi.require_version('NM', '1.0')
 from gi.repository import NM
 from subprocess import call, STDOUT
@@ -20,7 +19,7 @@ except ImportError:
 
 
 class FwRedirect(object):
-    @method_logger()
+
     def __init__(self, float_addr, anchor_addr):
         self.float_addr = float_addr
         self.anchor_addr = anchor_addr
@@ -34,19 +33,16 @@ class FwRedirect(object):
         self.prio = 0
         self.args = ['-d', self.float_addr, '-j', self.jump, '--to-destination', self.anchor_addr]
 
-    @method_logger()
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
         f.write('True')
         f.close()
 
-    @method_logger()
     def unset_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
         f.write('False')
         f.close()
 
-    @method_logger()
     def read_state(self):
         if os.path.isfile(FIREWALLD_STATE_FILE):
             f = open(FIREWALLD_STATE_FILE, "r")
@@ -61,7 +57,6 @@ class FwRedirect(object):
         else:
             return False
 
-    @method_logger()
     def is_locked(self):
         if self.read_state():
             seconds = 0
@@ -72,16 +67,13 @@ class FwRedirect(object):
                     return True
         return False
 
-    @method_logger()
     def save(self):
         self.fw_direct.update(self.fw_direct.getSettings())
         self.unset_state()
 
-    @method_logger()
     def reload(self):
         self.fw.reload()
 
-    @method_logger()
     def query_rule(self):
         chain = self.chain + FIREWALL_CHAIN_PREFIX
         ipt_cmd = 'iptables -t {} -C {} -d {} -j {} --to-destination {}'.format(self.table, chain,
@@ -93,12 +85,10 @@ class FwRedirect(object):
             return False
         return True
 
-    @method_logger()
     def check_rule_in_xml(self):
         res = self.fw_direct.queryRule(self.ipv, self.table, self.chain, self.prio, self.args)
         return res
 
-    @method_logger()
     def add_rule(self):
         if not self.query_rule():
             chain = self.chain + FIREWALL_CHAIN_PREFIX
@@ -112,7 +102,6 @@ class FwRedirect(object):
                     self.fw_direct.addRule(self.ipv, self.table, self.chain, self.prio, self.args)
                     self.save()
 
-    @method_logger()
     def remove_rule(self):
         if self.query_rule():
             chain = self.chain + FIREWALL_CHAIN_PREFIX
@@ -128,13 +117,12 @@ class FwRedirect(object):
 
 
 class NetManager(object):
-    @method_logger()
+
     def __init__(self, float_addr):
         self.dev = BRIDGE_EXT
         self.float_addr = float_addr
         self.nmc = NM.Client.new(None)
 
-    @method_logger()
     def get_ip_addresses(self):
         ip_addrs = []
         dev = self.nmc.get_device_by_iface(self.dev)
@@ -143,7 +131,7 @@ class NetManager(object):
             ip_addrs.append(addr.get_address())
         return ip_addrs
 
-    @method_logger()
+
     def add_address(self, prefix=32):
         ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))
         dev = self.nmc.get_device_by_iface(self.dev)
@@ -153,7 +141,7 @@ class NetManager(object):
         ipcfg.add_address(ip_addr)
         conn.commit_changes(True)
 
-    @method_logger()
+
     def remove_address(self, prefix=32):
         ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))
         dev = self.nmc.get_device_by_iface(self.dev)

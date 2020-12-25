@@ -50,19 +50,3 @@ FIREWALL_CHAIN_PREFIX = conf.get('firewall', 'chain_prefix', fallback='')
 # Firewalld settings
 FIREWALLD_STATE_TIMEOUT = conf.getint('firewall', 'state_timeout', fallback=120)
 FIREWALLD_STATE_FILE = conf.get('firewall', 'state_file', fallback='/var/run/firewalld/locked')
-
-# Logging settings
-"""
-logging.DEBUG
-10
-logging.ERROR
-40
-logging.INFO
-20
-"""
-LOG_DIR = conf.get('log', 'directory', fallback='/var/log/hostvirtmgr')
-WHEN = conf.get('log', 'when', fallback='w6')
-INTERVAL = conf.getint('log', 'interval', fallback=1)
-LOG_LEVEL = conf.getint('log', 'level', fallback=10)
-MAX_SIZE = conf.getint('log', 'max_size', fallback=8192)
-BACKUP_COUNT = conf.getint('log', 'backup_count', fallback=6)

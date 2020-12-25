@@ -1,6 +1,5 @@
 import os
 import time
-from .logger import method_logger
 from subprocess import call, STDOUT
 from firewall.client import FirewallClient
 from settings import FIREWALL_IN_NAME, FIREWALL_OUT_NAME
@@ -13,7 +12,7 @@ except ImportError:
 
 
 class FirewallMgr(object):
-    @method_logger()
+
     def __init__(self, rules_id, ipv4_public_addr=None, ipv4_private_addr=None):
         self.fw = FirewallClient()
         self.config = self.fw.config()
@@ -28,7 +27,6 @@ class FirewallMgr(object):
         self.firewall_in_chain = FIREWALL_IN_NAME + str(rules_id)
         self.firewall_out_chain = FIREWALL_OUT_NAME + str(rules_id)
 
-    @method_logger()
     def attach(self, rules_inbound, rules_outbound):
         err_msg = None
         if not self.is_locked():
@@ -41,7 +39,6 @@ class FirewallMgr(object):
             err_msg = 'Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT
         return err_msg
 
-    @method_logger()
     def detach(self):
         err_msg = None
         if not self.is_locked():
@@ -52,7 +49,6 @@ class FirewallMgr(object):
             err_msg = 'Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT
         return err_msg
 
-    @method_logger()
     def add_rule(self, rules_inbound, rules_outbound):
         err_msg = None
         if not self.is_locked():
@@ -66,7 +62,6 @@ class FirewallMgr(object):
             err_msg = 'Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT
         return err_msg
 
-    @method_logger()
     def delete_rule(self, rules_inbound, rules_outbound):
         err_msg = None
         if not self.is_locked():
@@ -80,19 +75,16 @@ class FirewallMgr(object):
             err_msg = 'Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT
         return err_msg
 
-    @method_logger()
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
         f.write('1')
         f.close()
 
-    @method_logger()
     def unset_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
         f.write('0')
         f.close()
 
-    @method_logger()
     def read_state(self):
         if os.path.isfile(FIREWALLD_STATE_FILE):
             f = open(FIREWALLD_STATE_FILE, "r")
@@ -107,7 +99,6 @@ class FirewallMgr(object):
         else:
             return False
 
-    @method_logger()
     def is_locked(self):
         if self.read_state():
             seconds = 0
@@ -118,12 +109,10 @@ class FirewallMgr(object):
                     return True
         return False
 
-    @method_logger()
     def save(self):
         self.fw_direct.update(self.fw_direct.getSettings())
         self.unset_state()
 
-    @method_logger()
     def query_rule(self, args):
         chain = self.chain + FIREWALL_CHAIN_PREFIX
         ipt_cmd = 'iptables -t {0} -C {1} {2}'.format(self.table, chain, ' '.join(args))
@@ -132,12 +121,10 @@ class FirewallMgr(object):
             return False
         return True
 
-    @method_logger()
     def query_rule_cfg(self, args):
         check = self.fw_direct.queryRule(self.ipv, self.table, self.chain, self.prio, args)
         return check
 
-    @method_logger()
     def query_chain(self, chain):
         ipt_cmd = 'iptables -t {0} -L {1}'.format(self.table, chain)
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
@@ -145,12 +132,10 @@ class FirewallMgr(object):
             return False
         return True
 
-    @method_logger()
     def query_chain_cfg(self, chain):
         check = self.fw_direct.queryChain(self.ipv, self.table, chain)
         return check
 
-    @method_logger()
     def query_chain_rule(self, chain, args):
         ipt_cmd = 'iptables -t {0} -C {1} {2}'.format(self.table, chain, ' '.join(args))
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
@@ -158,12 +143,10 @@ class FirewallMgr(object):
             return False
         return True
 
-    @method_logger()
     def query_chain_rule_cfg(self, chain, args):
         check = self.fw_direct.queryRule(self.ipv, self.table, chain, self.prio, args)
         return check
 
-    @method_logger()
     def rule_args(self, chain, rule):
         src_dst = '-d'
         port = rule.get('port')
@@ -202,7 +185,6 @@ class FirewallMgr(object):
         
         return args
 
-    @method_logger()
     def create_firewall(self):
         ipv4_addrs = []
 
@@ -253,7 +235,6 @@ class FirewallMgr(object):
                     if not self.query_rule_cfg(out_args):
                         self.fw_direct.addRule(self.ipv, self.table, self.chain, self.prio, out_args)
 
-    @method_logger()
     def remove_firewall(self):
         ipv4_addrs = []
 
@@ -318,7 +299,6 @@ class FirewallMgr(object):
                         if run_ipt_cmd == 0:
                             self.fw_direct.removeChain(chain[0], chain[1], chain[2])
 
-    @method_logger()
     def create_rule(self, chain, rules):
         if chain == 'inbound':
             firewall_chain = self.firewall_in_chain
@@ -339,7 +319,6 @@ class FirewallMgr(object):
                     if not self.query_chain_rule_cfg(firewall_chain, args):
                         self.fw_direct.addRule(self.ipv, self.table, firewall_chain, self.prio, args)
 
-    @method_logger()
     def remove_rule(self, chain, rules):
         if chain == 'inbound':
             firewall_chain = self.firewall_in_chain

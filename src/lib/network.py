@@ -1,6 +1,5 @@
 import os
 from subprocess import call, STDOUT
-from .logger import method_logger
 from .libguestfs import GuestFSUtil
 from .excpetions import IPRedirectError
 from .libredirect import FwRedirect, NetManager
@@ -12,11 +11,9 @@ except ImportError:
 
 
 class AnchorIP(object):
-    @method_logger()
     def __init__(self, anchor_ip):
         self.anchor_ip = anchor_ip
 
-    @method_logger()
     def attach_floating_ip(self, floating_ip, floating_prefix, floating_gw):
         err_msg = None
         try:
@@ -29,7 +26,6 @@ class AnchorIP(object):
 
         return err_msg
 
-    @method_logger()
     def detach_floating_ip(self, floating_ip, floating_prefix):
         err_msg = None
         dev = BRIDGE_EXT
@@ -42,7 +38,6 @@ class AnchorIP(object):
 
         return err_msg
 
-    @method_logger()
     def change_anchor_ip(self, image_path, distro):
         err_msg = None
         try:
@@ -56,7 +51,6 @@ class AnchorIP(object):
 
         return err_msg
 
-    @method_logger()
     def add_addr(self, float_addr, nmc, dev, prefix=32):
         if float_addr not in nmc.get_ip_addresses():
             ip_cmd = 'ip addr add {}/{} dev {}'.format(float_addr, prefix, dev)
@@ -66,7 +60,6 @@ class AnchorIP(object):
                 return True
         return False
 
-    @method_logger()
     def del_addr(self, nmc, float_addr, dev, prefix=32):
         if float_addr in nmc.get_ip_addresses():
             ip_cmd = 'ip addr del {}/{} dev {}'.format(float_addr, prefix, dev)
@@ -76,28 +69,23 @@ class AnchorIP(object):
                 return True
         return False
 
-    @method_logger()
     def check_rule(self, fwd):
         return fwd.query_rule()
 
-    @method_logger()
     def add_rule(self, fwd):
         if not self.check_rule(fwd):
             fwd.add_rule()
 
-    @method_logger()
     def del_rule(self, fwd):
         if self.check_rule(fwd):
             fwd.remove_rule()
 
-    @method_logger()
     def clear_arp(self, float_addr, float_gw, dev):
         arp_cmd = 'arping -c 3 -s {} -I {} -U {}'.format(float_addr, dev, float_gw)
         run_arp_cmd = call(arp_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_arp_cmd == 0:
             return True
 
-    @method_logger()
     def add_redirect(self, fwd, float_addr, float_pref, float_gw, nmc, dev):
         if self.add_addr(float_addr, nmc, dev, prefix=float_pref):
             if not fwd.is_locked():
@@ -110,7 +98,6 @@ class AnchorIP(object):
         else:
             raise IPRedirectError('Error adding IP address to the network device.')
 
-    @method_logger()
     def remove_redirect(self, fwd, float_addr, float_pref, nmc, dev):
         if self.del_addr(nmc, float_addr, dev, prefix=float_pref):
             if not fwd.is_locked():

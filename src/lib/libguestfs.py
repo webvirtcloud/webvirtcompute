@@ -5,7 +5,6 @@
 
 import re
 import guestfs
-from .logger import method_logger
 
 from tmpl import eth1_rnch
 from tmpl import eth0_rnch_public
@@ -30,7 +29,7 @@ from tmpl import eth0_deb_private
 
 
 class GuestFSUtil(object):
-    @method_logger()
+
     def __init__(self, drive, distro):
         self.drive = drive
         self.distro = distro
@@ -38,7 +37,6 @@ class GuestFSUtil(object):
         self.gfs.add_drive(drive)
         self.gfs.launch()
 
-    @method_logger()
     def get_distro(self):
         if 'fedora' in self.distro:
             return 'rhl'
@@ -59,7 +57,6 @@ class GuestFSUtil(object):
         if 'alpine' in self.distro:
             return 'alpn'
 
-    @method_logger()
     def root_device(self):
         device = '/dev/sda1'
         if self.get_distro() == 'core':
@@ -70,68 +67,56 @@ class GuestFSUtil(object):
             device = '/dev/sda3'
         return device
 
-    @method_logger()
     def ostree_path(self):
         ostree_path = '/ostree/boot.0/centos-atomic-host'
         root_uuid = self.gfs.ls(ostree_path)
         return ostree_path + '/' + root_uuid[0] + '/0'
 
-    @method_logger()
     def coreos_config_path(self):
         return '/cloud-config.yml'
 
-    @method_logger()
     def rancheros_config_path(self):
         return '/var/lib/rancher/conf/cloud-config.yml'
 
-    @method_logger()
     def cloud_init_path(self):
         path = '/var/lib/cloud'
         if self.get_distro() == 'atom':
             path = self.ostree_path() + path
         return path
 
-    @method_logger()
     def shadow_file_path(self):
         path = '/etc/shadow'
         if self.get_distro() == 'atom':
             path = self.ostree_path() + path
         return path
 
-    @method_logger()
     def hostname_file_path(self):
         path = '/etc/hostname'
         if self.get_distro() == 'atom':
             path = self.ostree_path() + path
         return path
 
-    @method_logger()
     def root_ssh_dir_path(self):
         path = '/root/.ssh'
         if self.get_distro() == 'atom':
             path = '/ostree/deploy/centos-atomic-host/var/roothome/.ssh'
         return path
 
-    @method_logger()
     def root_auth_keys_path(self):
         path = '/root/.ssh/authorized_keys'
         if self.get_distro() == 'atom':
             path = '/ostree/deploy/centos-atomic-host/var/roothome/.ssh/authorized_keys'
         return path
 
-    @method_logger()
     def _win_str_disk_extend(self):
         return 'diskpart /s %~dp0\\diskpart.txt\r\n'
 
-    @method_logger()
     def _win_str_shutdown(self):
         return 'shutdown /r /t 1\r\n'
 
-    @method_logger()
     def _win_clean_cloudinit(self):
         return 'type NUL > %~dp0\\cloudinit.cmd\r\n'
 
-    @method_logger()
     def nic_file_path(self, nic_type='public'):
         f_path = ''
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
@@ -154,7 +139,6 @@ class GuestFSUtil(object):
             f_path = self.rancheros_config_path()
         return f_path
 
-    @method_logger()
     def deb_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
         f_eth0 = ''
         if cloud == 'public':
@@ -182,7 +166,6 @@ class GuestFSUtil(object):
             )
         return f_eth0
 
-    @method_logger()
     def deb_eth1_data(self, ipv4private):
         f_eth1 = eth1_deb.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -190,7 +173,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    @method_logger()
     def deb_eth2_data(self, ipv4private):
         f_eth2 = eth2_deb.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -198,7 +180,6 @@ class GuestFSUtil(object):
         )
         return f_eth2
 
-    @method_logger()
     def rhl_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
         f_eth0 = ''
         if cloud == 'public':
@@ -226,7 +207,6 @@ class GuestFSUtil(object):
             )
         return f_eth0
 
-    @method_logger()
     def rhl_eth1_data(self, ipv4private):
         f_eth1 = eth1_rhl.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -234,7 +214,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    @method_logger()
     def win_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
         f_eth0 = ''
         if cloud == 'public':
@@ -262,7 +241,6 @@ class GuestFSUtil(object):
             )
         return f_eth0
 
-    @method_logger()
     def win_eth1_data(self, ipv4private):
         f_eth1 = eth1_win.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -270,7 +248,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    @method_logger()
     def core_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
         f_eth0 = ''
         if cloud == 'public':
@@ -296,7 +273,6 @@ class GuestFSUtil(object):
             )
         return f_eth0
 
-    @method_logger()
     def core_eth1_data(self, ipv4private):
         f_eth1 = eth1_core.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -304,7 +280,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    @method_logger()
     def rnch_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
         f_eth0 = ''
         if cloud == 'public':
@@ -332,7 +307,6 @@ class GuestFSUtil(object):
             )
         return f_eth0
 
-    @method_logger()
     def rnch_eth1_data(self, ipv4private):
         f_eth1 = eth1_rnch.data.format(
             ipv4_addr=ipv4private.get('address'),
@@ -340,7 +314,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    @method_logger()
     def public_nic_setup(self, ipv4public, ipv4anchor, ipv6public):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
@@ -367,7 +340,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def private_nic_setup(self, ipv4private):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
@@ -402,7 +374,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def vpc_gw_nic_setup(self, ipv4vpc):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
@@ -412,7 +383,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def vpc_nic_setup(self, ipv4vpc):
         if self.get_distro() == 'deb':
             nic_f_path = self.nic_file_path()
@@ -439,7 +409,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def private_cloud_nic_setup(self, ipv4public):
         if self.get_distro() == 'deb':
             nic_f_path = self.nic_file_path()
@@ -466,7 +435,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def setup_networking(self, networks, cloud='public'):
         ipv4vpc = networks.get('ipv4_vpc')
         ipv4public = networks.get('ipv4_public')
@@ -485,7 +453,6 @@ class GuestFSUtil(object):
         if cloud == 'private':
             self.vpc_nic_setup(ipv4vpc)
 
-    @method_logger()
     def change_ipv4anch(self, ipv4anchor):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
@@ -516,7 +483,6 @@ class GuestFSUtil(object):
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
 
-    @method_logger()
     def change_root_passwd(self, password_hash, shadow_file):
         shadow_file_updated = ''
         if self.get_distro() == 'win':
@@ -532,7 +498,6 @@ class GuestFSUtil(object):
             shadow_file_updated = re.sub('^root:.*?:', root_shadow_line, shadow_file)
         return shadow_file_updated
 
-    @method_logger()
     def reset_root_passwd(self, pass_hash):
         if self.get_distro() == 'win':
             nic_f_path = self.nic_file_path()
@@ -567,7 +532,6 @@ class GuestFSUtil(object):
             self.gfs.write(shadow_fl_path, shadow_file_updated)
             self.gfs.chmod(640, shadow_fl_path)
 
-    @method_logger()
     def set_pubic_keys(self, public_key):
         if public_key:
             if self.get_distro() == 'win':
@@ -595,7 +559,6 @@ class GuestFSUtil(object):
                 self.gfs.write(root_fl_auth_key_path, public_key)
                 self.gfs.chmod(600, root_fl_auth_key_path)
 
-    @method_logger()
     def set_hostname(self, hostname):
         if self.get_distro() == 'alpn':
             f_path = self.hostname_file_path()
@@ -621,7 +584,6 @@ class GuestFSUtil(object):
             f_data += h_data
             self.gfs.write(nic_f_path, f_data)
 
-    @method_logger()
     def clean_cloud_init(self):
         if self.get_distro() == 'win':
             pass
@@ -633,7 +595,6 @@ class GuestFSUtil(object):
             path = self.cloud_init_path()
             self.gfs.rm_rf(path)
 
-    @method_logger()
     def resize_win_fs(self):
         nic_f_path = self.nic_file_path()
         f_data = self.gfs.cat(nic_f_path)
@@ -641,20 +602,17 @@ class GuestFSUtil(object):
         f_data += d_data
         self.gfs.write(nic_f_path, f_data)
 
-    @method_logger()
     def resize_linux_fs(self, device=None):
         if not device:
             device = self.root_device()
         self.gfs.resize2fs(device)
 
-    @method_logger()
     def resize_fs(self):
         if self.get_distro() == 'win':
             if not self.gfs.mounts():
                 self.mount_root()
             self.resize_win_fs()
 
-    @method_logger()
     def mount_root(self):
         device = self.root_device()
         if self.get_distro() == 'win':
@@ -666,14 +624,12 @@ class GuestFSUtil(object):
         else:
             self.gfs.mount(device, '/')
 
-    @method_logger()
     def umount_root(self):
         device = self.root_device()
         if self.get_distro() == 'core':
             device = '/dev/sda6'
         self.gfs.umount(device)
 
-    @method_logger()
     def clearfix(self, firstboot=True):
         if self.get_distro() == 'rhl':
             if firstboot:
@@ -690,7 +646,6 @@ class GuestFSUtil(object):
             f_data += self._win_clean_cloudinit()
             self.gfs.write(nic_f_path, f_data)
 
-    @method_logger()
     def close(self):
         self.gfs.shutdown()
         self.gfs.close()

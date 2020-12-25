@@ -1,4 +1,5 @@
 import re
+impot hashlib
 import random
 import libvirt
 from xml.etree import ElementTree
@@ -22,6 +23,14 @@ def randomMAC():
                  random.randint(0x00, 0xff),
                  random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x: "%02x" % x, mac))
+
+
+def md5sum(filename):
+    md5 = hashlib.md5()
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 
 def randomUUID():

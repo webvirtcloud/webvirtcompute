@@ -2,8 +2,7 @@ import os
 import requests
 from subprocess import call, STDOUT
 from settings import CACHE_DIR
-from .common import md5sum
-from .logger import method_logger
+from .util import md5sum
 from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 try:
@@ -16,13 +15,12 @@ ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
 
 
 class Template(object):
-    @method_logger()
+
     def __init__(self, template_name, template_md5sum):
         self.template_name = template_name
         self.template_md5sum = template_md5sum
         self.template_image_path = None
 
-    @method_logger()
     def download(self, template_url):
         """
         :param template_url(string): url todownload if not in cache
@@ -63,11 +61,10 @@ class Template(object):
 
 
 class Image(object):
-    @method_logger()
+
     def __init__(self, image_path):
         self.image_path = image_path
 
-    @method_logger()
     def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud):
         """
         :param template(instance of class Template):
@@ -91,7 +88,6 @@ class Image(object):
 
         return err_msg
 
-    @method_logger()
     def _run(self, disk_size, template_name, networks, public_key, hostname, cloud, root_password):
         err_msg = None
 
@@ -121,7 +117,6 @@ class Image(object):
 
         return err_msg
 
-    @method_logger()
     def reset_password(self, distro, root_password):
         err_msg = None
         try:
@@ -136,7 +131,6 @@ class Image(object):
 
         return err_msg
 
-    @method_logger()
     def resize(self, distro, disk_size):
         err_msg = None
         vrt = LibVrt()

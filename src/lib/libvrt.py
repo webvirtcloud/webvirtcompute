@@ -6,7 +6,6 @@ import re
 import libvirt
 from . import util
 from xml.etree import ElementTree
-from .logger import method_logger
 
 
 class wvmConnect(object):
