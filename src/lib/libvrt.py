@@ -182,7 +182,7 @@ class wvmConnect(object):
 
     @method_logger()
     def get_host_instances(self):
-        vname = {}
+        vname = []
         for name in self.get_instances():
             dom = self.get_instance(name)
             mem = util.get_xml_data(dom.XMLDesc(0), 'currentMemory')
@@ -192,7 +192,7 @@ class wvmConnect(object):
                 vcpu = cur_vcpu
             else:
                 vcpu = util.get_xml_data(dom.XMLDesc(0), 'vcpu')
-            vname[dom.name()] = {'status': dom.info()[0], 'uuid': dom.UUIDString(), 'vcpu': vcpu, 'memory': mem}
+            vname.append({'name': dom.name(), 'status': dom.info()[0], 'uuid': dom.UUIDString(), 'vcpu': vcpu, 'memory': mem})
         return vname
 
     @method_logger()
@@ -203,28 +203,32 @@ class wvmConnect(object):
 class wvmStorages(wvmConnect):
 
     def get_storages_info(self):
-        volumes = None
+        volumes = []
         storages = []
         for storage in self.get_storages():
             stg = self.get_storage(storage)
-            status = stg.isActive()
+            active = bool(stg.isActive())
             s_type = util.get_xml_data(stg.XMLDesc(0), element='type')
-            if status:
-                volumes = len(stg.listVolumes())                
-            size = stg.info()[1]
+            if active is True:
+                volumes = stg.listVolumes()              
             storages.append({
                 'name': storage,
-                'status': status,
+                'active': active,
                 'type': s_type,
                 'volumes': volumes,
-                'size': size
+                'size': {
+                    'total': stg.info()[1],
+                    'used': stg.info()[2],
+                    'free': stg.info()[3]
+                },
+                'autostart': bool(stg.autostart())
             })
         return storages
 
     def define_storage(self, xml, flag=0):
         self.wvm.storagePoolDefineXML(xml, flag)
 
-    def create_storage_dir(self, name, source, target):
+    def create_storage_dir(self, name, target):
         xml = f"""
                 <pool type='dir'>
                 <name>{name}</name>
@@ -234,8 +238,6 @@ class wvmStorages(wvmConnect):
                 </pool>"""
         self.define_storage(xml, 0)
         stg = self.get_storage(name)
-        if s_type == 'logical':
-            stg.build(0)
         stg.create(0)
         stg.setAutostart(1)
 
@@ -258,13 +260,13 @@ class wvmStorages(wvmConnect):
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_ceph(self, name, pool, user, secret, host1, host2=None, host3=None):
+    def create_storage_ceph(self, name, pool, user, secret, host, host2=None, host3=None):
         xml = f"""
                 <pool type='rbd'>
                 <name>{name}</name>
                 <source>
                     <name>{pool}</name>
-                    <host name='{host1}' port='6789'/>"""
+                    <host name='{host}' port='6789'/>"""
         if host2:
             xml += f"""<host name='{host2}' port='6789'/>"""
         if host3:
@@ -280,14 +282,14 @@ class wvmStorages(wvmConnect):
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_netfs(self, name, host, source, s_format, target):
+    def create_storage_netfs(self, name, host, source, format, target):
         xml = f"""
                 <pool type='nfs'>
                 <name>{name}</name>
                 <source>
                     <host name='{host}'/>
                     <dir path='{source}'/>
-                    <format type='{s_format}'/>
+                    <format type='{format}'/>
                 </source>
                 <target>
                     <path>{target}</path>
@@ -301,10 +303,14 @@ class wvmStorages(wvmConnect):
 
 class wvmStorage(wvmConnect):
     def __init__(self, pool):
+        wvmConnect.__init__(self)
         self.pool = self.get_storage(pool)
 
     def get_name(self):
         return self.pool.name()
+
+    def get_active(self):
+        return bool(self.pool.isActive())
 
     def get_status(self):
         status = ['Not running', 'Initializing pool, not available', 'Running normally', 'Running degraded']
@@ -313,8 +319,14 @@ class wvmStorage(wvmConnect):
         except ValueError:
             return 'Unknown'
 
-    def get_size(self):
-        return [self.pool.info()[1], self.pool.info()[3]]
+    def get_total_size(self):
+        return self.pool.info()[1]
+
+    def get_used_size(self):
+        return self.pool.info()[3]
+
+    def get_free_size(self):
+        return self.pool.info()[3]
 
     def XMLDesc(self, flags):
         return self.pool.XMLDesc(flags)
@@ -329,7 +341,7 @@ class wvmStorage(wvmConnect):
         return self.wvm.storagePoolDefineXML(xml, 0)
 
     def is_active(self):
-        return self.pool.isActive()
+        return bool(self.pool.isActive())
 
     def get_uuid(self):
         return self.pool.UUIDString()
@@ -344,7 +356,7 @@ class wvmStorage(wvmConnect):
         self.pool.undefine()
 
     def get_autostart(self):
-        return self.pool.autostart()
+        return bool(self.pool.autostart())
 
     def set_autostart(self, value):
         self.pool.setAutostart(value)
