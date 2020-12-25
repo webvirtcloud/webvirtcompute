@@ -5,14 +5,7 @@
 import re
 import libvirt
 from xml.etree import ElementTree
-from .logger import method_logger, function_logger
-
-
-@function_logger()
-def refresh_storages(conn):
-    for pool in conn.listStoragePools():
-        stg = conn.storagePoolLookupByName(pool)
-        stg.refresh()
+from .logger import method_logger
 
 
 class LibVrt(object):
@@ -22,13 +15,70 @@ class LibVrt(object):
 
     @method_logger()
     def get_cap_xml(self):
-        """Return xml capabilities"""
         return self.conn.getCapabilities()
 
     @method_logger()
     def is_kvm_supported(self):
-        """Return KVM capabilities."""
         return util.is_kvm_available(self.get_cap_xml())
+
+    @method_logger()
+    def get_node_info(self):
+        nodeinfo = self.conn.getInfo()
+        return {
+            'hostname': self.conn.getHostname(),
+            'arch': nodeinfo[0],
+            'memory': nodeinfo[1] * (1024 ** 2),
+            'cpus': nodeinfo[2],
+            'processor': util.get_xml_data(self.conn.getSysinfo(0), 'processor/entry[6]'),
+            'connection': self.conn.getURI()
+        }
+
+    @method_logger()
+    def get_node_type(self):
+        return util.get_xml_data(self.get_cap_xml(), 'guest/arch/domain', 'type')
+
+    @method_logger()
+    def get_host_mem_usage(self):
+        host_mem = self.wvm.getInfo()[1] * (1024**2)
+        free_mem = self.wvm.getMemoryStats(-1, 0)
+        if isinstance(free_mem, dict):
+            mem = list(free_mem.values())
+            free = (mem[1] + mem[2] + mem[3]) * 1024
+            percent = (100 - ((free * 100) / host_mem))
+            usage = (host_mem - free)
+            return {'size': host_mem, 'usage': usage, 'percent': round(percent)}
+        return {'size': 0, 'usage': 0, 'percent': 0}
+
+    @method_logger()
+    def get_host_cpu_usage(self):
+        prev_idle = prev_total = diff_usage = 0
+        cpu = self.wvm.getCPUStats(-1, 0)
+        if isinstance(cpu, dict):
+            for num in range(2):
+                idle = self.wvm.getCPUStats(-1, 0)['idle']
+                total = sum(self.wvm.getCPUStats(-1, 0).values())
+                diff_idle = idle - prev_idle
+                diff_total = total - prev_total
+                diff_usage = (1000 * (diff_total - diff_idle) / diff_total + 5) / 10
+                prev_total = total
+                prev_idle = idle
+                if num == 0:
+                    time.sleep(1)
+                if diff_usage < 0:
+                    diff_usage = 0
+        return {'usage': round(diff_usage)}
+
+    @method_logger()
+    def get_storage_usage(self, name):
+        pool = self.get_storage(name)
+        pool.refresh()
+        if pool.isActive():
+            size = pool.info()[1]
+            free = pool.info()[3]
+            used = size - free
+            percent = (used * 100) / size
+            return {'size': size, 'used': used, 'percent': percent}
+        return {'size': 0, 'used': 0, 'percent': 0}
 
     @method_logger()
     def get_storages(self):
@@ -47,7 +97,13 @@ class LibVrt(object):
         for net in self.conn.listDefinedNetworks():
             virtnet.append(net)
         return virtnet
-    
+
+    @method_logger()
+    def refresh_storages(self):
+        for pool in self.conn.listStoragePools():
+            stg = self.conn.storagePoolLookupByName(pool)
+            stg.refresh()
+
     @method_logger()
     def get_ifaces(self):
         interface = []
