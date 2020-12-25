@@ -19,15 +19,41 @@ def result(err_msg=None, **kwargs):
         return res
 
 
-@app.get("/create_instance/", dependencies=[Depends(basic_auth)])
-def create_instance():
+@app.get("/host/", dependencies=[Depends(basic_auth)])
+def host():
     conn = libvrt.LibVrt()
-    print(conn.get_networks())
-    return result()
+    hostinfo = conn.get_host_info()
+    conn.close() 
+    return {'host': hostinfo}
 
 
-@app.get("/instances/{instance_id}/status", dependencies=[Depends(basic_auth)])
-def instance(instance_id):
+@app.get("/storages/", dependencies=[Depends(basic_auth)])
+def storages():
+    conn = libvrt.LibVrt()
+    storages = conn.get_storages()
+    conn.close() 
+    return {'storages': storages}
 
 
-    return result()
+@app.get("/storages/{ name }", dependencies=[Depends(basic_auth)])
+def storage(name):
+    conn = libvrt.LibVrt()
+    hostinfo = conn.get_storages()
+    conn.close() 
+    return {'storage': storages}
+
+
+@app.get("/networks/", dependencies=[Depends(basic_auth)])
+def networks():
+    conn = libvrt.LibVrt()
+    networks = conn.get_networks()
+    conn.close() 
+    return {'networks': networks}
+
+
+@app.get("/networks/{ name }", dependencies=[Depends(basic_auth)])
+def network(name):
+    conn = libvrt.LibVrt()
+    networks = conn.get_networks()
+    conn.close() 
+    return {'network': networks}
