@@ -4,7 +4,7 @@ from subprocess import call, STDOUT
 from settings import CACHE_DIR
 from .common import md5sum
 from .logger import method_logger
-from .libvrt import LibVrt
+from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 try:
     from subprocess import DEVNULL

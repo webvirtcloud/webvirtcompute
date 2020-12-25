@@ -1,7 +1,7 @@
 import os
 import paramiko
 from .common import md5sum
-from .libvrt import LibVrt
+from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 from subprocess import call, STDOUT
 from .logger import method_logger

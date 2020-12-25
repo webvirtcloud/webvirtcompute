@@ -29,9 +29,10 @@ def host():
 
 @app.get("/storages/", dependencies=[Depends(basic_auth)])
 def storages():
-    conn = libvrt.LibVrt()
-    storages = conn.get_storages()
-    conn.close() 
+    storage_list = []
+    conn = libvrt.wvmStorages()
+    storages = conn.get_storages_info()
+    conn.close()
     return {'storages': storages}
 
 

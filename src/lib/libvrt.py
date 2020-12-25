@@ -9,7 +9,7 @@ from xml.etree import ElementTree
 from .logger import method_logger
 
 
-class LibVrt(object):
+class wvmConnect(object):
     @method_logger()
     def __init__(self):
         self.wvm = libvirt.open('qemu:///system')
@@ -71,6 +71,19 @@ class LibVrt(object):
         return {'usage': round(diff_usage)}
 
     @method_logger()
+    def get_storages(self):
+        storages = []
+        for pool in self.wvm.listStoragePools():
+            storages.append(pool)
+        for pool in self.wvm.listDefinedStoragePools():
+            storages.append(pool)
+        return storages
+
+    @method_logger()
+    def get_storage(self, name):
+        return self.wvm.storagePoolLookupByName(name)
+
+    @method_logger()
     def get_storage_usage(self, name):
         pool = self.get_storage(name)
         pool.refresh()
@@ -81,15 +94,6 @@ class LibVrt(object):
             percent = (used * 100) / size
             return {'size': size, 'used': used, 'percent': percent}
         return {'size': 0, 'used': 0, 'percent': 0}
-
-    @method_logger()
-    def get_storages(self):
-        storages = []
-        for pool in self.wvm.listStoragePools():
-            storages.append(pool)
-        for pool in self.wvm.listDefinedStoragePools():
-            storages.append(pool)
-        return storages
 
     @method_logger()
     def get_networks(self):
@@ -126,10 +130,6 @@ class LibVrt(object):
     @method_logger()
     def get_secret(self, uuid):
         return self.wvm.secretLookupByUUIDString(uuid)
-
-    @method_logger()
-    def get_storage(self, name):
-        return self.wvm.storagePoolLookupByName(name)
 
     @method_logger()
     def get_volume_by_path(self, path):
@@ -196,72 +196,256 @@ class LibVrt(object):
         return vname
 
     @method_logger()
-    def image_resize(self, path, size):
-        refresh_storages(self.wvm)
-        vol = self.wvm.storageVolLookupByPath(path)
-        vol.resize(size, 0)
-
-    @method_logger()
-    def get_image_size(self, path):
-        refresh_storages(self.wvm)
-        vol = self.wvm.storageVolLookupByPath(path)
-        stg = vol.storagePoolLookupByVolume()
-        stg.refresh()
-        return vol.info()[2]
-
-    @method_logger()
-    def get_disk_size(self, path):
-        refresh_storages(self.wvm)
-        vol = self.wvm.storageVolLookupByPath(path)
-        stg = vol.storagePoolLookupByVolume()
-        stg.refresh()
-        return vol.info()[1]
-
-    @method_logger()
-    def check_image(self, path, size):
-        refresh_storages(self.wvm)
-        vol = self.wvm.storageVolLookupByPath(path)
-        stg = vol.storagePoolLookupByVolume()
-        if vol.info()[2] > 200704:
-            name = vol.name()
-            vol.delete(0)
-            xml = """
-                <volume>
-                    <name>%s</name>
-                    <capacity>%s</capacity>
-                    <allocation>0</allocation>
-                    <target>
-                        <format type='qcow2'/>
-                    </target>
-                </volume>""" % (name, size)
-            stg.createXML(xml, 0)
-            stg.refresh()
-
-    @method_logger()
-    def win_img_for_resize(self, path, size):
-        refresh_storages(self.wvm)
-        vol = self.wvm.storageVolLookupByPath(path)
-        name = vol.name().split('.')[0] + '_resize' + '.img'
-        xml = """
-            <volume>
-                <name>%s</name>
-                <capacity>%s</capacity>
-                <allocation>0</allocation>
-                <target>
-                    <format type='qcow2'/>
-                </target>
-            </volume>""" % (name, size)
-        stg = vol.storagePoolLookupByVolume()
-        stg.refresh()
-        try:
-            stg.createXML(xml, 0)
-        except libvirt.libvirtError:
-            vol = stg.storageVolLookupByName(name)
-            vol.delete(0)
-            stg.createXML(xml, 0)
-        created_vol = stg.storageVolLookupByName(name)
-        return created_vol.path()
-
-    @method_logger()
     def close(self):
         self.wvm.close()
+
+
+class wvmStorages(wvmConnect):
+
+    def get_storages_info(self):
+        volumes = None
+        storages = []
+        for storage in self.get_storages():
+            stg = self.get_storage(storage)
+            status = stg.isActive()
+            s_type = util.get_xml_data(stg.XMLDesc(0), element='type')
+            if status:
+                volumes = len(stg.listVolumes())                
+            size = stg.info()[1]
+            storages.append({
+                'name': storage,
+                'status': status,
+                'type': s_type,
+                'volumes': volumes,
+                'size': size
+            })
+        return storages
+
+    def define_storage(self, xml, flag=0):
+        self.wvm.storagePoolDefineXML(xml, flag)
+
+    def create_storage_dir(self, name, source, target):
+        xml = f"""
+                <pool type='dir'>
+                <name>{name}</name>
+                <target>
+                    <path>{target}</path>
+                </target>
+                </pool>"""
+        self.define_storage(xml, 0)
+        stg = self.get_storage(name)
+        if s_type == 'logical':
+            stg.build(0)
+        stg.create(0)
+        stg.setAutostart(1)
+
+    def create_storage_logic(self, name, source):
+        xml = f"""
+                <pool type='logical'>
+                <name>{name}</name>
+                  <source>
+                    <device path='{source}'/>
+                    <name>{name}</name>
+                    <format type='lvm2'/>
+                  </source>            
+                  <target>
+                       <path>/dev/{name}</path>
+                  </target>
+                </pool>"""
+        self.define_storage(xml, 0)
+        stg = self.get_storage(name)
+        stg.build(0)
+        stg.create(0)
+        stg.setAutostart(1)
+
+    def create_storage_ceph(self, name, pool, user, secret, host1, host2=None, host3=None):
+        xml = f"""
+                <pool type='rbd'>
+                <name>{name}</name>
+                <source>
+                    <name>{pool}</name>
+                    <host name='{host1}' port='6789'/>"""
+        if host2:
+            xml += f"""<host name='{host2}' port='6789'/>"""
+        if host3:
+            xml += f"""<host name='{host3}' port='6789'/>"""
+
+        xml += """<auth username='%s' type='ceph'>
+                        <secret uuid='%s'/>
+                    </auth>
+                </source>
+                </pool>""" % (user, secret)
+        self.define_storage(xml, 0)
+        stg = self.get_storage(name)
+        stg.create(0)
+        stg.setAutostart(1)
+
+    def create_storage_netfs(self, name, netfs_host, source, source_format, target):
+        xml = f"""
+                <pool type='nfs'>
+                <name>{name}</name>
+                <source>
+                    <host name='{netfs_host}'/>
+                    <dir path='{source}'/>
+                    <format type='{source_format}'/>
+                </source>
+                <target>
+                    <path>{target}</path>
+                </target>
+                </pool>"""
+        self.define_storage(xml, 0)
+        stg = self.get_storage(name)
+        stg.create(0)
+        stg.setAutostart(1)
+
+
+class wvmStorage(wvmConnect):
+    def __init__(self, pool):
+        self.pool = self.get_storage(pool)
+
+    def get_name(self):
+        return self.pool.name()
+
+    def get_status(self):
+        status = ['Not running', 'Initializing pool, not available', 'Running normally', 'Running degraded']
+        try:
+            return status[self.pool.info()[0]]
+        except ValueError:
+            return 'Unknown'
+
+    def get_size(self):
+        return [self.pool.info()[1], self.pool.info()[3]]
+
+    def XMLDesc(self, flags):
+        return self.pool.XMLDesc(flags)
+
+    def createXML(self, xml, flags):
+        self.pool.createXML(xml, flags)
+
+    def createXMLFrom(self, xml, vol, flags):
+        self.pool.createXMLFrom(xml, vol, flags)
+
+    def define(self, xml):
+        return self.wvm.storagePoolDefineXML(xml, 0)
+
+    def is_active(self):
+        return self.pool.isActive()
+
+    def get_uuid(self):
+        return self.pool.UUIDString()
+
+    def start(self):
+        self.pool.create(0)
+
+    def stop(self):
+        self.pool.destroy()
+
+    def delete(self):
+        self.pool.undefine()
+
+    def get_autostart(self):
+        return self.pool.autostart()
+
+    def set_autostart(self, value):
+        self.pool.setAutostart(value)
+
+    def get_type(self):
+        return util.get_xml_data(self.XMLDesc(0), element='type')
+
+    def get_target_path(self):
+        return util.get_xml_data(self.XMLDesc(0), 'target/path')
+
+    def get_allocation(self):
+        return int(util.get_xml_data(self.XMLDesc(0), 'allocation'))
+
+    def get_available(self):
+        return int(util.get_xml_data(self.XMLDesc(0), 'available'))
+
+    def get_capacity(self):
+        return int(util.get_xml_data(self.XMLDesc(0), 'capacity'))
+
+    def get_pretty_allocation(self):
+        return util.pretty_bytes(self.get_allocation())
+
+    def get_pretty_available(self):
+        return util.pretty_bytes(self.get_available())
+
+    def get_pretty_capacity(self):
+        return util.pretty_bytes(self.get_capacity())
+
+    def get_volumes(self):
+        return self.pool.listVolumes()
+
+    def get_volume(self, name):
+        return self.pool.storageVolLookupByName(name)
+
+    def get_volume_size(self, name):
+        vol = self.get_volume(name)
+        return vol.info()[1]
+
+    def _vol_XMLDesc(self, name):
+        vol = self.get_volume(name)
+        return vol.XMLDesc(0)
+
+    def del_volume(self, name):
+        vol = self.pool.storageVolLookupByName(name)
+        vol.delete(0)
+
+    def get_volume_type(self, name):
+        return util.get_xml_data(self._vol_XMLDesc(name), 'target/format', 'type')
+
+    def refresh(self):
+        self.pool.refresh(0)
+
+    def update_volumes(self):
+        try:
+            self.refresh()
+        except Exception:
+            pass
+        vols = self.get_volumes()
+        vol_list = []
+
+        for volname in vols:
+            vol_list.append({
+                'name': volname,
+                'size': self.get_volume_size(volname),
+                'type': self.get_volume_type(volname)
+            })
+        return vol_list
+
+    def create_volume(self, name, size, vol_fmt='qcow2', metadata=False):
+        storage_type = self.get_type()
+        alloc = size
+        if vol_fmt == 'unknown':
+            vol_fmt = 'raw'
+        if storage_type == 'dir':
+            name += '.img'
+            alloc = 0
+        xml = f"""
+            <volume>
+                <name>{name}</name>
+                <capacity>{size}</capacity>
+                <allocation>{alloc}</allocation>
+                <target>
+                    <format type='{vol_fmt}'/>
+                </target>
+            </volume>"""
+        self.createXML(xml, metadata)
+
+    def clone_volume(self, name, clone, vol_fmt=None, metadata=False):
+        storage_type = self.get_type()
+        if storage_type == 'dir':
+            clone += '.img'
+        vol = self.get_volume(name)
+        if not vol_fmt:
+            vol_fmt = self.get_volume_type(name)
+        xml = f"""
+            <volume>
+                <name>{clone}</name>
+                <capacity>0</capacity>
+                <allocation>0</allocation>
+                <target>
+                    <format type='{vol_fmt}'/>
+                </target>
+            </volume>"""
+        self.createXMLFrom(xml, vol, metadata)
