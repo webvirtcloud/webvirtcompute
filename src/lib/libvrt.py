@@ -178,14 +178,20 @@ class wvmConnect(object):
 class wvmStorages(wvmConnect):
 
     def get_storages_info(self):
-        volumes = []
         storages = []
         for storage in self.get_storages():
             stg = self.get_storage(storage)
             active = bool(stg.isActive())
             s_type = util.get_xml_data(stg.XMLDesc(0), element='type')
             if active is True:
-                volumes = stg.listVolumes()              
+                for volume in  stg.listVolumes():
+                    volumes = []
+                    vol = stg.storageVolLookupByName(volume)
+                    volumes.append({
+                        'name': volume,
+                        'type': util.get_xml_data(vol.XMLDesc(0), 'target/format', 'type'),
+                        'size': vol.info()[1]
+                    })
             storages.append({
                 'name': storage,
                 'active': active,
@@ -368,7 +374,9 @@ class wvmStorage(wvmConnect):
             self.refresh()
         except Exception:
             pass
-        return self.pool.listVolumes()
+        if self.get_active() is True:
+            return self.pool.listVolumes()
+        return []
 
     def get_volume(self, name):
         return self.pool.storageVolLookupByName(name)

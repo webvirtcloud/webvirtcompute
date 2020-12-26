@@ -93,10 +93,10 @@ def storage(pool):
         error_msg(err)
 
     storage = {
-        'name': name,
+        'name': pool,
         'active': conn.get_active(),
         'type': conn.get_type(),
-        'volumes': conn.get_volumes(),
+        'volumes': conn.get_volumes_info(),
         'size': {
             'total': conn.get_total_size(),
             'used': conn.get_used_size(),
@@ -234,7 +234,7 @@ def networks():
     return {'networks': networks}
 
 
-@app.get("/networks/{ name }", dependencies=[Depends(basic_auth)])
+@app.get("/networks/{name}", dependencies=[Depends(basic_auth)])
 def network(name):
     conn = libvrt.LibVrt()
     networks = conn.get_networks()
