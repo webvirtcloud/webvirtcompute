@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class PoolAdd(BaseModel):
+class StorageCreate(BaseModel):
     name: str
     type: str
     target: Optional[str] = None
@@ -16,11 +16,11 @@ class PoolAdd(BaseModel):
     secret: Optional[str] = None
 
 
-class PoolAction(BaseModel):
+class StorageAction(BaseModel):
     action: str
 
 
-class VolumeAdd(BaseModel):
+class VolumeCreate(BaseModel):
     name: str
     size: int
     format: Optional[str] = None
@@ -30,3 +30,17 @@ class VolumeAction(BaseModel):
     action: str
     name: Optional[str] = None
     size: Optional[int] = None
+
+
+class NetworkCreate(BaseModel):
+    name: str
+    forward: str
+    gateway: Optional[str] = None
+    mask: Optional[str] = None
+    dhcp: Optional[str] = None
+    bridge: Optional[str] = None
+    openvswitch: Optional[str] = None
+    fixed: Optional[str] = None
+
+class NetworkAction(BaseModel):
+    action: str

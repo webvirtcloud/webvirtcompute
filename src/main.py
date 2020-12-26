@@ -3,7 +3,7 @@ from auth import basic_auth
 from libvirt import libvirtError
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
-from model import PoolAdd, PoolAction, VolumeAdd, VolumeAction
+from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NetworkCreate, NetworkAction
 
 
 app = FastAPI()
@@ -30,8 +30,8 @@ def storages():
     return {'storages': storages}
 
 
-@app.post("/storages/", response_model=PoolAdd, dependencies=[Depends(basic_auth)])
-def storages(pool: PoolAdd):
+@app.post("/storages/", response_model=StorageCreate, dependencies=[Depends(basic_auth)])
+def storages(pool: StorageCreate):
     conn = libvrt.wvmStorages()
     if pool.type == 'dir':
         if pool.target is None:
@@ -108,8 +108,8 @@ def storage(pool):
     return {'storage': storage}
 
 
-@app.post("/storages/{pool}/", response_model=PoolAction, dependencies=[Depends(basic_auth)])
-def storage(pool, val: PoolAction):
+@app.post("/storages/{pool}/", response_model=StorageAction, dependencies=[Depends(basic_auth)])
+def storage(pool, val: StorageAction):
     try:
         conn = libvrt.wvmStorage(pool)
     except libvirtError as err:
@@ -135,12 +135,11 @@ def storage(pool, val: PoolAction):
 def storage(pool):
     try:
         conn = libvrt.wvmStorage(pool)
+        conn.stop()
         conn.delete()
     except libvirtError as err:
         error_msg(err)
-
     conn.close()
-    return volume
 
 
 @app.get("/storages/{pool}/volumes/", dependencies=[Depends(basic_auth)])
@@ -155,8 +154,8 @@ def storage(pool):
     return {'volumes': volumes}
 
 
-@app.post("/storages/{pool}/volumes/", response_model=VolumeAdd, dependencies=[Depends(basic_auth)])
-def storage(pool, volume: VolumeAdd):
+@app.post("/storages/{pool}/volumes/", response_model=VolumeCreate, dependencies=[Depends(basic_auth)])
+def storage(pool, volume: VolumeCreate):
     try:
         conn = libvrt.wvmStorage(pool)
         conn.create_volume(
@@ -214,29 +213,90 @@ def storage(pool, volume, val: VolumeAction):
     return val
 
 
-@app.delete("/storages/{pool}/volumes/{volume}/", dependencies=[Depends(basic_auth)])
+@app.delete("/storages/{pool}/volumes/{volume}/", status_code=204, dependencies=[Depends(basic_auth)])
 def storage(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
         vol = conn.del_volume(volume)
     except libvirtError as err:
         error_msg(err)
-    
     conn.close()
-    return {'volume': vol}
 
 
 @app.get("/networks/", dependencies=[Depends(basic_auth)])
 def networks():
-    conn = libvrt.LibVrt()
-    networks = conn.get_networks()
+    conn = libvrt.wvmNetworks()
+    networks = conn.get_networks_info()
     conn.close() 
     return {'networks': networks}
 
 
-@app.get("/networks/{name}", dependencies=[Depends(basic_auth)])
-def network(name):
-    conn = libvrt.LibVrt()
-    networks = conn.get_networks()
+@app.post("/networks/", response_model=NetworkCreate, dependencies=[Depends(basic_auth)])
+def networks(net: NetworkCreate):
+    conn = libvrt.wvmNetworks()
+    try:
+        conn.create_network(
+            net.name,
+            net.forward,
+            net.gateway,
+            net.mask,
+            net.dhcp,
+            net.bridge,
+            net.openvswitch,
+            net.fixed
+        )
+    except libvirtError as err:
+        error_msg(err)
     conn.close() 
-    return {'network': networks}
+    return net
+
+
+@app.get("/networks/{name}/", dependencies=[Depends(basic_auth)])
+def network(name):
+    try:
+        conn = libvrt.wvmNetwork(name)
+    except libvirtError as err:
+        error_msg(err)
+    
+    network = {
+        'name': name,
+        'active': conn.get_active(),
+        'device': conn.get_bridge_device(),
+        'forward': conn.get_ipv4_forward()[0]
+    }
+    conn.close() 
+    return {'network': network}
+
+
+@app.post("/networks/{name}/", response_model=NetworkAction, dependencies=[Depends(basic_auth)])
+def network(name):
+    try:
+        conn = libvrt.wvmNetwork(name)
+    except libvirtError as err:
+        error_msg(err)
+   
+    if val.action not in ['start', 'stop', 'autostart', 'manualstart']:
+        error_msg('Action not exist.')
+    
+    if val.action == 'start':
+        conn.start()
+    if val.action == 'stop':
+        conn.stop()
+    if val.action == 'autostart':
+        conn.set_autostart(True)
+    if val.action == 'manualstart':
+        conn.set_autostart(False)
+
+    conn.close() 
+    return {'network': network}
+
+
+@app.delete("/networks/{name}/", status_code=204, dependencies=[Depends(basic_auth)])
+def network(name):
+    try:
+        conn = libvrt.wvmNetwork(name)
+        conn.stop()
+        conn.delete()
+    except libvirtError as err:
+        error_msg(err)
+    conn.close()

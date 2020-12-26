@@ -182,7 +182,6 @@ class wvmStorages(wvmConnect):
         for storage in self.get_storages():
             stg = self.get_storage(storage)
             active = bool(stg.isActive())
-            s_type = util.get_xml_data(stg.XMLDesc(0), element='type')
             if active is True:
                 for volume in  stg.listVolumes():
                     volumes = []
@@ -195,7 +194,7 @@ class wvmStorages(wvmConnect):
             storages.append({
                 'name': storage,
                 'active': active,
-                'type': s_type,
+                'type': util.get_xml_data(stg.XMLDesc(0), element='type'),
                 'volumes': volumes,
                 'size': {
                     'total': stg.info()[1],
@@ -283,6 +282,7 @@ class wvmStorages(wvmConnect):
 
 
 class wvmStorage(wvmConnect):
+    
     def __init__(self, pool):
         wvmConnect.__init__(self)
         self.pool = self.get_storage(pool)
@@ -396,11 +396,11 @@ class wvmStorage(wvmConnect):
     def get_volume_type(self, name):
         return util.get_xml_data(self._vol_XMLDesc(name), 'target/format', 'type')
 
-    def get_volume_info(self, volname):
+    def get_volume_info(self, name):
         return {
-            'name': volname,
-            'size': self.get_volume_size(volname),
-            'type': self.get_volume_type(volname)
+            'name': name,
+            'size': self.get_volume_size(name),
+            'type': self.get_volume_type(name)
         }
 
     def get_volumes_info(self):
@@ -465,15 +465,14 @@ class wvmNetworks(wvmConnect):
 
     def get_networks_info(self):
         networks = []
-        get_networks = self.get_networks()
-        for network in get_networks:
+        for network in self.get_networks():
             net = self.get_network(network)
-            net_status = net.isActive()
+            net_status = bool(net.isActive())
             net_bridge = net.bridgeName()
             net_forwd = util.get_xml_data(net.XMLDesc(0), 'forward', 'mode')
             networks.append({
                 'name': network,
-                'status': net_status,
+                'active': net_status,
                 'device': net_bridge,
                 'forward': net_forwd
             })
@@ -483,30 +482,29 @@ class wvmNetworks(wvmConnect):
         self.wvm.networkDefineXML(xml)
 
     def create_network(self, name, forward, gateway, mask, dhcp, bridge, openvswitch, fixed=False):
-        xml = """
+        xml = f"""
             <network>
-                <name>%s</name>""" % name
+                <name>{name}</name>"""
         if forward in ['nat', 'route', 'bridge']:
-            xml += """<forward mode='%s'/>""" % forward
+            xml += f"""<forward mode='{forward}'/>"""
         xml += """<bridge """
         if forward in ['nat', 'route', 'none']:
             xml += """stp='on' delay='0'"""
         if forward == 'bridge':
-            xml += """name='%s'""" % bridge
+            xml += f"""name='{bridge}'"""
         xml += """/>"""
         if openvswitch is True:
             xml += """<virtualport type='openvswitch'/>"""
         if forward != 'bridge':
-            xml += """
-                        <ip address='%s' netmask='%s'>""" % (gateway, mask)
+            xml += f"""<ip address='{gateway}' netmask='{mask}'>"""
             if dhcp:
-                xml += """<dhcp>
-                            <range start='%s' end='%s' />""" % (dhcp[0], dhcp[1])
+                xml += f"""<dhcp>
+                            <range start='{dhcp[0]}' end='{dhcp[1]}' />"""
                 if fixed:
                     fist_oct = int(dhcp[0].strip().split('.')[3])
                     last_oct = int(dhcp[1].strip().split('.')[3])
                     for ip in range(fist_oct, last_oct + 1):
-                        xml += """<host mac='%s' ip='%s.%s' />""" % (util.randomMAC(), gateway[:-2], ip)
+                        xml += f"""<host mac='{util.randomMAC()}' ip='{gateway[:-2]}.{ip}' />"""
                 xml += """</dhcp>"""
 
             xml += """</ip>"""
@@ -538,7 +536,7 @@ class wvmNetwork(wvmConnect):
     def set_autostart(self, value):
         self.net.setAutostart(value)
 
-    def is_active(self):
+    def get_active(self):
         return bool(self.net.isActive())
 
     def get_uuid(self):
@@ -623,5 +621,4 @@ class wvmNetwork(wvmConnect):
         dhcp_list = tree.findall('ip/dhcp/host')
         for i in dhcp_list:
             fixed_mac.append({'host': i.get('ip'), 'mac': i.get('mac')})
-
         return fixed_mac
