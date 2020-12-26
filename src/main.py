@@ -24,7 +24,6 @@ def host():
 
 @app.get("/storages/", dependencies=[Depends(basic_auth)])
 def storages():
-    storage_list = []
     conn = libvrt.wvmStorages()
     storages = conn.get_storages_info()
     conn.close()
@@ -41,6 +40,44 @@ def storages(pool: PoolAdd):
             conn.create_storage_dir(
                 pool.name,
                 pool.target,
+            )
+        except libvirtError as err:
+            error_msg(err)
+    if pool.type == 'logical':
+        if pool.source is None:
+            error_msg('Source field required for dir storage pool.')
+        try:
+            conn.create_storage_logic(
+                pool.name,
+                pool.source,
+            )
+        except libvirtError as err:
+            error_msg(err)
+    if pool.type == 'rbd':
+        if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
+            error_msg('Pool, secret, host fields required for rbd storage pool.')
+        try:
+            conn.create_storage_ceph(
+                pool.name,
+                pool.pool,
+                pool.user,
+                pool.secret,
+                pool.host,
+                pool.host2,
+                pool.host3
+            )
+        except libvirtError as err:
+            error_msg(err)
+    if pool.type == 'nfs':
+        if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
+            error_msg('Pool, secret, host fields required for rbd storage pool.')
+        try:
+            conn.create_storage_netfs(
+                pool.name,
+                pool.host,
+                pool.source,
+                pool.format,
+                pool.target
             )
         except libvirtError as err:
             error_msg(err)
@@ -92,6 +129,18 @@ def storage(pool, val: PoolAction):
 
     conn.close() 
     return val
+
+
+@app.delete("/storages/{pool}/", dependencies=[Depends(basic_auth)])
+def storage(pool):
+    try:
+        conn = libvrt.wvmStorage(pool)
+        conn.delete()
+    except libvirtError as err:
+        error_msg(err)
+
+    conn.close()
+    return volume
 
 
 @app.get("/storages/{pool}/volumes/", dependencies=[Depends(basic_auth)])
@@ -163,6 +212,18 @@ def storage(pool, volume, val: VolumeAction):
 
     conn.close()
     return val
+
+
+@app.delete("/storages/{pool}/volumes/{volume}/", dependencies=[Depends(basic_auth)])
+def storage(pool, volume):
+    try:
+        conn = libvrt.wvmStorage(pool)
+        vol = conn.del_volume(volume)
+    except libvirtError as err:
+        error_msg(err)
+    
+    conn.close()
+    return {'volume': vol}
 
 
 @app.get("/networks/", dependencies=[Depends(basic_auth)])
