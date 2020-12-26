@@ -330,6 +330,9 @@ class wvmStorage(wvmConnect):
     def delete(self):
         self.pool.undefine()
 
+    def refresh(self):
+        self.pool.refresh(0)
+
     def get_autostart(self):
         return bool(self.pool.autostart())
 
@@ -361,6 +364,10 @@ class wvmStorage(wvmConnect):
         return util.pretty_bytes(self.get_capacity())
 
     def get_volumes(self):
+        try:
+            self.refresh()
+        except Exception:
+            pass
         return self.pool.listVolumes()
 
     def get_volume(self, name):
@@ -381,10 +388,14 @@ class wvmStorage(wvmConnect):
     def get_volume_type(self, name):
         return util.get_xml_data(self._vol_XMLDesc(name), 'target/format', 'type')
 
-    def refresh(self):
-        self.pool.refresh(0)
+    def get_volume_info(self, volname):
+        return {
+            'name': volname,
+            'size': self.get_volume_size(volname),
+            'type': self.get_volume_type(volname)
+        }
 
-    def update_volumes(self):
+    def get_volumes_info(self):
         try:
             self.refresh()
         except Exception:
@@ -400,11 +411,15 @@ class wvmStorage(wvmConnect):
             })
         return vol_list
 
-    def create_volume(self, name, size, vol_fmt='qcow2', metadata=False):
+    def resize_volume(self, name, size):
+        vol = self.get_volume(name)
+        vol.resize(size)
+
+    def create_volume(self, name, size, fmt='qcow2', metadata=False):
         storage_type = self.get_type()
         alloc = size
-        if vol_fmt == 'unknown':
-            vol_fmt = 'raw'
+        if fmt == 'unknown':
+            fmt = 'raw'
         if storage_type == 'dir':
             name += '.img'
             alloc = 0
@@ -414,25 +429,25 @@ class wvmStorage(wvmConnect):
                 <capacity>{size}</capacity>
                 <allocation>{alloc}</allocation>
                 <target>
-                    <format type='{vol_fmt}'/>
+                    <format type='{fmt}'/>
                 </target>
             </volume>"""
         self.createXML(xml, metadata)
 
-    def clone_volume(self, name, clone, vol_fmt=None, metadata=False):
+    def clone_volume(self, name, clone, fmt=None, metadata=False):
         storage_type = self.get_type()
         if storage_type == 'dir':
             clone += '.img'
         vol = self.get_volume(name)
-        if not vol_fmt:
-            vol_fmt = self.get_volume_type(name)
+        if fmt is None:
+            fmt = self.get_volume_type(name)
         xml = f"""
             <volume>
                 <name>{clone}</name>
                 <capacity>0</capacity>
                 <allocation>0</allocation>
                 <target>
-                    <format type='{vol_fmt}'/>
+                    <format type='{fmt}'/>
                 </target>
             </volume>"""
         self.createXMLFrom(xml, vol, metadata)

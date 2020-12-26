@@ -1,9 +1,9 @@
 import json
-from model import AddPool
 from auth import basic_auth
 from libvirt import libvirtError
-from fastapi import FastAPI, Depends, HTTPException
 from lib import network, backup, fwall, images, libvrt
+from fastapi import FastAPI, Query, Depends, HTTPException
+from model import PoolAdd, PoolAction, VolumeAdd, VolumeAction
 
 
 app = FastAPI()
@@ -31,12 +31,12 @@ def storages():
     return {'storages': storages}
 
 
-@app.post("/storages/", response_model=AddPool, dependencies=[Depends(basic_auth)])
-def storages(pool: AddPool):
+@app.post("/storages/", response_model=PoolAdd, dependencies=[Depends(basic_auth)])
+def storages(pool: PoolAdd):
     conn = libvrt.wvmStorages()
     if pool.type == 'dir':
         if pool.target is None:
-            raise HTTPException(status_code=400, detail="Target field required for dir storage pool.")
+            error_msg('Target field required for dir storage pool.')
         try:
             conn.create_storage_dir(
                 pool.name,
@@ -48,26 +48,121 @@ def storages(pool: AddPool):
     return pool
 
 
-@app.get("/storages/{name}/", dependencies=[Depends(basic_auth)])
-def storage(name):
+@app.get("/storages/{pool}/", dependencies=[Depends(basic_auth)])
+def storage(pool):
     try:
-        conn = libvrt.wvmStorage(name)
-        storage = {
-            'name': name,
-            'active': conn.get_active(),
-            'type': conn.get_type(),
-            'volumes': conn.get_volumes(),
-            'size': {
-                'total': conn.get_total_size(),
-                'used': conn.get_used_size(),
-                'free': conn.get_free_size()
-            },
-            'autostart': conn.get_autostart()
-        }
-        conn.close()    
+        conn = libvrt.wvmStorage(pool)
     except libvirtError as err:
         error_msg(err)
+
+    storage = {
+        'name': name,
+        'active': conn.get_active(),
+        'type': conn.get_type(),
+        'volumes': conn.get_volumes(),
+        'size': {
+            'total': conn.get_total_size(),
+            'used': conn.get_used_size(),
+            'free': conn.get_free_size()
+        },
+        'autostart': conn.get_autostart()
+    }
+    conn.close()
     return {'storage': storage}
+
+
+@app.post("/storages/{pool}/", response_model=PoolAction, dependencies=[Depends(basic_auth)])
+def storage(pool, val: PoolAction):
+    try:
+        conn = libvrt.wvmStorage(pool)
+    except libvirtError as err:
+        error_msg(err)
+
+    if val.action not in ['start', 'stop', 'autostart', 'manualstart']:
+        error_msg('Action not exist.')
+    
+    if val.action == 'start':
+        conn.start()
+    if val.action == 'stop':
+        conn.stop()
+    if val.action == 'autostart':
+        conn.set_autostart(True)
+    if val.action == 'manualstart':
+        conn.set_autostart(False)
+
+    conn.close() 
+    return val
+
+
+@app.get("/storages/{pool}/volumes/", dependencies=[Depends(basic_auth)])
+def storage(pool):
+    try:
+        conn = libvrt.wvmStorage(pool)
+    except libvirtError as err:
+        error_msg(err)
+
+    volumes = conn.get_volumes_info()
+    conn.close()
+    return {'volumes': volumes}
+
+
+@app.post("/storages/{pool}/volumes/", response_model=VolumeAdd, dependencies=[Depends(basic_auth)])
+def storage(pool, volume: VolumeAdd):
+    try:
+        conn = libvrt.wvmStorage(pool)
+        conn.create_volume(
+            name=volume.name,
+            size=volume.size * (1024**3),
+            fmt=volume.format
+        )
+    except libvirtError as err:
+        error_msg(err)
+
+    conn.close()
+    return volume
+
+
+@app.get("/storages/{pool}/volumes/{volume}/", dependencies=[Depends(basic_auth)])
+def storage(pool, volume):
+    try:
+        conn = libvrt.wvmStorage(pool)
+        vol = conn.get_volume_info(volume)
+    except libvirtError as err:
+        error_msg(err)
+    
+    conn.close()
+    return {'volume': vol}
+
+
+@app.post("/storages/{pool}/volumes/{volume}/", response_model=VolumeAction, dependencies=[Depends(basic_auth)])
+def storage(pool, volume, val: VolumeAction):
+    try:
+        conn = libvrt.wvmStorage(pool)
+        vol = conn.get_volume(volume)
+    except libvirtError as err:
+        error_msg(err)
+
+    if val.action not in ['resize', 'clone']:
+         error_msg('Action not exist.')
+
+    if val.action == 'resize':
+        if not val.size:
+            error_msg('Size required for resize ation.')
+        try:
+            conn.resize_volume(val.size)
+        except libvirtError as err:
+            error_msg(err)
+
+    if val.action == 'clone':
+        if not val.name:
+            error_msg('Name required for clone ation.')
+        try:
+            conn.clone_volume(volume, val.name)
+        except libvirtError as err:
+            error_msg(err)
+
+    conn.close()
+    return val
 
 
 @app.get("/networks/", dependencies=[Depends(basic_auth)])
