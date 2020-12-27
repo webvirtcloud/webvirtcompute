@@ -55,7 +55,7 @@ def storages(pool: StorageCreate):
             error_msg(err)
     if pool.type == 'rbd':
         if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
-            error_msg('Pool, secret, host fields required for rbd storage pool.')
+            error_msg('Source, pool, secret and host fields required for rbd storage pool.')
         try:
             conn.create_storage_ceph(
                 pool.name,
@@ -70,7 +70,7 @@ def storages(pool: StorageCreate):
             error_msg(err)
     if pool.type == 'nfs':
         if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
-            error_msg('Pool, secret, host fields required for rbd storage pool.')
+            error_msg('Pool, source, source and target fields required for nfs storage pool.')
         try:
             conn.create_storage_netfs(
                 pool.name,
