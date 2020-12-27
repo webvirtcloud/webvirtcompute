@@ -44,3 +44,14 @@ class NetworkCreate(BaseModel):
 
 class NetworkAction(BaseModel):
     action: str
+
+
+class SecretCreate(BaseModel):
+    type: str
+    data: str
+    private: str
+    ephemeral: str
+
+
+class SecretValue(BaseModel):
+    value: str

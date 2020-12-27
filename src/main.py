@@ -3,7 +3,8 @@ from auth import basic_auth
 from libvirt import libvirtError
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
-from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NetworkCreate, NetworkAction
+from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue
 
 
 app = FastAPI()
@@ -300,3 +301,75 @@ def network(name):
     except libvirtError as err:
         error_msg(err)
     conn.close()
+
+
+@app.get("/secrets/", dependencies=[Depends(basic_auth)])
+def secrets():
+    secrets_list = []
+    conn = libvrt.wvmSecrets()
+    for uuid in conn.get_secrets():
+        secret = conn.get_secret(uuid)
+        secrets_list.append({
+            'usage': secret.usageID(),
+            'uuid': secret.UUIDString(),
+            'usageType': secret.usageType(),
+            'value': conn.get_secret_value(uuid)
+        })
+    conn.close() 
+    return {'secrets': secrets_list}
+
+
+@app.post("/secrets/", response_model=SecretCreate, dependencies=[Depends(basic_auth)])
+def secrets(secret: SecretCreate):
+    conn = libvrt.wvmSecrets()
+    try:
+        conn.create_secret(
+            secret.ephemeral,
+            secret.private,
+            secret.secret_type,
+            secret.data
+        )
+    except libvirtError as err:
+        error_msg(err)
+    conn.close() 
+    return secret
+
+
+@app.get("/secrets/{uuid}/", dependencies=[Depends(basic_auth)])
+def secret(uuid):
+    conn = libvrt.wvmSecrets()
+    try:
+        secret = conn.get_secret(uuid)
+    except libvirtError as err:
+        error_msg(err)
+    
+    secret = {
+        'usage': secret.usageID(),
+        'uuid': secret.UUIDString(),
+        'usageType': secret.usageType(),
+        'value': conn.get_secret_value(uuid)
+    }
+    conn.close() 
+    return {'secret': secret}
+
+
+@app.post("/secrets/{uuid}/", response_model=SecretValue, dependencies=[Depends(basic_auth)])
+def secret(uuid, secret: SecretValue):
+    conn = libvrt.wvmSecrets()
+    try:
+        conn.set_secret_value(uuid, secret.value)
+    except libvirtError as err:
+        error_msg(err)
+    
+    conn.close() 
+    return secret
+
+
+@app.delete("/secrets/{uuid}/", status_code=204, dependencies=[Depends(basic_auth)])
+def secret(uuid):
+    conn = libvrt.wvmSecrets()
+    try:
+       conn.delete_secret(uuid)
+    except libvirtError as err:
+        error_msg(err)
+    conn.close() 
