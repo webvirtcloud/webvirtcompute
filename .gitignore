@@ -1,6 +1,5 @@
 *.pyc
 *.pyo
-*.spec
 .idea
 .DS_*
 .vscode
@@ -8,3 +7,4 @@
 venv
 dist
 build
+release

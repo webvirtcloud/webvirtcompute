@@ -14,7 +14,6 @@ def error_msg(msg):
     raise HTTPException(status_code=400, detail=json.dumps(str(msg)))
 
 
-
 @app.get("/host/", dependencies=[Depends(basic_auth)])
 def host():
     conn = libvrt.LibVrt()
