@@ -117,6 +117,12 @@ class wvmConnect(object):
     def get_secret(self, uuid):
         return self.wvm.secretLookupByUUIDString(uuid)
 
+    def get_nwfilters(self):
+        return self.wvm.listNWFilters()
+
+    def get_nwfilter(self, name):
+        return self.wvm.nwfilterLookupByName(name)
+
     def get_volume_by_path(self, path):
         return self.wvm.storageVolLookupByPath(path)
 
@@ -660,3 +666,17 @@ class wvmSecrets(wvmConnect):
     def delete_secret(self, uuid):
         secret = self.get_secret(uuid)
         secret.undefine()
+
+
+class wvmNWfilter(wvmConnect):
+
+    def create_nwfilter(self, xml):
+        self.wvm.nwfilterDefineXML(xml)
+
+    def get_nwfilter_xml(self, name):
+        nw = self.get_nwfilter(name)
+        return nw.XMLDesc()
+
+    def delete_nwfilter(self, name):
+        nw = self.get_nwfilter(name)
+        nw.undefine()

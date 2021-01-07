@@ -373,3 +373,11 @@ def secret(uuid):
     except libvirtError as err:
         error_msg(err)
     conn.close() 
+
+
+@app.get("/nwfilters/", dependencies=[Depends(basic_auth)])
+def nwfilters():
+    conn = libvrt.wvmNWfilter()
+    nwfilters = conn.get_nwfilter()
+    conn.close() 
+    return {'secrets': nwfilters}
