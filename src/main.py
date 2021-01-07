@@ -4,7 +4,7 @@ from libvirt import libvirtError
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate
 
 
 app = FastAPI()
@@ -377,7 +377,47 @@ def secret(uuid):
 
 @app.get("/nwfilters/", dependencies=[Depends(basic_auth)])
 def nwfilters():
+    nwfilters_list = []
     conn = libvrt.wvmNWfilter()
     nwfilters = conn.get_nwfilter()
+    for nwfilter in nwfilters:
+        nwfilters_list.append({
+            'name': nwfilter,
+            'xml': conn.get_nwfilter_xml(nwfilter)
+        })
     conn.close() 
-    return {'secrets': nwfilters}
+    return {'nwfilters': nwfilters_list}
+
+
+@app.post("/nwfilters/", response_model=NwFilterCreate, dependencies=[Depends(basic_auth)])
+def nwfilters(nwfilter: NwFilterCreate):
+    conn = libvrt.wvmNWfilter()
+    try:
+        conn.create_nwfilter(xml)
+    except libvirtError as err:
+        error_msg(err)
+    conn.close() 
+    return nwfilter
+
+
+@app.get("/nwfilters/{name}/", dependencies=[Depends(basic_auth)])
+def nwfilter(name):
+    conn = libvrt.wvmNWfilter()
+    try:
+        nwfilter = {'name': name, 'xml': conn.get_nwfilter_xml(name)}
+    except libvirtError as err:
+        error_msg(err)
+    
+    conn.close() 
+    return {'nwfilter': nwfilter}
+
+
+@app.delete("/nwfilters/{name}/", dependencies=[Depends(basic_auth)])
+def nwfilter(name):
+    conn = libvrt.wvmNWfilter()
+    try:
+        nwfilter = conn.delete_nwfilter(name)
+    except libvirtError as err:
+        error_msg(err)
+    
+    conn.close() 

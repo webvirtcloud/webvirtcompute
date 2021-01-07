@@ -55,3 +55,7 @@ class SecretCreate(BaseModel):
 
 class SecretValue(BaseModel):
     value: str
+
+
+class NwFilterCreate(BaseModel):
+    xml: str
