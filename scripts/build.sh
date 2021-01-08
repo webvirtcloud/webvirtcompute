@@ -4,11 +4,11 @@ set -e
 # Create virtualenv
 python3 -m venv --system-site-package /root/venv
 
+# Install fastapi
+/root/venv/bin/pip install --no-use-pep517 --no-cache -r requirements.txt
+
 # Update pip
 /root/venv/bin/pip install -U pip
-
-# Install fastapi
-/root/venv/bin/pip install pyinstaller fastapi uvicorn
 
 # Cleanup directory
 cd /vagrant/src
@@ -31,3 +31,5 @@ tar -czf ../release/hostvirtmgr-centos8-amd64.tar.gz --transform s/dist/hostvirt
 
 echo ""
 echo "Release is ready!"
+
+exit 0
