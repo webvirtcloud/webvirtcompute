@@ -2,19 +2,21 @@
 set -e
 
 # Create virtualenv
-python3 -m venv --system-site-package /root/venv
-
-# Install fastapi
-/root/venv/bin/pip install --no-use-pep517 --no-cache -r requirements.txt
-
-# Update pip
-/root/venv/bin/pip install -U pip
+if [[ ! -d /root/venv ]]; then
+  python3 -m venv --system-site-package /root/venv
+fi
 
 # Cleanup directory
 cd /vagrant/src
 if [[ -d dist || -d build ]]; then
   rm -rf dist build
 fi
+
+# Update pip
+/root/venv/bin/pip install -U pip
+
+# Install fastapi
+/root/venv/bin/pip install --no-use-pep517 --no-cache -r requirements.txt
 
 echo "Creating hostvirtmgr binary..."
 /root/venv/bin/pyinstaller -y --clean hostvirtmgr.spec

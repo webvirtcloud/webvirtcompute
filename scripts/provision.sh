@@ -5,7 +5,7 @@ set -e
 dnf install -y epel-release
 dnf install -y bash-completion \
                libgcrypt libvirt libguestfs-tools \
-               python36 python36-devel python3-firewall python3-libvirt python3-libguestfs
+               python36 python3-libvirt python3-libguestfs
                
 
 # Enable libvirt
