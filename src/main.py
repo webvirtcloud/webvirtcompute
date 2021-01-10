@@ -3,7 +3,7 @@ from auth import basic_auth
 from libvirt import libvirtError
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
-from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction
+from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate
 
 
@@ -12,6 +12,40 @@ app = FastAPI()
 
 def error_msg(msg):
     raise HTTPException(status_code=400, detail=json.dumps(str(msg)))
+
+
+@app.post("/instance/", response_model=InstanceCreate, dependencies=[Depends(basic_auth)])
+def instance(instance: InstanceCreate):
+    template = images.Template(instance.image.get('name'), instance.image.get('md5sum'))
+    err_msg, template_path = template.download(instance.image.get('url'))
+    if err_msg is None:
+        image = images.Image(instance.image.get('path'))
+        err_msg = image.deploy_template(
+            template=template,
+            disk_size=instance.image.get('size'),
+            networks=instance.network,
+            public_key=instance.public_keys,
+            hostname=instance.name,
+            root_password=instance.root_password
+        )
+    if err_msg is not None:
+        error_msg(err_msg)     
+    return instance
+    
+
+@app.get("/instance/{name}/", dependencies=[Depends(basic_auth)])
+def instance():
+    pass
+
+
+@app.post("/instance/{name}/", dependencies=[Depends(basic_auth)])
+def instance():
+    pass
+
+
+@app.delete("/instance/{name}/", dependencies=[Depends(basic_auth)])
+def instance():
+    pass
 
 
 @app.get("/host/", dependencies=[Depends(basic_auth)])

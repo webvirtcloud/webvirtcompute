@@ -65,7 +65,7 @@ class Image(object):
     def __init__(self, image_path):
         self.image_path = image_path
 
-    def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud):
+    def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud='public'):
         """
         :param template(instance of class Template):
         :param disk_size:
@@ -84,7 +84,7 @@ class Image(object):
         qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (template_image_path, self.image_path)
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
-            err_msg = self._run(disk_size, template_name, networks, public_key, hostname,cloud, root_password)
+            err_msg = self._run(disk_size, template_name, networks, public_key, hostname, cloud, root_password)
 
         return err_msg
 

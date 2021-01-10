@@ -2,6 +2,14 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class InstanceCreate(BaseModel):
+    name: str
+    image: dict
+    network: dict
+    public_keys: list
+    root_password: str
+
+
 class StorageCreate(BaseModel):
     name: str
     type: str
