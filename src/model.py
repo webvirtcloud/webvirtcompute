@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 class InstanceCreate(BaseModel):
     name: str
-    image: dict
+    images: dict
     network: dict
     public_keys: list
     root_password: str
