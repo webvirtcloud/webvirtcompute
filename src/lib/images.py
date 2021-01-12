@@ -1,10 +1,11 @@
 import os
 import requests
+from libvirt import libvirtError
 from subprocess import call, STDOUT
 from settings import CACHE_DIR
 from .util import md5sum
-from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
+from .libvrt import wvmConnect, wvmStorage
 try:
     from subprocess import DEVNULL
 except ImportError:
@@ -22,11 +23,7 @@ class Template(object):
         self.template_image_path = None
 
     def download(self, template_url):
-        """
-        :param template_url(string): url todownload if not in cache
-        :return: err_msg(string),template_image_path(string):err_msg will be None if successful
-        """
-        err_msg = 'MD5 sum mismatch'
+        err_msg = None
         download_image = True
         template_image_md5 = None
         template_image_url = template_url
@@ -54,34 +51,33 @@ class Template(object):
 
         self.template_image_path = template_image_path
 
-        if self.template_md5sum == template_image_md5:
-            return None, template_image_path
-        else:
-            return err_msg, template_image_path
+        if self.template_md5sum != template_image_md5:
+            err_msg = 'MD5 sum mismatch'
+        
+        return err_msg, template_image_path
 
 
 class Image(object):
 
-    def __init__(self, image_path):
-        self.image_path = image_path
+    def __init__(self, name, pool):
+        self.name = name
+        self.pool = pool
+
+        conn = wvmStorage(self.pool)
+        self.image_path = conn.get_target_path() + '/' + self.name
+        conn.close()
+
+    def image_resize(self):
+        conn = wvmStorage(self.pool)
+        conn.resize_volume(self.name, disk_size)
+        conn.close()
 
     def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud='public'):
-        """
-        :param template(instance of class Template):
-        :param disk_size:
-        :param networks:
-        :param public_key:
-        :param hostname:
-        :param root_password:
-        :param cloud:
-        :return: err_msg(string)
-        """
-        template_image_path = template.template_image_path
-        template_name = template.template_name
-
         err_msg = 'Error convert template to image'
+        template_name = template.template_name
+        template_image_path = emplate.template_image_path
 
-        qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (template_image_path, self.image_path)
+        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template.template_image_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
             err_msg = self._run(disk_size, template_name, networks, public_key, hostname, cloud, root_password)
@@ -91,34 +87,37 @@ class Image(object):
     def _run(self, disk_size, template_name, networks, public_key, hostname, cloud, root_password):
         err_msg = None
 
-        vrt = LibVrt()
-        vrt.image_resize(self.image_path, disk_size)
-        vrt.close()
-
         try:
-            # Load GuestFS
-            gstfish = GuestFSUtil(
-                self.image_path,
-                template_name
-            )
-            gstfish.mount_root()
-            gstfish.setup_networking(
-                networks,
-                cloud=cloud
-            )
-            gstfish.set_pubic_keys(public_key)
-            gstfish.set_hostname(hostname)
-            gstfish.reset_root_passwd(root_password)
-            gstfish.resize_fs()
-            gstfish.clearfix()
-            gstfish.close()
-        except RuntimeError as err:
+            self.image_resize()
+        except libvirtError as err:
             err_msg = err
+        
+        if err_msg is None:
+            try:
+                # Load GuestFS
+                gstfish = GuestFSUtil(
+                    self.image_path,
+                    template_name
+                )
+                gstfish.mount_root()
+                gstfish.setup_networking(
+                    networks,
+                    cloud=cloud
+                )
+                gstfish.set_pubic_keys(public_key)
+                gstfish.set_hostname(hostname)
+                gstfish.reset_root_passwd(root_password)
+                gstfish.resize_fs()
+                gstfish.clearfix()
+                gstfish.close()
+            except RuntimeError as err:
+                err_msg = err
 
         return err_msg
 
     def reset_password(self, distro, root_password):
         err_msg = None
+        
         try:
             # Load GuestFS
             gstfish = GuestFSUtil(self.image_path, distro)
@@ -131,18 +130,22 @@ class Image(object):
 
         return err_msg
 
-    def resize(self, distro, disk_size):
+    def guestfs_resize(self, distro, disk_size):
         err_msg = None
-        vrt = LibVrt()
-        vrt.image_resize(self.image_path, disk_size)
-        vrt.close()
+        
         try:
-            # Load GuestFS
-            gstfish = GuestFSUtil(self.image_path, distro)
-            gstfish.resize_fs()
-            gstfish.clearfix(firstboot=False)
-            gstfish.close()
-        except RuntimeError as err:
+            self.image_resize()
+        except libvirtError as err:
             err_msg = err
+        
+        if err_msg is None:
+            try:
+                # Load GuestFS
+                gstfish = GuestFSUtil(self.image_path, distro)
+                gstfish.resize_fs()
+                gstfish.clearfix(firstboot=False)
+                gstfish.close()
+            except RuntimeError as err:
+                err_msg = err
 
         return err_msg

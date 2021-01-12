@@ -31,18 +31,23 @@ def instance(instance: InstanceCreate):
         error_msg(err)
 
     # Download and deploy images template
-    template = images.Template(instance.images.get('name'), instance.images.get('md5sum'))
-    err_msg, template_path = template.download(instance.image.get('url'))
-    if err_msg is None:
-        image = images.Image(instance.images.get('path'))
-        err_msg = image.deploy_template(
-            template=template,
-            disk_size=instance.images.get('size'),
-            networks=instance.network,
-            public_key=instance.public_keys,
-            hostname=instance.name,
-            root_password=instance.root_password
-        )
+    for image in instance.images:
+        if instance.image.get('primary') is True:
+            template = images.Template(instance.image.get('name'), instance.image.get('md5sum'))
+            err_msg, template_path = template.download(instance.image.get('url'))
+            if err_msg is None:
+                image = images.Image(instance.image.get('name'), instance.image.get('pool'))
+                err_msg = image.deploy_template(
+                    template=template,
+                    disk_size=instance.image.get('size'),
+                    networks=instance.network,
+                    public_key=instance.public_keys,
+                    hostname=instance.name,
+                    root_password=instance.root_password
+                )
+        else:
+            pass # TODO: create disk
+
     if err_msg is not None:
         error_msg(err_msg) 
     

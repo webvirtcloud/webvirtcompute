@@ -834,26 +834,26 @@ class wvmCreate(wvmConnect):
                   <devices>"""
 
         disk_letters = list(string.ascii_lowercase)
-        for image, img_type in images.items():
-            stg = self.get_storage_by_vol_path(image)
+        for image in images:
+            stg = self.get_storage(image.get('pool'))
             stg_type = util.get_xml_data(stg.XMLDesc(0), element='type')
 
             if stg_type == 'rbd':
                 ceph_user, secrt_uuid, ceph_host = get_rbd_storage_data(stg)
 
                 xml += f"""<disk type='network' device='disk'>
-                            <driver name='qemu' type='{img_type}' cache='writeback'/>
+                            <driver name='qemu' type='raw' cache='writeback'/>
                             <auth username='{ceph_user}'>
                              <secret type='ceph' uuid='{secrt_uuid}'/>
                             </auth>
-                            <source protocol='rbd' name='{image}'>
+                            <source protocol='rbd' name='{image.get('name')}'>
                              <host name='{ceph_host}' port='6789'/>
                             </source>
                            </disk>"""
             else:
                 xml += f"""<disk type='file' device='disk'>
-                            <driver name='qemu' type='{img_type}'/>
-                            <source file='{image}'/>
+                            <driver name='qemu' type='raw'/>
+                            <source file='{image.get('name')}'/>
                             <target dev='vd{disk_letters.pop(0)}' bus='virtio'/>
                            </disk>"""
 
@@ -865,20 +865,21 @@ class wvmCreate(wvmConnect):
                   </disk>"""
 
         # Create public pool device with IP and IPv6 and Anchor
-        if network.get('public_ipv4_address'):
-            xml += f"""<interface type='network'>
-                        <mac address='{network.get('public_device_mac')}'/>
-                        <source network='{network.get('public_pool')}'/>"""
+        if network.get('v4', {}).get('public'):
+            xml += f"""<interface type='network'>"""
+                if network.get('v4', {}).get('public', {}).get('mac'):
+                    xml += f"""<mac address='{network.get('v4', {}).get('public', {}).get('mac')}'/>"""
+                xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
             if nwfilter:
                 xml += """<filterref filter='clean-traffic-ipv6'>"""
 
-                if network.get('public_ipv4_anchor'):
-                    xml += f"""<parameter name='IP' value='{network.get('public_ipv4_address')}'/>"""
+                if network.get('v4', {}).get('public', {}).get('primary', {}):
+                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('primary', {}).get('address')}'/>"""
 
-                if network.get('public_ipv4_anchor'):
-                    xml += f"""<parameter name='IP' value='{network.get('public_ipv4_anchor')}'/>"""
+                if network.get('v4', {}).get('public', {}).get('secondary', {}):
+                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('secondary', {}).get('address')}'/>"""
 
-                if network.get('public_ipv6_range'):
+                if network.get('v6', {}).get('public'):
                     for ipv6 in IP(network['public_ipv6_range']):
                         xml += f"""<parameter name='IPV6' value='{ipv6.strNormal()}'/>"""
 
@@ -888,27 +889,17 @@ class wvmCreate(wvmConnect):
                       </interface>"""
 
         # Create private pool device with IP
-        if network.get('private_ipv4_address'):
-            xml += f"""<interface type='network'>
-                        <mac address='{network.get('private_device_mac')}'/>
-                        <source network='{network.get('private_pool')}'/>"""
+        if network.get('v4', {}).get('private'):
+            xml += f"""<interface type='network'>"""
+                if network.get('v4', {}).get('public', {}).get('mac'):
+                    xml += f"""<mac address='{network.get('v4', {}).get('private', {}).get('mac')}'/>"""
+                xml += f"""<source network='{network.get('v4', {}).get('private', {}).get('pool')}'/>"""
             if nwfilter:
                 xml += f"""<filterref filter='clean-traffic'>
-                            <parameter name='IP' value='{network.get('private_ipv4_address')}'/>
-                           </filterref>"""
-
-            xml += """<model type='virtio'/>
-                      </interface>"""
-
-        # Create public pool device without public IP
-        if network.get('public_ipv4_anchor') and not network.get('public_ipv4_address'):
-            xml += f"""<interface type='network'>
-                        <mac address='{network.get('public_mac')}'/>
-                        <source network='{network.get('public_pool')}'/>"""
-            if nwfilter:
-                xml += f"""<filterref filter='clean-traffic'>
-                            <parameter name='IP' value='{network.get('public_ipv4_anchor')}'/>
-                           </filterref>"""
+                            <parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('primary', {}).get('address')}'/>"""
+                    if network.get('v4', {}).get('private', {}).get('secondary', {}).get('address'):
+                        xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')}'/>"""
+                xml += f"""</filterref>"""
 
             xml += """<model type='virtio'/>
                       </interface>"""
