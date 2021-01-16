@@ -5,6 +5,7 @@
 
 import re
 import guestfs
+from ipaddress import IPv4Interface
 
 from tmpl import eth1_rnch
 from tmpl import eth0_rnch_public
@@ -144,12 +145,12 @@ class GuestFSUtil(object):
         if cloud == 'public':
             f_eth0 = eth0_deb_public.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2'),
                 ipv4anch_addr=ipv4anchor.get('address'),
-                ipv4anch_mask=ipv4anchor.get('mask'),
+                ipv4anch_mask=ipv4anchor.get('netmask'),
                 ipv6_addr=ipv6public.get('address'),
                 ipv6_mask=ipv6public.get('prefix'),
                 ipv6_gw=ipv6public.get('gateway'),
@@ -159,7 +160,7 @@ class GuestFSUtil(object):
         if cloud == 'private':
             f_eth0 = eth0_deb_private.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2')
@@ -169,28 +170,29 @@ class GuestFSUtil(object):
     def deb_eth1_data(self, ipv4private):
         f_eth1 = eth1_deb.data.format(
             ipv4_addr=ipv4private.get('address'),
-            ipv4_mask=ipv4private.get('mask')
+            ipv4_mask=ipv4private.get('netmask')
         )
         return f_eth1
 
     def deb_eth2_data(self, ipv4private):
         f_eth2 = eth2_deb.data.format(
             ipv4_addr=ipv4private.get('address'),
-            ipv4_mask=ipv4private.get('mask')
+            ipv4_mask=ipv4private.get('netmask')
         )
         return f_eth2
 
     def rhl_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
+        ipv4_anchor = IPv4Interface(f'{ipv4anchor.get('address')}/{ipv4anchor.get('netmaks')}')
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_rhl_public.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2'),
                 ipv4anch_addr=ipv4anchor.get('address'),
-                ipv4anch_mask=ipv4anchor.get('prefix'),
+                ipv4anch_mask=ipv4_anchor.network.prefixlen,
                 ipv6_addr=ipv6public.get('address'),
                 ipv6_mask=ipv6public.get('prefix'),
                 ipv6_gw=ipv6public.get('gateway'),
@@ -200,7 +202,7 @@ class GuestFSUtil(object):
         if cloud == 'private':
             f_eth0 = eth0_rhl_private.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2')
@@ -210,21 +212,22 @@ class GuestFSUtil(object):
     def rhl_eth1_data(self, ipv4private):
         f_eth1 = eth1_rhl.data.format(
             ipv4_addr=ipv4private.get('address'),
-            ipv4_mask=ipv4private.get('mask')
+            ipv4_mask=ipv4private.get('netmask')
         )
         return f_eth1
 
     def win_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
+        ipv4_anchor = IPv4Interface(f'{ipv4anchor.get('address')}/{ipv4anchor.get('netmaks')}')
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_win_public.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2'),
                 ipv4anch_addr=ipv4anchor.get('address'),
-                ipv4anch_mask=ipv4anchor.get('prefix'),
+                ipv4anch_mask=ipv4_anchor.network.prefixlen,
                 ipv6_addr=ipv6public.get('address'),
                 ipv6_mask=ipv6public.get('prefix'),
                 ipv6_gw=ipv6public.get('gateway'),
@@ -234,7 +237,7 @@ class GuestFSUtil(object):
         if cloud == 'private':
             f_eth0 = eth0_win_private.data.format(
                 ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('mask'),
+                ipv4_mask=ipv4public.get('netmask'),
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2')
@@ -244,11 +247,12 @@ class GuestFSUtil(object):
     def win_eth1_data(self, ipv4private):
         f_eth1 = eth1_win.data.format(
             ipv4_addr=ipv4private.get('address'),
-            ipv4_mask=ipv4private.get('mask')
+            ipv4_mask=ipv4private.get('netmask')
         )
         return f_eth1
 
     def core_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
+        ipv4_anchor = IPv4Interface(f'{ipv4anchor.get('address')}/{ipv4anchor.get('netmaks')}')
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_core_public.data.format(
@@ -257,7 +261,7 @@ class GuestFSUtil(object):
                 ipv4_gw=ipv4public.get('gateway'),
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4anch_addr=ipv4anchor.get('address'),
-                ipv4anch_mask=ipv4anchor.get('prefix'),
+                ipv4anch_mask=ipv4_anchor.netwrok.prefixlen,
                 ipv6_addr=ipv6public.get('address'),
                 ipv6_mask=ipv6public.get('prefix'),
                 ipv6_gw=ipv6public.get('gateway'),
@@ -281,6 +285,7 @@ class GuestFSUtil(object):
         return f_eth1
 
     def rnch_eth0_data(self, ipv4public, ipv4anchor={}, ipv6public={}, cloud='public'):
+        ipv4_anchor = IPv4Interface(f'{ipv4anchor.get('address')}/{ipv4anchor.get('netmaks')}')
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_rnch_public.data.format(
@@ -290,7 +295,7 @@ class GuestFSUtil(object):
                 ipv4_dns1=ipv4public.get('dns1'),
                 ipv4_dns2=ipv4public.get('dns2'),
                 ipv4anch_addr=ipv4anchor.get('address'),
-                ipv4anch_mask=ipv4anchor.get('prefix'),
+                ipv4anch_mask=ipv4_anchor.network.prefixlen,
                 ipv6_addr=ipv6public.get('address'),
                 ipv6_mask=ipv6public.get('prefix'),
                 ipv6_gw=ipv6public.get('gateway'),
@@ -436,11 +441,11 @@ class GuestFSUtil(object):
             self.gfs.chmod(644, nic_f_path)
 
     def setup_networking(self, networks, cloud='public'):
-        ipv4vpc = networks.get('ipv4_vpc')
-        ipv4public = networks.get('ipv4_public')
-        ipv6public = networks.get('ipv6_public')
-        ipv4anchor = networks.get('ipv4_anchor')
-        ipv4private = networks.get('ipv4_private')
+        ipv4vpc = networks.get('v4', {}).get('vpc', {}).get('primary')
+        ipv4public = networks.get('v4', {}).get('public', {}).get('primary')
+        ipv4anchor = networks.get('v4', {}).get('public', {}).get('secondary')
+        ipv4private = networks.get('v4', {}).get('private', {}).get('primary')
+        ipv6public = networks.get('v6', {}).get('public', {}).get('primary')
 
         if cloud == 'public':
             self.public_nic_setup(ipv4public, ipv4anchor=ipv4anchor, ipv6public=ipv6public)
@@ -451,34 +456,34 @@ class GuestFSUtil(object):
                 self.vpc_gw_nic_setup(ipv4vpc)
 
         if cloud == 'private':
-            self.vpc_nic_setup(ipv4vpc)
+            self.ipv4_vpc(ipv4vpc)
 
     def change_ipv4anch(self, ipv4anchor):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = 'address ' % ipv4anchor.get('address')
+            new_line_nic_file = f'address {ipv4anchor.get('address')}'
             network_file_data = re.sub('^address 10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = '^IPADDR2=%s' % ipv4anchor.get('address')
+            new_line_nic_file = f'^IPADDR2={ipv4anchor.get('address')}'
             network_file_data = re.sub('^IPADDR2=.*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'core':
             nic_f_path = self.coreos_config_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = 'Address=%s/%s' % (ipv4anchor.get('address'), ipv4anchor.get('prefix'))
+            new_line_nic_file = f'Address={ipv4anchor.get('address')}/{ipv4anchor.get('prefix')}'
             network_file_data = re.sub('^Address=10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = 'address: %s/%s' % (ipv4anchor.get('address'), ipv4anchor.get('prefix'))
+            new_line_nic_file = f'address: {ipv4anchor.get('address')}/{ipv4anchor.get('prefix')}'
             network_file_data = re.sub('^address: 10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
@@ -488,13 +493,13 @@ class GuestFSUtil(object):
         if self.get_distro() == 'win':
             pass
         elif self.get_distro() == 'core':
-            new_pass_line = '- passwd: "%s"' % password_hash
+            new_pass_line = f'- passwd: "{password_hash}"'
             shadow_file_updated = re.sub('^- passwd:.*?', new_pass_line, shadow_file)
         elif self.get_distro() == 'rnch':
-            new_pass_line = '- sed -i "s/^rancher:\*:/rancher:%s:/g" /etc/shadow' % password_hash
+            new_pass_line = f'- sed -i "s/^rancher:\*:/rancher:{password_hash}:/g" /etc/shadow'
             shadow_file_updated = re.sub('^- sed -i "s/^rancher:.*?', new_pass_line, shadow_file)
         else:
-            root_shadow_line = 'root:%s:' % password_hash
+            root_shadow_line = f'root:{password_hash}:'
             shadow_file_updated = re.sub('^root:.*?:', root_shadow_line, shadow_file)
         return shadow_file_updated
 
@@ -502,7 +507,7 @@ class GuestFSUtil(object):
         if self.get_distro() == 'win':
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
-            str_pswd = 'net user Administrator %s\r\n' % pass_hash
+            str_pswd = f'net user Administrator {pass_hash}\r\n'
             f_data += str_pswd
             self.gfs.write(nic_f_path, f_data)
         elif self.get_distro() == 'core':
@@ -511,7 +516,7 @@ class GuestFSUtil(object):
             if 'passwd' in config_data:
                 config_data_updated = self.change_root_passwd(pass_hash, config_data)
             else:
-                account_data = '\nusers:\n  - name: "core"\n  - passwd: "%s"\n' % pass_hash
+                account_data = f'\nusers:\n  - name: "core"\n  - passwd: "{pass_hash}"\n' 
                 config_data_updated = config_data + account_data
             self.gfs.write(config_fl_path, config_data_updated)
             self.gfs.chmod(644, config_fl_path)
@@ -521,7 +526,7 @@ class GuestFSUtil(object):
             if 'rancher:\*:' in config_data:
                 config_data_updated = self.change_root_passwd(pass_hash, config_data)
             else:
-                account_data = '\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:%s:/g" /etc/shadow\n' % pass_hash
+                account_data = f'\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:{pass_hash}:/g" /etc/shadow\n'
                 config_data_updated = config_data + account_data
             self.gfs.write(config_fl_path, config_data_updated)
             self.gfs.chmod(644, config_fl_path)
@@ -539,14 +544,14 @@ class GuestFSUtil(object):
             elif self.get_distro() == 'core':
                 f_path = self.coreos_config_path()
                 f_data = self.gfs.cat(f_path)
-                key_data = '\n\nssh_authorized_keys:\n  - "%s"\n' % public_key
+                key_data = f'\n\nssh_authorized_keys:\n  - "{public_key}"\n'
                 config_data = f_data + key_data
                 self.gfs.write(f_path, config_data)
                 self.gfs.chmod(640, f_path)
             elif self.get_distro() == 'rnch':
                 f_path = self.rancheros_config_path()
                 f_data = self.gfs.cat(f_path)
-                key_data = '\nssh_authorized_keys:\n- "%s"\n' % public_key
+                key_data = f'\nssh_authorized_keys:\n- "{public_key}"\n'
                 config_data = f_data + key_data
                 self.gfs.write(f_path, config_data)
                 self.gfs.chmod(640, f_path)
@@ -566,21 +571,21 @@ class GuestFSUtil(object):
         elif self.get_distro() == 'core':
             f_path = self.coreos_config_path()
             f_data = self.gfs.cat(f_path)
-            key_data = '\nhostname: "%s"\n' % hostname
+            key_data = f'\nhostname: "{hostname}"\n'
             config_data = f_data + key_data
             self.gfs.write(f_path, config_data)
             self.gfs.chmod(640, f_path)
         elif self.get_distro() == 'rnch':
             f_path = self.rancheros_config_path()
             f_data = self.gfs.cat(f_path)
-            key_data = '\nhostname: "%s"\n' % hostname
+            key_data = f'\nhostname: "{hostname}"\n'
             config_data = f_data + key_data
             self.gfs.write(f_path, config_data)
             self.gfs.chmod(640, f_path)
         elif self.get_distro() == 'win':
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
-            h_data = 'wmic computersystem where name="%s" call rename name="%s"\r\n' % ('%COMPUTERNAME%', hostname)
+            h_data = f'wmic computersystem where name="{'%COMPUTERNAME%'}" call rename name="{hostname}"\r\n'
             f_data += h_data
             self.gfs.write(nic_f_path, f_data)
 
