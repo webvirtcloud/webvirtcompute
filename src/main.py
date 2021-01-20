@@ -14,6 +14,11 @@ def error_msg(msg):
     raise HTTPException(status_code=400, detail=json.dumps(str(msg)))
 
 
+@app.get("/metrics/", dependencies=[Depends(basic_auth)])
+def metrics():
+    pass
+
+
 @app.post("/instance/", response_model=InstanceCreate, dependencies=[Depends(basic_auth)])
 def instance(instance: InstanceCreate):
     # Create XML

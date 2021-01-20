@@ -10,15 +10,15 @@ except ImportError:
     DEVNULL = open(os.devnull, 'wb')
 
 
-class AnchorIP(object):
-    def __init__(self, anchor_ip):
-        self.anchor_ip = anchor_ip
+class FixedIP(object):
+    def __init__(self, fixed_ip):
+        self.fixed_ip = fixed_ip
 
     def attach_floating_ip(self, floating_ip, floating_prefix, floating_gw):
         err_msg = None
         try:
             nmc = NetManager(floating_ip)
-            fwd = FwRedirect(floating_ip, self.anchor_ip)
+            fwd = FwRedirect(floating_ip, self.fixed_ip)
             dev = BRIDGE_EXT
             self.add_redirect(fwd, floating_ip, floating_prefix, floating_gw, nmc, dev)
         except IPRedirectError as err:
@@ -30,7 +30,7 @@ class AnchorIP(object):
         err_msg = None
         dev = BRIDGE_EXT
         nmc = NetManager(floating_ip)
-        fwd = FwRedirect(floating_ip, self.anchor_ip)
+        fwd = FwRedirect(floating_ip, self.fixed_ip)
         try:
             self.remove_redirect(fwd, floating_ip, floating_prefix, nmc, dev)
         except IPRedirectError as err:
@@ -38,13 +38,13 @@ class AnchorIP(object):
 
         return err_msg
 
-    def change_anchor_ip(self, image_path, distro):
+    def change_fixed_ip(self, image_path, distro):
         err_msg = None
         try:
             # Load GuestFS
             gstfish = GuestFSUtil(image_path, distro)
             gstfish.mount_root()
-            gstfish.change_ipv4anch(self.anchor_ip)
+            gstfish.change_ipv4anch(self.fixed_ip)
             gstfish.close()
         except RuntimeError as err:
             err_msg = err
