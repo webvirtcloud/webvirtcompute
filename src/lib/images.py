@@ -64,10 +64,11 @@ class Image(object):
         self.pool = pool
 
         conn = wvmStorage(self.pool)
+        conn.refresh()
         self.image_path = conn.get_target_path() + '/' + self.name
         conn.close()
 
-    def image_resize(self):
+    def image_resize(self, disk_size):
         conn = wvmStorage(self.pool)
         conn.resize_volume(self.name, disk_size)
         conn.close()
@@ -75,7 +76,7 @@ class Image(object):
     def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud='public'):
         err_msg = 'Error convert template to image'
         template_name = template.template_name
-        template_image_path = emplate.template_image_path
+        template_image_path = template.template_image_path
 
         qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template.template_image_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
@@ -88,7 +89,7 @@ class Image(object):
         err_msg = None
 
         try:
-            self.image_resize()
+            self.image_resize(disk_size)
         except libvirtError as err:
             err_msg = err
         
@@ -134,7 +135,7 @@ class Image(object):
         err_msg = None
         
         try:
-            self.image_resize()
+            self.image_resize(disk_size)
         except libvirtError as err:
             err_msg = err
         

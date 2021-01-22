@@ -4,9 +4,11 @@ from pydantic import BaseModel
 
 class InstanceCreate(BaseModel):
     name: str
-    images: dict
+    vcpu: int
+    memory: int
+    images: list
     network: dict
-    public_keys: list
+    public_keys: str
     root_password: str
 
 

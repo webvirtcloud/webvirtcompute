@@ -4,6 +4,7 @@
 
 import re
 import base64
+import string
 import libvirt
 import binascii
 from . import util
@@ -790,7 +791,7 @@ class wvmCreate(wvmConnect):
         vol = self.get_volume_by_path(path)
         vol.delete()
 
-    def create_instance(self, name, vcpu, memory, images, network, autostart=True, nwfilter=True, display=DISPLAY):
+    def create_xml(self, name, vcpu, memory, images, network, autostart=True, nwfilter=True, display=DISPLAY):
         xml = f"""
                 <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>
                   <name>{name}</name>
@@ -867,21 +868,27 @@ class wvmCreate(wvmConnect):
         # Create public pool device with IP and IPv6 and Anchor
         if network.get('v4', {}).get('public'):
             xml += f"""<interface type='network'>"""
-                if network.get('v4', {}).get('public', {}).get('mac'):
-                    xml += f"""<mac address='{network.get('v4', {}).get('public', {}).get('mac')}'/>"""
+            
+            if network.get('v4', {}).get('public', {}).get('mac'):
+                xml += f"""<mac address='{network.get('v4', {}).get('public', {}).get('mac')}'/>"""
+            
+            if network.get('v4', {}).get('public', {}).get('pool'):
                 xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
+            
             if nwfilter:
                 xml += """<filterref filter='clean-traffic-ipv6'>"""
 
-                if network.get('v4', {}).get('public', {}).get('primary', {}):
+                if network.get('v4', {}).get('public', {}).get('primary'):
                     xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('primary', {}).get('address')}'/>"""
 
-                if network.get('v4', {}).get('public', {}).get('secondary', {}):
+                if network.get('v4', {}).get('public', {}).get('secondary'):
                     xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('secondary', {}).get('address')}'/>"""
 
-                if network.get('v6', {}).get('public'):
-                    for ipv6 in IP(network['public_ipv6_range']):
-                        xml += f"""<parameter name='IPV6' value='{ipv6.strNormal()}'/>"""
+                if network.get('v6', {}).get('public').get('primary'):
+                        xml += f"""<parameter name='IPV6' value='{network.get('v6', {}).get('public', {}).get('primary', {}).get('address')}'/>"""
+
+                if network.get('v6', {}).get('public').get('secondary'):
+                        xml += f"""<parameter name='IPV6' value='{network.get('v6', {}).get('public', {}).get('secondary', {}).get('address')}'/>"""
 
                 xml += """</filterref>"""
 
@@ -889,16 +896,24 @@ class wvmCreate(wvmConnect):
                       </interface>"""
 
         # Create private pool device with IP
-        if network.get('v4', {}).get('private'):
+        if network.get('v4', {}).get('private', {}).get('primary') or network.get('v4', {}).get('private', {}).get('secondary'):
             xml += f"""<interface type='network'>"""
-                if network.get('v4', {}).get('public', {}).get('mac'):
-                    xml += f"""<mac address='{network.get('v4', {}).get('private', {}).get('mac')}'/>"""
+            
+            if network.get('v4', {}).get('private', {}).get('mac'):
+                xml += f"""<mac address='{network.get('v4', {}).get('private', {}).get('mac')}'/>"""
+            
+            if network.get('v4', {}).get('private', {}).get('pool'):
                 xml += f"""<source network='{network.get('v4', {}).get('private', {}).get('pool')}'/>"""
+            
             if nwfilter:
-                xml += f"""<filterref filter='clean-traffic'>
-                            <parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('primary', {}).get('address')}'/>"""
-                    if network.get('v4', {}).get('private', {}).get('secondary', {}).get('address'):
-                        xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')}'/>"""
+                xml += """<filterref filter='clean-traffic'>"""
+
+                if network.get('v4', {}).get('private', {}).get('primary'):
+                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('primary', {}).get('address')}'/>"""
+                    
+                if network.get('v4', {}).get('private', {}).get('secondary', {}):
+                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')}'/>"""
+                    
                 xml += f"""</filterref>"""
 
             xml += """<model type='virtio'/>

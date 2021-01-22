@@ -4,7 +4,7 @@ from libvirt import libvirtError
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate, wvmCreate, wvmInstance
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate, InstanceCreate
 
 
 app = FastAPI()
@@ -21,30 +21,16 @@ def metrics():
 
 @app.post("/instance/", response_model=InstanceCreate, dependencies=[Depends(basic_auth)])
 def instance(instance: InstanceCreate):
-    # Create XML
-    try:
-        conn = wvmCreate()
-        conn.create_instance(
-            instance.name,
-            instance.vcpu,
-            instance.memory,
-            instance.volumes,
-            instance.networks
-        )
-        conn.close()
-    except libvirtError as err:
-        error_msg(err)
-
     # Download and deploy images template
-    for image in instance.images:
-        if instance.image.get('primary') is True:
-            template = images.Template(instance.image.get('name'), instance.image.get('md5sum'))
-            err_msg, template_path = template.download(instance.image.get('url'))
+    for img in instance.images:
+        if img.get('primary') is True:
+            template = images.Template(img.get('name'), img.get('md5sum'))
+            err_msg, template_path = template.download(img.get('url'))
             if err_msg is None:
-                image = images.Image(instance.image.get('name'), instance.image.get('pool'))
+                image = images.Image(img.get('name'), img.get('pool'))
                 err_msg = image.deploy_template(
                     template=template,
-                    disk_size=instance.image.get('size'),
+                    disk_size=img.get('size'),
                     networks=instance.network,
                     public_key=instance.public_keys,
                     hostname=instance.name,
@@ -56,9 +42,23 @@ def instance(instance: InstanceCreate):
     if err_msg is not None:
         error_msg(err_msg) 
     
+    # Create XML
+    try:
+        conn = libvrt.wvmCreate()
+        conn.create_xml(
+            instance.name,
+            instance.vcpu,
+            instance.memory,
+            instance.images,
+            instance.network
+        )
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+
     # Run Instance
     try:
-        conn = wvmInstance(instance.name)
+        conn = libvrt.wvmInstance(instance.name)
         conn.start()
         conn.close()
     except libvirtError as err:
@@ -84,7 +84,7 @@ def instance():
 
 @app.get("/host/", dependencies=[Depends(basic_auth)])
 def host():
-    conn = libvrt.LibVrt()
+    conn = libvrt.wvmConnect()
     hostinfo = conn.get_host_info()
     conn.close() 
     return {'host': hostinfo}

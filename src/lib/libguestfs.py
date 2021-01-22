@@ -182,7 +182,7 @@ class GuestFSUtil(object):
         return f_eth2
 
     def rhl_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
-        ipv4cidr = IPv4Interface(f'{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}')
+        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_rhl_public.data.format(
@@ -217,7 +217,7 @@ class GuestFSUtil(object):
         return f_eth1
 
     def win_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
-        ipv4cidr = IPv4Interface(f'{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}')
+        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_win_public.data.format(
@@ -252,7 +252,7 @@ class GuestFSUtil(object):
         return f_eth1
 
     def core_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
-        ipv4cidr = IPv4Interface(f'{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}')
+        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_core_public.data.format(
@@ -285,7 +285,7 @@ class GuestFSUtil(object):
         return f_eth1
 
     def rnch_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
-        ipv4cidr = IPv4Interface(f'{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}')
+        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
         f_eth0 = ''
         if cloud == 'public':
             f_eth0 = eth0_rnch_public.data.format(
@@ -462,28 +462,28 @@ class GuestFSUtil(object):
         if self.get_distro() == 'deb' or self.get_distro() == 'alpn':
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f'address {ipv4fixed.get('address')}'
+            new_line_nic_file = f"address {ipv4fixed.get('address')}"
             network_file_data = re.sub('^address 10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f'^IPADDR2={ipv4fixed.get('address')}'
+            new_line_nic_file = f"^IPADDR2={ipv4fixed.get('address')}"
             network_file_data = re.sub('^IPADDR2=.*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'core':
             nic_f_path = self.coreos_config_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f'Address={ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}'
+            new_line_nic_file = f"Address={ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}"
             network_file_data = re.sub('^Address=10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f'address: {ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}'
+            new_line_nic_file = f"address: {ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}"
             network_file_data = re.sub('^address: 10\.255\..*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
@@ -585,7 +585,7 @@ class GuestFSUtil(object):
         elif self.get_distro() == 'win':
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
-            h_data = f'wmic computersystem where name="{'%COMPUTERNAME%'}" call rename name="{hostname}"\r\n'
+            h_data = 'wmic computersystem where name="{'%COMPUTERNAME%'}" call rename name="%s"\r\n' % hostname
             f_data += h_data
             self.gfs.write(nic_f_path, f_data)
 
