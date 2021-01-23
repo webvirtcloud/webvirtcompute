@@ -837,7 +837,8 @@ class wvmCreate(wvmConnect):
         disk_letters = list(string.ascii_lowercase)
         for image in images:
             stg = self.get_storage(image.get('pool'))
-            stg_type = util.get_xml_data(stg.XMLDesc(0), element='type')
+            stg_xml = stg.XMLDesc(0)
+            stg_type = util.get_xml_data(stg_xml, element='type')
 
             if stg_type == 'rbd':
                 ceph_user, secrt_uuid, ceph_host = get_rbd_storage_data(stg)
@@ -852,9 +853,10 @@ class wvmCreate(wvmConnect):
                             </source>
                            </disk>"""
             else:
+                stg_path = util.get_xml_data(stg_xml, path='target/path')
                 xml += f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='raw'/>
-                            <source file='{image.get('name')}'/>
+                            <source file='{stg_path}/{image.get('name')}'/>
                             <target dev='vd{disk_letters.pop(0)}' bus='virtio'/>
                            </disk>"""
 
