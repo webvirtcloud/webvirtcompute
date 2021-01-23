@@ -1,6 +1,9 @@
 import json
+import requests
 from auth import basic_auth
+from typing import Optional
 from libvirt import libvirtError
+from settings import METRICS_URL
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
@@ -15,8 +18,9 @@ def error_msg(msg):
 
 
 @app.get("/metrics/", dependencies=[Depends(basic_auth)])
-def metrics():
-    pass
+def metrics(query: Optional[str] = None, query_range: Optional[str] = None):
+    res = None
+    return res
 
 
 @app.post("/instance/", response_model=InstanceCreate, dependencies=[Depends(basic_auth)])
@@ -37,7 +41,12 @@ def instance(instance: InstanceCreate):
                     root_password=instance.root_password
                 )
         else:
-            pass # TODO: create disk
+            try:
+                conn = libvrt.wvmStorage(img.get('pool'))
+                conn.create_volume(img.get('name'), img.get('size'), fmt='raw')
+                conn.close()
+            except libvirtError as err:
+                error_msg(err)
 
     if err_msg is not None:
         error_msg(err_msg) 

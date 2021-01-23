@@ -27,6 +27,9 @@ TOKEN = conf.get('daemon', 'token', fallback='')
 PORT = conf.getint('daemon', 'port', fallback=8884)
 HOST = conf.get('daemon', 'host', fallback='0.0.0.0')
 
+# Metrics settings
+METRICS_URL = conf.get('metrics', 'url', fallback='http://localhost:9090/api/v1/')
+
 # Cache path
 CACHE_DIR = conf.get('cache', 'directory', fallback='/var/lib/libvirt/template_cache')
 
@@ -34,8 +37,8 @@ CACHE_DIR = conf.get('cache', 'directory', fallback='/var/lib/libvirt/template_c
 BRIDGE_EXT = conf.get('bridge', 'external', fallback='br-ext')
 
 # Backup settings
-BACKUP_USER = conf.get('backup', 'user', fallback='hostvirtmgr')
-BACKUP_KEY_FILE = conf.get('backup', 'file', fallback='private.pem')
+BACKUP_USER = conf.get('backup', 'user', fallback='virtmgr')
+BACKUP_KEY_FILE = conf.get('backup', 'file', fallback='/etc/hostvirtmgr/privkey.pem')
 
 # Firewall rule name
 FIREWALL_IN_NAME = conf.get('firewall', 'in_name', fallback='FW_I_')
