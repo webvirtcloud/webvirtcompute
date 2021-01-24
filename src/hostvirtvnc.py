@@ -11,9 +11,6 @@ from websockify import WebSocketProxy
 from websockify import ProxyRequestHandler
 
 
-CERT = None
-
-
 parser = OptionParser()
 parser.add_option("-v",
                   "--verbose",
@@ -65,7 +62,6 @@ else:
 def get_conn_data(token):
     port = None
     temptoken = token.split('-', 1)
-    uuid = temptoken[1]
     try:
         conn = wvmInstance(name)
         port = conn.get_console_port()
@@ -79,9 +75,6 @@ def get_conn_data(token):
 class CompatibilityMixIn(object):
     def _new_client(self, daemon, socket_factory):
         cookie = cookies.SimpleCookie()
-        if not hasattr(self.headers, 'cookie'):
-            logging.error('- Cookie not found')
-            return False
         cookie.load(self.headers.get('cookie'))
         if 'token' not in cookie:
             logging.error('- Token not found')

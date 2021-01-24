@@ -64,6 +64,7 @@ class Image(object):
         self.pool = pool
 
         conn = wvmStorage(self.pool)
+        conn.refresh()
         self.image_path = conn.get_target_path() + '/' + self.name
         conn.close()
 
