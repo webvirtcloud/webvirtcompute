@@ -1,0 +1,6 @@
+<pool type='dir'>
+  <name>backups</name>
+  <target>
+    <path>/var/lib/libvirt/backups</path>
+  </target>
+</pool>

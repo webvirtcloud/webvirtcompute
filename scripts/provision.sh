@@ -16,9 +16,15 @@ systemctl enable --now libvirtd
 systemctl enable --now libvirt-guests
 
 # Setup libvirt storage
+virsh pool-define /vagrant/libvirt/isos.xml
 virsh pool-define /vagrant/libvirt/images.xml
+virsh pool-define /vagrant/libvirt/backups.xml
+virsh pool-start isos
 virsh pool-start images
+virsh pool-start backups
+virsh pool-autostart isos
 virsh pool-autostart images
+virsh pool-autostart backups
 
 # Setup libvirt network
 virsh net-destroy default
@@ -37,6 +43,9 @@ virsh nwfilter-define /vagrant/libvirt/clean-traffic-ipv6.xml
 
 # Tune profile
 tuned-adm profile virtual-host
+
+# Download rescue iso
+wget https://mirrors.finnix.org/releases/121/finnix-121.iso -O /var/lib/libvirt/isos/rescue.iso > /dev/null 2>&1
 
 # Prometheus Server
 cd /tmp
