@@ -64,12 +64,12 @@ class Image(object):
         self.pool = pool
 
         conn = wvmStorage(self.pool)
-        conn.refresh()
         self.image_path = conn.get_target_path() + '/' + self.name
         conn.close()
 
     def image_resize(self, disk_size):
         conn = wvmStorage(self.pool)
+        conn.refresh()
         conn.resize_volume(self.name, disk_size)
         conn.close()
 
