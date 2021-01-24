@@ -140,7 +140,8 @@ After=network-online.target
 Type=simple
 User=prometheus
 Group=prometheus
-ExecStart=/usr/local/bin/libvirt_exporter --web.listen-address=localhost:9177
+ExecStart=/usr/local/bin/libvirt_exporter \
+    --web.listen-address=localhost:9177
 SyslogIdentifier=libvirt_exporter
 Restart=always
 

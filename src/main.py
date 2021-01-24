@@ -18,8 +18,9 @@ def error_msg(msg):
 
 
 @app.get("/metrics/", dependencies=[Depends(basic_auth)])
-def metrics(query: Optional[str] = None, query_range: Optional[str] = None):
-    res = None
+def metrics(query: Optional[str] = '', start: Optional[str] = '', end: Optional[str] = '', step: Optional[str] = ''):
+    params = {'query': query, 'start': start, 'end': end, 'step': step}
+    res = requests.get(METRICS_URL, params=params).json()
     return res
 
 

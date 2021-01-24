@@ -28,7 +28,7 @@ PORT = conf.getint('daemon', 'port', fallback=8884)
 HOST = conf.get('daemon', 'host', fallback='0.0.0.0')
 
 # Metrics settings
-METRICS_URL = conf.get('metrics', 'url', fallback='http://localhost:9090/api/v1/')
+METRICS_URL = conf.get('metrics', 'url', fallback='http://localhost:9090/api/v1/query_range')
 
 # Cache path
 CACHE_DIR = conf.get('cache', 'directory', fallback='/var/lib/libvirt/template_cache')
