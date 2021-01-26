@@ -58,9 +58,9 @@ Vagrant.configure('2') do |config|
         lv.memory = KVM_MEMORY
         lv.nested = true
         lv.driver = "kvm"
+        lv.disk_bus = "sata"
         lv.nic_model_type = "virtio"
-        lv.qemu_use_session = false
-        lv.storage :file, :device => "hdb", :size => '128G', :bus => "ide"
-        override.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [".git/", ".mysql/", ".vagrant/"]
+        lv.storage :file, :size => "128G", :bus => "sata"
+        override.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: [".git/", ".vagrant/"]
     end
 end
