@@ -75,14 +75,21 @@ def instance(instance: InstanceCreate):
         error_msg(err)
 
     return instance
-    
 
-@app.get("/instance/{name}/", dependencies=[Depends(basic_auth)])
+
+@app.get("/instances/", dependencies=[Depends(basic_auth)])
+def instances():
+    conn = libvrt.wvmCreate()
+    instances = conn.get_host_instances()
+    return instances
+
+
+@app.get("/instance/{uuid}/", dependencies=[Depends(basic_auth)])
 def instance():
     pass
 
 
-@app.post("/instance/{name}/", dependencies=[Depends(basic_auth)])
+@app.post("/instance/{uuid}/", dependencies=[Depends(basic_auth)])
 def instance():
     pass
 

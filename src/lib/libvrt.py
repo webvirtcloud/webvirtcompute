@@ -183,7 +183,13 @@ class wvmConnect(object):
                 vcpu = cur_vcpu
             else:
                 vcpu = util.get_xml_data(dom.XMLDesc(0), 'vcpu')
-            vname.append({'name': dom.name(), 'status': dom.info()[0], 'uuid': dom.UUIDString(), 'vcpu': vcpu, 'memory': mem})
+            vname.append({
+                'name': dom.name(), 
+                'status': dom.info()[0], 
+                'uuid': dom.UUIDString(), 
+                'vcpu': vcpu, 
+                'memory': mem
+            })
         return vname
 
     def close(self):
