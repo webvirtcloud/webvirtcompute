@@ -119,9 +119,16 @@ def instance(name):
 
     return {'instance': instance}
 
-@app.post("/instances/{uuid}/", dependencies=[Depends(basic_auth)])
-def instance():
-    pass
+@app.get("/instances/{name}/status/", dependencies=[Depends(basic_auth)])
+def instance(name):
+    status = 1
+    try:
+        conn = libvrt.wvmInstance(name)
+        status = conn.get_status()
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    return {'status': status}
 
 
 @app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])

@@ -1025,7 +1025,14 @@ class wvmInstance(wvmConnect):
         self.instance = self.get_instance(vname)
 
     def get_status(self):
-        return self.instance.info()[0]
+        state = self.instance.info()[0]
+        if state == libvirt.VIR_DOMAIN_RUNNING:
+            return 'running'
+        if state == libvirt.VIR_DOMAIN_PAUSED:
+            return 'paused'
+        if state == libvirt.VIR_DOMAIN_SHUTOFF:
+            return 'shutoff'
+        return 'nostate'
 
     def start(self):
         self.instance.create()
