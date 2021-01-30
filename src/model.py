@@ -83,3 +83,10 @@ class SecretValue(BaseModel):
 
 class NwFilterCreate(BaseModel):
     xml: str
+
+
+class FloatingIPs(BaseModel):
+    fixed_address: str
+    address: str
+    prefix: str
+    gateway: str

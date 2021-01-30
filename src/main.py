@@ -6,9 +6,9 @@ from libvirt import libvirtError
 from settings import METRICS_URL
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
-from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate
 from model import InstanceCreate, InstanceStatus, InstanceResize, InstanceMedia
+from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs
 
 
 app = FastAPI()
@@ -641,3 +641,56 @@ def nwfilter(name):
         error_msg(err)
     
     conn.close() 
+
+
+@app.post("/floating_ips/", response_model=FloatingIPs, dependencies=[Depends(basic_auth)])
+def network(name, floating_ip: FloatingIPs):
+    try:
+        ip = network.FixedIP(floating_ip.fixed_address)
+        err_msg = ip.attach_floating_ip(
+            floating_ip.address,
+            floating_ip.prefix,
+            floating_ip.gateway
+        )
+    except Exception as err:
+        error_msg(err)
+    return floating_ip
+
+
+@app.post("/floating_ips/", response_model=FloatingIPs, dependencies=[Depends(basic_auth)])
+def network(name, floating_ip: FloatingIPs):
+    error_msg = None
+
+    try:
+        ip = network.FixedIP(floating_ip.fixed_address)
+        err_msg = ip.attach_floating_ip(
+            floating_ip.address,
+            floating_ip.prefix,
+            floating_ip.gateway
+        )
+    except Exception as err:
+        error_msg(err)
+
+    if err_msg:
+        error_msg(err_msg)
+    
+    return floating_ip
+
+
+@app.delete("/floating_ips/", response_model=FloatingIPs, dependencies=[Depends(basic_auth)])
+def network(name, floating_ip: FloatingIPs):
+    error_msg = None
+
+    try:
+        ip = network.FixedIP(floating_ip.fixed_address)
+        err_msg = ip.detach_floating_ip(
+            floating_ip.address,
+            floating_ip.prefix
+        )
+    except Exception as err:
+        error_msg(err)
+
+    if err_msg:
+        error_msg(err_msg)
+    
+    return floating_ip
