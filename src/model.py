@@ -22,6 +22,10 @@ class InstanceResize(BaseModel):
     disk_size: Optional[int] = None
 
 
+class InstanceMedia(BaseModel):
+    image: str
+    device: str
+
 class StorageCreate(BaseModel):
     name: str
     type: str

@@ -8,7 +8,7 @@ from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate
-from model import InstanceCreate, InstanceStatus, InstanceResize
+from model import InstanceCreate, InstanceStatus, InstanceResize, InstanceMedia
 
 
 app = FastAPI()
@@ -88,7 +88,7 @@ def instances():
         dconn = libvrt.wvmInstance(name)
         instances.append({
             'name': name, 
-            'status': dconn.get_status(), 
+            'status': dconn.get_state(), 
             'uuid': dconn.get_uuid(), 
             'vcpu': dconn.get_vcpu(),
             'memory': dconn.get_memory(),
@@ -106,7 +106,7 @@ def instance(name):
         conn = libvrt.wvmInstance(name)
         instance = {
             'name': name, 
-            'status': conn.get_status(), 
+            'status': conn.get_state(), 
             'uuid': conn.get_uuid(), 
             'vcpu': conn.get_vcpu(),
             'memory': conn.get_memory(),
@@ -124,7 +124,7 @@ def instance(name):
 def instance(name):
     try:
         conn = libvrt.wvmInstance(name)
-        status = conn.get_status()
+        status = conn.get_state()
         conn.close()
     except libvirtError as err:
         error_msg(err)
@@ -158,7 +158,7 @@ def instance(name, status: InstanceStatus):
 def instance(name, resize: InstanceResize):
     try:
         conn = libvrt.wvmInstance(name)
-        if conn.get_status() != 'shutoff':
+        if conn.get_state() != 'shutoff':
             error_msg('Please shutoff the virtual machine.')
         conn.resize_resources(
             resize.vcpu,
@@ -177,6 +177,45 @@ def instance(name, resize: InstanceResize):
     
     return resize
 
+
+@app.get("/instances/{name}/media/", dependencies=[Depends(basic_auth)])
+def instance(name):
+    try:
+        conn = libvrt.wvmInstance(name)
+        media = conn.get_media_device()
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    return {'media': media}
+
+
+@app.post("/instances/{name}/media/", response_model=InstanceMedia, dependencies=[Depends(basic_auth)])
+def instance(name, media: InstanceMedia):
+    try:
+        conn = libvrt.wvmInstance(name)
+        conn.mount_iso(            
+            media.device, 
+            media.image
+        )
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    
+    return media
+
+@app.delete("/instances/{name}/media/", response_model=InstanceMedia, dependencies=[Depends(basic_auth)])
+def instance(name, media: InstanceMedia):
+    try:
+        conn = libvrt.wvmInstance(name)
+        conn.umount_iso(
+            media.device, 
+            media.image
+        )
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    
+    return media
 
 @app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])
 def instance(name):

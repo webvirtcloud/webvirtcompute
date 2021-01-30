@@ -1028,12 +1028,14 @@ class wvmInstance(wvmConnect):
         self.instance = self.get_instance(vname)
 
     def get_status(self):
-        state = self.instance.info()[0]
-        if state == libvirt.VIR_DOMAIN_RUNNING:
+        return self.instance.info()[0]
+
+    def get_state(self):
+        if self.get_status == libvirt.VIR_DOMAIN_RUNNING:
             return 'running'
-        if state == libvirt.VIR_DOMAIN_PAUSED:
+        if self.get_status == libvirt.VIR_DOMAIN_PAUSED:
             return 'paused'
-        if state == libvirt.VIR_DOMAIN_SHUTOFF:
+        if self.get_status == libvirt.VIR_DOMAIN_SHUTOFF:
             return 'shutoff'
         return 'nostate'
 
@@ -1248,6 +1250,7 @@ class wvmInstance(wvmConnect):
         storages = self.get_storages()
         for storage in storages:
             stg = self.get_storage(storage)
+            stg.refresh()
             if stg.info()[0] != 0:
                 for img in stg.listVolumes():
                     if image == img:
@@ -1270,7 +1273,7 @@ class wvmInstance(wvmConnect):
             if disk.get('device') == 'cdrom':
                 for elm in disk:
                     if elm.tag == 'source':
-                        if elm.get('file') == image:
+                        if image in elm.get('file'):
                             src_media = elm
                     if elm.tag == 'target':
                         if elm.get('dev') == dev:
