@@ -7,7 +7,8 @@ from settings import METRICS_URL
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate, InstanceCreate, InstanceStatus
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate
+from model import InstanceCreate, InstanceStatus, InstanceResize
 
 
 app = FastAPI()
@@ -151,6 +152,30 @@ def instance(name, status: InstanceStatus):
         error_msg(err)
     
     return status
+
+
+@app.post("/instances/{name}/resize/", response_model=InstanceResize, dependencies=[Depends(basic_auth)])
+def instance(name, resize: InstanceResize):
+    try:
+        conn = libvrt.wvmInstance(name)
+        if conn.get_status() != 'shutoff':
+            error_msg('Please shutoff the virtual machine.')
+        conn.resize_resources(
+            resize.vcpu,
+            resize.memory
+        )
+        if resize.disk_size:
+            drivers = conn.get_disk_device()
+            for drive in drivers:
+                if drive.get('dev') == 'vda' or drive.get('dev') == 'sda':
+                    sconn = libvrt.wvmStorage(drive.get('pool'))
+                    sconn.resize_volume(drive.get('name'), resize.disk_size)
+                    sconn.close()
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    
+    return resize
 
 
 @app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])

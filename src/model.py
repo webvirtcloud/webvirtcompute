@@ -16,6 +16,12 @@ class InstanceStatus(BaseModel):
     action: str
 
 
+class InstanceResize(BaseModel):
+    vcpu: int
+    memory: int
+    disk_size: Optional[int] = None
+
+
 class StorageCreate(BaseModel):
     name: str
     type: str
