@@ -1106,17 +1106,17 @@ class wvmInstance(wvmConnect):
 
     def get_memory(self):
         mem = util.get_xml_data(self.XMLDesc(), 'memory')
-        return int(mem) / 1024
+        return int(mem) * 1024
 
     def get_cur_memory(self):
         mem = util.get_xml_data(self.XMLDesc(), 'currentMemory')
-        return int(mem) / 1024
+        return int(mem) * 1024
 
     def get_description(self):
         return util.get_xml_data(self.XMLDesc(), 'description')
 
     def get_max_memory(self):
-        return self.wvm.getInfo()[1] * 1048576
+        return self.wvm.getInfo()[1] * (1024 ** 2)
 
     def get_max_cpus(self):
         """Get number of physical CPUs."""
@@ -1125,7 +1125,7 @@ class wvmInstance(wvmConnect):
         range_pcpus = range(1, int(pcpus + 1))
         return range_pcpus
 
-    def get_net_device(self):
+    def get_net_ifaces(self):
         result = []
 
         def get_mac_ipaddr(xml, mac_host):
@@ -1184,8 +1184,8 @@ class wvmInstance(wvmConnect):
 
                 result.append({
                     'dev': disk_dev,
-                    'image': vol.name(),
-                    'storage': stg.name(),
+                    'name': vol.name(),
+                    'pool': stg.name(),
                     'path': disk_img,
                     'format': disk_format,
                     'size': vol.info()[1]
@@ -1218,7 +1218,7 @@ class wvmInstance(wvmConnect):
                 result.append({
                     'dev': disk_dev,
                     'image': vol_name,
-                    'storage': stg_name,
+                    'pool': stg_name,
                     'path': disk_img
                 })
 

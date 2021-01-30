@@ -79,22 +79,52 @@ def instance(instance: InstanceCreate):
 
 @app.get("/instances/", dependencies=[Depends(basic_auth)])
 def instances():
-    conn = libvrt.wvmCreate()
-    instances = conn.get_host_instances()
-    return instances
+    instances = []
+    conn = libvrt.wvmConnect()
+    instance_names = conn.get_instances()
+    conn.close()
+    for name in instance_names:
+        dconn = libvrt.wvmInstance(name)
+        instances.append({
+            'name': name, 
+            'status': dconn.get_status(), 
+            'uuid': dconn.get_uuid(), 
+            'vcpu': dconn.get_vcpu(),
+            'memory': dconn.get_memory(),
+            'disks': dconn.get_disk_device(),
+            'media': dconn.get_media_device(),
+            'ifaces': dconn.get_net_ifaces() 
+        })
+        dconn.close()
+    return {'instances': instances}
 
 
-@app.get("/instance/{uuid}/", dependencies=[Depends(basic_auth)])
+@app.get("/instances/{name}/", dependencies=[Depends(basic_auth)])
+def instance(name):
+    try:
+        conn = libvrt.wvmInstance(name)
+        instance = {
+            'name': name, 
+            'status': conn.get_status(), 
+            'uuid': conn.get_uuid(), 
+            'vcpu': conn.get_vcpu(),
+            'memory': conn.get_memory(),
+            'disks': conn.get_disk_device(),
+            'media': conn.get_media_device(),
+            'ifaces': conn.get_net_ifaces() 
+        }
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+
+    return {'instance': instance}
+
+@app.post("/instances/{uuid}/", dependencies=[Depends(basic_auth)])
 def instance():
     pass
 
 
-@app.post("/instance/{uuid}/", dependencies=[Depends(basic_auth)])
-def instance():
-    pass
-
-
-@app.delete("/instance/{name}/", dependencies=[Depends(basic_auth)])
+@app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])
 def instance():
     pass
 
