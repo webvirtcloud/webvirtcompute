@@ -7,7 +7,7 @@ from settings import METRICS_URL
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, StorageCreate, StorageAction, VolumeCreate, VolumeAction
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate, InstanceCreate
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, NwFilterCreate, InstanceCreate, InstanceStatus
 
 
 app = FastAPI()
@@ -121,7 +121,6 @@ def instance(name):
 
 @app.get("/instances/{name}/status/", dependencies=[Depends(basic_auth)])
 def instance(name):
-    status = 1
     try:
         conn = libvrt.wvmInstance(name)
         status = conn.get_status()
@@ -131,9 +130,45 @@ def instance(name):
     return {'status': status}
 
 
+@app.post("/instances/{name}/status/", response_model=InstanceStatus, dependencies=[Depends(basic_auth)])
+def instance(name, status: InstanceStatus):
+    
+    if status.action not in ['start', 'stop', 'suspend', 'resume']:
+        error_msg('Status does not exist.')
+
+    try:
+        conn = libvrt.wvmInstance(name)
+        if status.action == 'start':
+            conn.start()
+        if status.action == 'stop':
+            conn.shutdown()
+        if status.action == 'suspend':
+            conn.suspend()
+        if status.action == 'resume':
+            conn.resume()
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
+    
+    return status
+
+
 @app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])
-def instance():
-    pass
+def instance(name):
+    try:
+        conn = libvrt.wvmInstance(name)
+        drivers = conn.get_disk_device()
+        for drive in drivers:
+            if drive.get('dev') == 'vda' or drive.get('dev') == 'sda':
+                sconn = libvrt.wvmStorage(drive.get('pool'))
+                vol = sconn.get_volume(drive.get('name'))
+                vol.delete()
+                sconn.refresh()
+                sconn.close()
+        conn.delete()
+        conn.close()
+    except libvirtError as err:
+        error_msg(err)
 
 
 @app.get("/host/", dependencies=[Depends(basic_auth)])

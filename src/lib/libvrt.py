@@ -882,9 +882,12 @@ class wvmCreate(wvmConnect):
             
             if network.get('v4', {}).get('public', {}).get('pool'):
                 xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
-            
+
             if nwfilter:
-                xml += """<filterref filter='clean-traffic-ipv6'>"""
+                if network.get('v6', {}).get('public').get('primary') or network.get('v6', {}).get('public').get('secondary'):
+                    xml += """<filterref filter='clean-traffic-ipv6'>"""
+                else: 
+                    xml += """<filterref filter='clean-traffic'>"""
 
                 if network.get('v4', {}).get('public', {}).get('primary'):
                     xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('primary', {}).get('address')}'/>"""

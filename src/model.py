@@ -12,6 +12,10 @@ class InstanceCreate(BaseModel):
     root_password: str
 
 
+class InstanceStatus(BaseModel):
+    action: str
+
+
 class StorageCreate(BaseModel):
     name: str
     type: str
