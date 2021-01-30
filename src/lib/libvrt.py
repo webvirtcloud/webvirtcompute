@@ -2,6 +2,7 @@
 # libvrt - libvirt wrapper class
 #
 
+import os
 import re
 import base64
 import string
@@ -1268,12 +1269,13 @@ class wvmInstance(wvmConnect):
         self.defineXML(xmldom)
 
     def umount_iso(self, dev, image):
+        src_media = ''
         tree = ElementTree.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
         for disk in tree.findall('devices/disk'):
             if disk.get('device') == 'cdrom':
                 for elm in disk:
                     if elm.tag == 'source':
-                        if image in elm.get('file'):
+                        if os.path.basename(elm.get('file')) == image:
                             src_media = elm
                     if elm.tag == 'target':
                         if elm.get('dev') == dev:
