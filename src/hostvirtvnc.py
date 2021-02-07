@@ -4,11 +4,31 @@ import re
 import os
 import sys
 import socket
+import libvirt
 import logging
 from http import cookies
 from optparse import OptionParser
 from websockify import WebSocketProxy
 from websockify import ProxyRequestHandler
+
+
+def get_xml_data(xml, path=None, element=None):
+    res = ''
+    if not path and not element:
+        return ''
+
+    tree = ElementTree.fromstring(xml)
+    if path:
+        child = tree.find(path)
+        if child is not None:
+            if element:
+                res = child.get(element)
+            else:
+                res = child.text
+    else:
+        res = tree.get(element)
+    return res
+
 
 
 parser = OptionParser()
@@ -61,30 +81,36 @@ else:
 
 def get_conn_data(token):
     port = None
-    temptoken = token.split('-', 1)
     try:
-        conn = wvmInstance(name)
-        port = conn.get_console_port()
-    except Exception as e:
+        conn = libvirt.open('qemu:///system')
+        for dom in conn.listDomainsID():
+            if token == dom.UUIDString():
+                xml = dom.XMLDesc()
+                console_type = get_xml_data(xml, 'devices/graphics', 'type')
+                port = get_xml_data(xml, f"devices/graphics[@type='{console_type}']", 'port')
+        conn.close()
+    except libvirt.libvirtError as err:
         logging.error(
-            f'Fail to retrieve console connection infos for token {token} : {e}')
+            f'Fail to retrieve console connection infos for token {token} : {err}')
         raise
-    return 'localhost', port
+    return port
 
 
 class CompatibilityMixIn(object):
     def _new_client(self, daemon, socket_factory):
         cookie = cookies.SimpleCookie()
         cookie.load(self.headers.get('cookie'))
+
         if 'token' not in cookie:
             logging.error('- Token not found')
             return False
-        token = cookie.get('token').value
-        console_host, console_port = get_conn_data(token)
+    
+        console_host = 'localhost'
+        console_port = get_conn_data(cookie.get('token').value)
 
-        cnx_debug_msg = "Connection Info :\n"
-        cnx_debug_msg += f"  - console_host : '{console_host}'\n"
-        cnx_debug_msg += f"  - console_port : '{console_port}'"
+        cnx_debug_msg = "Connection Info:\n"
+        cnx_debug_msg += f"       - VNC host: {console_host}\n"
+        cnx_debug_msg += f"       - VNC port: {console_port}"
         logging.debug(cnx_debug_msg)
 
         # Direct access
