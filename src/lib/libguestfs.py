@@ -43,6 +43,8 @@ class GuestFSUtil(object):
         roots = self.gfs.inspect_os()
         for root in roots:
             distro = self.gfs.inspect_get_distro(root)
+        if distro == 'unknown':
+            distro = None
         return distro
 
     def get_distro(self):
