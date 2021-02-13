@@ -65,8 +65,6 @@ class Image(object):
 
         conn = wvmStorage(self.pool)
         conn.refresh()
-        if conn.get_type() == 'dir':
-            self.name += '.img'
         self.image_path = conn.get_target_path() + '/' + self.name
         conn.close()
 
