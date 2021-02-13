@@ -8,7 +8,7 @@ from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
 from model import InstanceCreate, InstanceStatus, InstanceResize, InstanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
 
 
 app = FastAPI()
@@ -694,3 +694,25 @@ def network(name, floating_ip: FloatingIPs):
         error_msg(err_msg)
     
     return floating_ip
+
+
+@app.post("/reset_password/", response_model=ResetPassword, dependencies=[Depends(basic_auth)])
+def network(name, reset_pass: ResetPassword):
+    error_msg = None
+            
+    try:
+        image = images.Image(
+            reset_pass.get('image'), 
+            reset_pass.get('pool')
+        )
+        err_msg = image.reset_password(
+            reset_pass.get('distro'), 
+            reset_pass.get('password')
+        )
+    except Exception as e:
+        error_msg(err)
+
+    if err_msg:
+        error_msg(err_msg)
+    
+    return reset_pass

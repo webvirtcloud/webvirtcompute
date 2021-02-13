@@ -38,6 +38,13 @@ class GuestFSUtil(object):
         self.gfs.add_drive(drive)
         self.gfs.launch()
 
+    def inspect_distro(self):
+        distro = None
+        roots = self.gfs.inspect_os()
+        for root in roots:
+            distro = self.gfs.inspect_get_distro(root)
+        return distro
+
     def get_distro(self):
         if 'fedora' in self.distro:
             return 'rhl'

@@ -65,6 +65,8 @@ class Image(object):
 
         conn = wvmStorage(self.pool)
         conn.refresh()
+        if conn.get_type() == 'dir':
+            self.name += '.img'
         self.image_path = conn.get_target_path() + '/' + self.name
         conn.close()
 
@@ -117,9 +119,9 @@ class Image(object):
 
         return err_msg
 
-    def reset_password(self, distro, root_password):
+    def reset_password(self, name, root_password):
         err_msg = None
-        
+
         try:
             # Load GuestFS
             gstfish = GuestFSUtil(self.image_path, distro)

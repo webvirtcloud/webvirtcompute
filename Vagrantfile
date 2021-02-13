@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-KVM_CPUS = 2
+KVM_CPUS = 6
 KVM_MEMORY = 4096
 KVM_BOX = 'bento/centos-8.2'
 HOME_DIR = ENV['HOME']

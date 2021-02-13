@@ -90,3 +90,10 @@ class FloatingIPs(BaseModel):
     address: str
     prefix: str
     gateway: str
+
+
+class ResetPassword(BaseModel):
+    pool: str
+    image: str
+    distro: str
+    password: str
