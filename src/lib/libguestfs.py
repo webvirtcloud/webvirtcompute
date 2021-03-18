@@ -11,10 +11,6 @@ from tmpl import eth1_rnch
 from tmpl import eth0_rnch_public
 from tmpl import eth0_rnch_private
 
-from tmpl import eth1_core
-from tmpl import eth0_core_public
-from tmpl import eth0_core_private
-
 from tmpl import eth1_win
 from tmpl import eth0_win_public
 from tmpl import eth0_win_private
@@ -58,10 +54,6 @@ class GuestFSUtil(object):
             return 'deb'
         if 'windows' in self.distro:
             return 'win'
-        if 'coreos' in self.distro:
-            return 'core'
-        if 'atomic' in self.distro:
-            return 'atom'
         if 'rancheros' in self.distro:
             return 'rnch'
         if 'alpine' in self.distro:
@@ -69,54 +61,27 @@ class GuestFSUtil(object):
 
     def root_device(self):
         device = '/dev/sda1'
-        if self.get_distro() == 'core':
-            device = '/dev/sda6'
-        if self.get_distro() == 'atom':
-            device = '/dev/atomicos/root'
         if self.get_distro() == 'alpn':
             device = '/dev/sda3'
         return device
-
-    def ostree_path(self):
-        ostree_path = '/ostree/boot.0/centos-atomic-host'
-        root_uuid = self.gfs.ls(ostree_path)
-        return ostree_path + '/' + root_uuid[0] + '/0'
-
-    def coreos_config_path(self):
-        return '/cloud-config.yml'
 
     def rancheros_config_path(self):
         return '/var/lib/rancher/conf/cloud-config.yml'
 
     def cloud_init_path(self):
-        path = '/var/lib/cloud'
-        if self.get_distro() == 'atom':
-            path = self.ostree_path() + path
-        return path
+        return '/var/lib/cloud'
 
     def shadow_file_path(self):
-        path = '/etc/shadow'
-        if self.get_distro() == 'atom':
-            path = self.ostree_path() + path
-        return path
+        return '/etc/shadow'
 
     def hostname_file_path(self):
-        path = '/etc/hostname'
-        if self.get_distro() == 'atom':
-            path = self.ostree_path() + path
-        return path
+        return '/etc/hostname'
 
     def root_ssh_dir_path(self):
-        path = '/root/.ssh'
-        if self.get_distro() == 'atom':
-            path = '/ostree/deploy/centos-atomic-host/var/roothome/.ssh'
-        return path
+        return '/root/.ssh'
 
     def root_auth_keys_path(self):
-        path = '/root/.ssh/authorized_keys'
-        if self.get_distro() == 'atom':
-            path = '/ostree/deploy/centos-atomic-host/var/roothome/.ssh/authorized_keys'
-        return path
+        return '/root/.ssh/authorized_keys'
 
     def _win_str_disk_extend(self):
         return 'diskpart /s %~dp0\\diskpart.txt\r\n'
@@ -136,15 +101,8 @@ class GuestFSUtil(object):
                 f_path = '/etc/sysconfig/network-scripts/ifcfg-eth0'
             if nic_type == 'private':
                 f_path = '/etc/sysconfig/network-scripts/ifcfg-eth1'
-        if self.get_distro() == 'atom':
-            if nic_type == 'public':
-                f_path = self.ostree_path() + '/etc/sysconfig/network-scripts/ifcfg-eth0'
-            if nic_type == 'private':
-                f_path = self.ostree_path() + '/etc/sysconfig/network-scripts/ifcfg-eth1'
         if self.get_distro() == 'win':
             f_path = '/Windows/System32/GroupPolicy/Machine/Scripts/Startup/cloudinit.cmd'
-        if self.get_distro() == 'core':
-            f_path = self.coreos_config_path()
         if self.get_distro() == 'rnch':
             f_path = self.rancheros_config_path()
         return f_path
@@ -260,39 +218,6 @@ class GuestFSUtil(object):
         )
         return f_eth1
 
-    def core_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
-        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
-        f_eth0 = ''
-        if cloud == 'public':
-            f_eth0 = eth0_core_public.data.format(
-                ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('prefix'),
-                ipv4_gw=ipv4public.get('gateway'),
-                ipv4_dns1=ipv4public.get('dns1'),
-                ipv4anch_addr=ipv4fixed.get('address'),
-                ipv4anch_mask=ipv4cidr.netwrok.prefixlen,
-                ipv6_addr=ipv6public.get('address'),
-                ipv6_mask=ipv6public.get('prefix'),
-                ipv6_gw=ipv6public.get('gateway'),
-                ipv6_dns1=ipv6public.get('dns1'),
-            )
-        if cloud == 'private':
-            f_eth0 = eth0_core_private.data.format(
-                ipv4_addr=ipv4public.get('address'),
-                ipv4_mask=ipv4public.get('prefix'),
-                ipv4_gw=ipv4public.get('gateway'),
-                ipv4_dns1=ipv4public.get('dns1'),
-                ipv4_dns2=ipv4public.get('dns2')
-            )
-        return f_eth0
-
-    def core_eth1_data(self, ipv4private):
-        f_eth1 = eth1_core.data.format(
-            ipv4_addr=ipv4private.get('address'),
-            ipv4_mask=ipv4private.get('prefix')
-        )
-        return f_eth1
-
     def rnch_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud='public'):
         ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
         f_eth0 = ''
@@ -334,7 +259,7 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
-        if self.get_distro() == 'rhl' or self.get_distro() == 'atom':
+        if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
@@ -343,11 +268,6 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
-        if self.get_distro() == 'core':
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.core_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
@@ -362,7 +282,7 @@ class GuestFSUtil(object):
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
-        if self.get_distro() == 'rhl' or self.get_distro() == 'atom':
+        if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path(nic_type='private')
             network_file_data = self.rhl_eth1_data(ipv4private)
             self.gfs.write(nic_f_path, network_file_data)
@@ -373,13 +293,6 @@ class GuestFSUtil(object):
             priv_nic_data = self.win_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
-        if self.get_distro() == 'core':
-            nic_f_path = self.nic_file_path()
-            pub_nic_data = self.gfs.cat(nic_f_path)
-            priv_nic_data = self.core_eth1_data(ipv4private)
-            network_file_data = pub_nic_data + priv_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
@@ -403,7 +316,7 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4vpc, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
-        if self.get_distro() == 'rhl' or self.get_distro() == 'atom':
+        if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4vpc, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
@@ -412,11 +325,6 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4vpc, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
-        if self.get_distro() == 'core':
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.core_eth0_data(ipv4vpc, cloud='private')
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4vpc, cloud='private')
@@ -429,7 +337,7 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4public, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
-        if self.get_distro() == 'rhl' or self.get_distro() == 'atom':
+        if self.get_distro() == 'rhl':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
@@ -438,11 +346,6 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4public, cloud='private')
             self.gfs.write(nic_f_path, network_file_data)
-        if self.get_distro() == 'core':
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.core_eth0_data(ipv4public, cloud='private')
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4public, cloud='private')
@@ -482,13 +385,6 @@ class GuestFSUtil(object):
             network_file_data = re.sub('^IPADDR2=.*?', new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(644, nic_f_path)
-        if self.get_distro() == 'core':
-            nic_f_path = self.coreos_config_path()
-            nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"Address={ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}"
-            network_file_data = re.sub('^Address=10\.255\..*?', new_line_nic_file, nic_file)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
         if self.get_distro() == 'rnch':
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
@@ -501,9 +397,6 @@ class GuestFSUtil(object):
         shadow_file_updated = ''
         if self.get_distro() == 'win':
             pass
-        elif self.get_distro() == 'core':
-            new_pass_line = f'- passwd: "{password_hash}"'
-            shadow_file_updated = re.sub('^- passwd:.*?', new_pass_line, shadow_file)
         elif self.get_distro() == 'rnch':
             new_pass_line = f'- sed -i "s/^rancher:\*:/rancher:{password_hash}:/g" /etc/shadow'
             shadow_file_updated = re.sub('^- sed -i "s/^rancher:.*?', new_pass_line, shadow_file)
@@ -519,16 +412,6 @@ class GuestFSUtil(object):
             str_pswd = f'net user Administrator {pass_hash}\r\n'
             f_data += str_pswd
             self.gfs.write(nic_f_path, f_data)
-        elif self.get_distro() == 'core':
-            config_fl_path = self.coreos_config_path()
-            config_data = self.gfs.cat(config_fl_path)
-            if 'passwd' in config_data:
-                config_data_updated = self.change_root_passwd(pass_hash, config_data)
-            else:
-                account_data = f'\nusers:\n  - name: "core"\n  - passwd: "{pass_hash}"\n' 
-                config_data_updated = config_data + account_data
-            self.gfs.write(config_fl_path, config_data_updated)
-            self.gfs.chmod(644, config_fl_path)
         elif self.get_distro() == 'rnch':
             config_fl_path = self.rancheros_config_path()
             config_data = self.gfs.cat(config_fl_path)
@@ -550,13 +433,6 @@ class GuestFSUtil(object):
         if public_key:
             if self.get_distro() == 'win':
                 pass
-            elif self.get_distro() == 'core':
-                f_path = self.coreos_config_path()
-                f_data = self.gfs.cat(f_path)
-                key_data = f'\n\nssh_authorized_keys:\n  - "{public_key}"\n'
-                config_data = f_data + key_data
-                self.gfs.write(f_path, config_data)
-                self.gfs.chmod(640, f_path)
             elif self.get_distro() == 'rnch':
                 f_path = self.rancheros_config_path()
                 f_data = self.gfs.cat(f_path)
@@ -577,13 +453,6 @@ class GuestFSUtil(object):
         if self.get_distro() == 'alpn':
             f_path = self.hostname_file_path()
             self.gfs.write(f_path, hostname)
-        elif self.get_distro() == 'core':
-            f_path = self.coreos_config_path()
-            f_data = self.gfs.cat(f_path)
-            key_data = f'\nhostname: "{hostname}"\n'
-            config_data = f_data + key_data
-            self.gfs.write(f_path, config_data)
-            self.gfs.chmod(640, f_path)
         elif self.get_distro() == 'rnch':
             f_path = self.rancheros_config_path()
             f_data = self.gfs.cat(f_path)
@@ -600,8 +469,6 @@ class GuestFSUtil(object):
 
     def clean_cloud_init(self):
         if self.get_distro() == 'win':
-            pass
-        elif self.get_distro() == 'core':
             pass
         elif self.get_distro() == 'rnch':
             pass
@@ -640,8 +507,6 @@ class GuestFSUtil(object):
 
     def umount_root(self):
         device = self.root_device()
-        if self.get_distro() == 'core':
-            device = '/dev/sda6'
         self.gfs.umount(device)
 
     def clearfix(self, firstboot=True):
