@@ -1,2 +1,3 @@
-# HostVirtMgr
-HostVirtMgr daemon for managing virtual machine and hypervisor
+# WebVirtCompute
+
+WebVirtCompute daemon for managing virtual machine and hypervisor
