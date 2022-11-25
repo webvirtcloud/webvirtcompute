@@ -13,9 +13,9 @@ from xml.etree import ElementTree
 
 
 DISPLAY = 'vnc'
-VENDOR = 'WebVirtMgr Cloud'
-PRODUCT = 'Instance'
-MANUFACTURER = 'WebVirtMgr'
+VENDOR = 'WebVirtCloud'
+PRODUCT = 'Virtance'
+MANUFACTURER = 'WebVirtCloud'
 
 
 class wvmConnect(object):
@@ -1237,55 +1237,37 @@ class wvmInstance(wvmConnect):
 
         return result
 
-    def mount_iso(self, dev, image):
-        def attach_iso(dev, disk, vol):
-            if disk.get('device') == 'cdrom':
-                for elm in disk:
-                    if elm.tag == 'target':
-                        if elm.get('dev') == dev:
-                            src_media = ElementTree.Element('source')
-                            src_media.set('file', vol.path())
-                            disk.insert(2, src_media)
-                            return True
+    def umount_iso(self, dev, image_path):
+        disk = """
+            <disk type='file' device='cdrom'>
+                <driver name='qemu' type='raw'/>
+                <target dev='hda' bus='ide'/>
+                <readonly/>
+                <serial>0</serial>
+              </disk>
+        """
 
-        storages = self.get_storages()
-        for storage in storages:
-            stg = self.get_storage(storage)
-            stg.refresh()
-            if stg.info()[0] != 0:
-                for img in stg.listVolumes():
-                    if image == img:
-                        vol = stg.storageVolLookupByName(image)
-        tree = ElementTree.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
-        for disk in tree.findall('devices/disk'):
-            if attach_iso(dev, disk, vol):
-                break
-        if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
-            xml_disk = ElementTree.tostring(disk)
-            self.instance.attachDevice(xml_disk.decode())
-            xmldom = self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE)
-        if self.get_status() == libvirt.VIR_DOMAIN_SHUTOFF:
-            xmldom = ElementTree.tostring(tree).decode()
-        self.defineXML(xmldom)
+        tree = ET.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
+        for disk in tree.findall("devices/disk"):
+            if disk.get("device") == "cdrom":
+                disk_target = disk.find("target")
+                if disk_target.get("dev") == dev:
+                    disk_source = disk.find("source")
+                    if disk_source.get("file") == image_path:
+                        disk.remove(disk_source)
+                        if disk.find("backingStore"):
+                            disk.remove(disk.find("backingStore"))
+                        break
 
-    def umount_iso(self, dev, image):
-        src_media = ''
-        tree = ElementTree.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
-        for disk in tree.findall('devices/disk'):
-            if disk.get('device') == 'cdrom':
-                for elm in disk:
-                    if elm.tag == 'source':
-                        if os.path.basename(elm.get('file')) == image:
-                            src_media = elm
-                    if elm.tag == 'target':
-                        if elm.get('dev') == dev:
-                            disk.remove(src_media)
+        xmldev = ET.tostring(disk).decode()
         if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
-            xml_disk = ElementTree.tostring(disk)
-            self.instance.attachDevice(xml_disk.decode())
+            self.updateDevice(xmldev, live=True)
             xmldom = self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE)
+
         if self.get_status() == libvirt.VIR_DOMAIN_SHUTOFF:
-            xmldom = ElementTree.tostring(tree).decode()
+            self.updateDevice(xmldev, live=False)
+            xmldom = ET.tostring(tree).decode()
+
         self.defineXML(xmldom)
 
     def cpu_usage(self):
