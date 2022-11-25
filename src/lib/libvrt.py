@@ -15,6 +15,7 @@ from xml.etree import ElementTree
 DISPLAY = 'vnc'
 VENDOR = 'WebVirtCloud'
 PRODUCT = 'Virtance'
+VERSION = '20221125'
 MANUFACTURER = 'WebVirtCloud'
 
 
@@ -812,13 +813,13 @@ class wvmCreate(wvmConnect):
         xml += f"""<sysinfo type='smbios'>
                     <bios>
                       <entry name='vendor'>{VENDOR}</entry>
-                      <entry name='version'>20200101</entry>
-                      <entry name='date'>01/01/2020</entry>
+                      <entry name='version'>{VERSION}</entry>
+                      <entry name='date'>11/25/2022</entry>
                     </bios>
                     <system>
                      <entry name='manufacturer'>{MANUFACTURER}</entry>
                       <entry name='product'>{PRODUCT}</entry>
-                      <entry name='version'>20200101</entry>
+                      <entry name='version'>{VERSION}</entry>
                       <entry name='serial'>{name.split('-')[1]}</entry>
                       <entry name='family'>{MANUFACTURER}_{PRODUCT}</entry>
                     </system>
@@ -874,7 +875,7 @@ class wvmCreate(wvmConnect):
                    <readonly/>
                   </disk>"""
 
-        # Create public pool device with IP and IPv6 and Anchor
+        # Create public pool device with IPv4 and IPv6 and internal IPv4
         if network.get('v4', {}).get('public'):
             xml += f"""<interface type='network'>"""
             
@@ -907,7 +908,7 @@ class wvmCreate(wvmConnect):
             xml += """<model type='virtio'/>
                       </interface>"""
 
-        # Create private pool device with IP
+        # Create private pool device with IPv4
         if network.get('v4', {}).get('private', {}).get('primary') or network.get('v4', {}).get('private', {}).get('secondary'):
             xml += f"""<interface type='network'>"""
             
