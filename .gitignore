@@ -1,10 +1,9 @@
 *.pyc
 *.pyo
-.idea
 .DS_*
+.venv
+.idea
 .vscode
-.vagrant
-venv
 dist
 build
 release
