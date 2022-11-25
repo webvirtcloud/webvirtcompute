@@ -8,8 +8,8 @@ from string import ascii_letters, digits
 
 def is_kvm_available(xml):
     tree = ElementTree.fromstring(xml)
-    for dom in tree.findall('guest/arch/domain'):
-        if 'kvm' in dom.get('type'):
+    for dom in tree.findall("guest/arch/domain"):
+        if "kvm" in dom.get("type"):
             return True
     return False
 
@@ -19,16 +19,14 @@ def randomMAC():
     # qemu MAC
     oui = [0x52, 0x54, 0x00]
 
-    mac = oui + [random.randint(0x00, 0xff),
-                 random.randint(0x00, 0xff),
-                 random.randint(0x00, 0xff)]
-    return ':'.join(map(lambda x: "%02x" % x, mac))
+    mac = oui + [random.randint(0x00, 0xFF), random.randint(0x00, 0xFF), random.randint(0x00, 0xFF)]
+    return ":".join(map(lambda x: "%02x" % x, mac))
 
 
 def md5sum(filename):
     md5 = hashlib.md5()
-    with open(filename, 'rb') as f:
-        for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(128 * md5.block_size), b""):
             md5.update(chunk)
     return md5.hexdigest()
 
@@ -42,7 +40,7 @@ def randomUUID():
 
 def get_max_vcpus(conn, type=None):
     """@param conn: libvirt connection to poll for max possible vcpus
-       @type type: optional guest type (kvm, etc.)"""
+    @type type: optional guest type (kvm, etc.)"""
     if type is None:
         type = conn.getType()
     try:
@@ -59,7 +57,7 @@ def xml_escape(str):
 
     str = str.replace("&", "&amp;")
     str = str.replace("'", "&apos;")
-    str = str.replace("\"", "&quot;")
+    str = str.replace('"', "&quot;")
     str = str.replace("<", "&lt;")
     str = str.replace(">", "&gt;")
     return str
@@ -86,9 +84,9 @@ def compareMAC(p, q):
 
 
 def get_xml_data(xml, path=None, element=None):
-    res = ''
+    res = ""
     if not path and not element:
-        return ''
+        return ""
 
     tree = ElementTree.fromstring(xml)
     if path:
@@ -125,10 +123,8 @@ def pretty_bytes(val):
 
 
 def gen_password(length=22, symbols=False):
-    simple_symbols = ''
+    simple_symbols = ""
     if symbols:
-        simple_symbols = '!@#$%^&*()_+[]-=:;{}?|<>'
-    password = ''.join(
-        [random.choice(ascii_letters + simple_symbols + digits) for dummy in range(length)]
-    )
+        simple_symbols = "!@#$%^&*()_+[]-=:;{}?|<>"
+    password = "".join([random.choice(ascii_letters + simple_symbols + digits) for dummy in range(length)])
     return password

@@ -4,10 +4,11 @@ from .libguestfs import GuestFSUtil
 from .excpetions import IPRedirectError
 from .libredirect import FwRedirect, NetManager
 from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
+
 try:
     from subprocess import DEVNULL
 except ImportError:
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, "wb")
 
 
 class FixedIP(object):
@@ -53,7 +54,7 @@ class FixedIP(object):
 
     def add_addr(self, float_addr, nmc, dev, prefix=32):
         if float_addr not in nmc.get_ip_addresses():
-            ip_cmd = 'ip addr add {}/{} dev {}'.format(float_addr, prefix, dev)
+            ip_cmd = "ip addr add {}/{} dev {}".format(float_addr, prefix, dev)
             run_ip_cmd = call(ip_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_ip_cmd == 0:
                 nmc.add_address(prefix=prefix)
@@ -62,7 +63,7 @@ class FixedIP(object):
 
     def del_addr(self, nmc, float_addr, dev, prefix=32):
         if float_addr in nmc.get_ip_addresses():
-            ip_cmd = 'ip addr del {}/{} dev {}'.format(float_addr, prefix, dev)
+            ip_cmd = "ip addr del {}/{} dev {}".format(float_addr, prefix, dev)
             run_ip_cmd = call(ip_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_ip_cmd == 0:
                 nmc.remove_address(prefix)
@@ -81,7 +82,7 @@ class FixedIP(object):
             fwd.remove_rule()
 
     def clear_arp(self, float_addr, float_gw, dev):
-        arp_cmd = 'arping -c 3 -s {} -I {} -U {}'.format(float_addr, dev, float_gw)
+        arp_cmd = "arping -c 3 -s {} -I {} -U {}".format(float_addr, dev, float_gw)
         run_arp_cmd = call(arp_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_arp_cmd == 0:
             return True
@@ -94,9 +95,9 @@ class FixedIP(object):
                 self.clear_arp(float_addr, float_gw, dev)
             else:
                 self.del_addr(nmc, float_addr, dev, prefix=float_pref)
-                raise IPRedirectError('Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT)
+                raise IPRedirectError("Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT)
         else:
-            raise IPRedirectError('Error adding IP address to the network device.')
+            raise IPRedirectError("Error adding IP address to the network device.")
 
     def remove_redirect(self, fwd, float_addr, float_pref, nmc, dev):
         if self.del_addr(nmc, float_addr, dev, prefix=float_pref):
@@ -105,6 +106,6 @@ class FixedIP(object):
                 self.del_rule(fwd)
             else:
                 self.add_addr(float_addr, nmc, dev, prefix=float_pref)
-                raise IPRedirectError('Firewall closed connection by timeout %ssec.' % FIREWALLD_STATE_TIMEOUT)
+                raise IPRedirectError("Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT)
         else:
-            raise IPRedirectError('Error deleting IP address from the network device.')
+            raise IPRedirectError("Error deleting IP address from the network device.")

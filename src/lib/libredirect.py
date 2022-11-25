@@ -6,41 +6,43 @@
 import os
 import time
 import socket
-import gi; gi.require_version('NM', '1.0')
+import gi
+
+gi.require_version("NM", "1.0")
 from gi.repository import NM
 from subprocess import call, STDOUT
 from firewall.client import FirewallClient
 from settings import BRIDGE_EXT, FIREWALL_CHAIN_PREFIX
 from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
+
 try:
     from subprocess import DEVNULL
 except ImportError:
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, "wb")
 
 
 class FwRedirect(object):
-
     def __init__(self, float_addr, anchor_addr):
         self.float_addr = float_addr
         self.anchor_addr = anchor_addr
         self.fw = FirewallClient()
         self.config = self.fw.config()
         self.fw_direct = self.config.direct()
-        self.ipv = 'ipv4'
-        self.table = 'nat'
-        self.chain = 'PREROUTING'
-        self.jump = 'DNAT'
+        self.ipv = "ipv4"
+        self.table = "nat"
+        self.chain = "PREROUTING"
+        self.jump = "DNAT"
         self.prio = 0
-        self.args = ['-d', self.float_addr, '-j', self.jump, '--to-destination', self.anchor_addr]
+        self.args = ["-d", self.float_addr, "-j", self.jump, "--to-destination", self.anchor_addr]
 
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write('True')
+        f.write("True")
         f.close()
 
     def unset_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write('False')
+        f.write("False")
         f.close()
 
     def read_state(self):
@@ -76,10 +78,9 @@ class FwRedirect(object):
 
     def query_rule(self):
         chain = self.chain + FIREWALL_CHAIN_PREFIX
-        ipt_cmd = 'iptables -t {} -C {} -d {} -j {} --to-destination {}'.format(self.table, chain,
-                                                                                self.float_addr,
-                                                                                self.jump,
-                                                                                self.anchor_addr)
+        ipt_cmd = "iptables -t {} -C {} -d {} -j {} --to-destination {}".format(
+            self.table, chain, self.float_addr, self.jump, self.anchor_addr
+        )
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_ipt_cmd == 1:
             return False
@@ -92,10 +93,9 @@ class FwRedirect(object):
     def add_rule(self):
         if not self.query_rule():
             chain = self.chain + FIREWALL_CHAIN_PREFIX
-            ipt_cmd = 'iptables -t {} -A {} -d {} -j {} --to-destination {}'.format(self.table, chain,
-                                                                                    self.float_addr,
-                                                                                    self.jump,
-                                                                                    self.anchor_addr)
+            ipt_cmd = "iptables -t {} -A {} -d {} -j {} --to-destination {}".format(
+                self.table, chain, self.float_addr, self.jump, self.anchor_addr
+            )
             run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_ipt_cmd == 0:
                 if not self.check_rule_in_xml():
@@ -105,10 +105,9 @@ class FwRedirect(object):
     def remove_rule(self):
         if self.query_rule():
             chain = self.chain + FIREWALL_CHAIN_PREFIX
-            ipt_cmd = 'iptables -t {} -D {} -d {} -j {} --to-destination {}'.format(self.table, chain,
-                                                                                    self.float_addr,
-                                                                                    self.jump,
-                                                                                    self.anchor_addr)
+            ipt_cmd = "iptables -t {} -D {} -d {} -j {} --to-destination {}".format(
+                self.table, chain, self.float_addr, self.jump, self.anchor_addr
+            )
             run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_ipt_cmd == 0:
                 if self.check_rule_in_xml():
@@ -117,7 +116,6 @@ class FwRedirect(object):
 
 
 class NetManager(object):
-
     def __init__(self, float_addr):
         self.dev = BRIDGE_EXT
         self.float_addr = float_addr
@@ -131,7 +129,6 @@ class NetManager(object):
             ip_addrs.append(addr.get_address())
         return ip_addrs
 
-
     def add_address(self, prefix=32):
         ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))
         dev = self.nmc.get_device_by_iface(self.dev)
@@ -140,7 +137,6 @@ class NetManager(object):
         ipcfg = conn.get_setting_ip4_config()
         ipcfg.add_address(ip_addr)
         conn.commit_changes(True)
-
 
     def remove_address(self, prefix=32):
         ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))

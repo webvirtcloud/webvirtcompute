@@ -5,17 +5,17 @@ from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
 from subprocess import call, STDOUT
 from settings import BACKUP_USER, BACKUP_KEY_FILE
+
 try:
     from subprocess import DEVNULL
 except ImportError:
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, "wb")
 
 
-ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
+ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
 
 
 class Backup(object):
-
     def __init__(self, backup_image_path, image_path):
         self.backup_image_path = backup_image_path
         self.image_path = image_path
@@ -38,11 +38,7 @@ class Backup(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(
-                node,
-                username=BACKUP_USER,
-                key_filename=backup_key_file
-            )
+            ssh.connect(node, username=BACKUP_USER, key_filename=backup_key_file)
             sftp = ssh.open_sftp()
             sftp.put(backup_path_from, backup_path_to)
             sftp.close()
@@ -58,18 +54,18 @@ class Backup(object):
         try:
             backup_image_md5 = md5sum(self.backup_image_path)
         except IOError as err:
-            err_msg = 'Check image MD5: ' + str(err)
+            err_msg = "Check image MD5: " + str(err)
 
         if backup_image_md5:
             if image_md5sum == backup_image_md5:
                 err_msg = self._prepare_image(disk_size, distro, True)
             else:
-                err_msg = 'MD5 sum mismatch'
+                err_msg = "MD5 sum mismatch"
 
         return err_msg
 
     def deploy(self, template_name, template_md5sum, networks, cloud, public_key, hostname, root_password, disk_size):
-        err_msg = 'MD5 sum mismatch'
+        err_msg = "MD5 sum mismatch"
         resize_disk = False
         backup_image_md5 = None
 
@@ -83,15 +79,9 @@ class Backup(object):
             if not err_msg:
                 try:
                     # Load GuestFS
-                    gstfish = GuestFSUtil(
-                        self.image_path,
-                        template_name
-                    )
+                    gstfish = GuestFSUtil(self.image_path, template_name)
                     gstfish.mount_root()
-                    gstfish.setup_networking(
-                        networks,
-                        cloud=cloud
-                    )
+                    gstfish.setup_networking(networks, cloud=cloud)
                     gstfish.set_pubic_keys(public_key)
                     gstfish.set_hostname(hostname)
                     gstfish.reset_root_passwd(root_password)
@@ -107,19 +97,19 @@ class Backup(object):
         err_msg = None
         resize_disk = False
         vrt = LibVrt()
-        if vrt.get_disk_size(self.backup_image_path) <  disk_size:
+        if vrt.get_disk_size(self.backup_image_path) < disk_size:
             qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (self.backup_image_path, self.image_path)
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 vrt.image_resize(self.image_path, disk_size)
                 resize_disk = True
             else:
-                err_msg = 'Error convert snapshot to image'
+                err_msg = "Error convert snapshot to image"
         else:
             qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (self.backup_image_path, self.image_path)
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd != 0:
-                err_msg = 'Error convert snapshot to image'
+                err_msg = "Error convert snapshot to image"
         vrt.close()
 
         if resize_disk:
@@ -152,8 +142,8 @@ class Backup(object):
 
                 image_md5 = md5sum(self.backup_image_path)
             else:
-                err_msg = 'Error convert image to snapshot'
+                err_msg = "Error convert image to snapshot"
         else:
-            err_msg = 'Snapshot path does not exist'
+            err_msg = "Snapshot path does not exist"
 
         return err_msg, image_md5, image_size, disk_size

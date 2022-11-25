@@ -6,17 +6,17 @@ from settings import CACHE_DIR
 from .util import md5sum
 from .libguestfs import GuestFSUtil
 from .libvrt import wvmConnect, wvmStorage
+
 try:
     from subprocess import DEVNULL
 except ImportError:
-    DEVNULL = open(os.devnull, 'wb')
+    DEVNULL = open(os.devnull, "wb")
 
 
-ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
+ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
 
 
 class Template(object):
-
     def __init__(self, template_name, template_md5sum):
         self.template_name = template_name
         self.template_md5sum = template_md5sum
@@ -41,7 +41,7 @@ class Template(object):
         if download_image:
             try:
                 r = requests.get(template_image_url, stream=True)
-                with open(template_image_path, 'wb') as f:
+                with open(template_image_path, "wb") as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
             except Exception as err:
@@ -52,20 +52,19 @@ class Template(object):
         self.template_image_path = template_image_path
 
         if self.template_md5sum != template_image_md5:
-            err_msg = 'MD5 sum mismatch'
-        
+            err_msg = "MD5 sum mismatch"
+
         return err_msg, template_image_path
 
 
 class Image(object):
-
     def __init__(self, name, pool):
         self.name = name
         self.pool = pool
 
         conn = wvmStorage(self.pool)
         conn.refresh()
-        self.image_path = conn.get_target_path() + '/' + self.name
+        self.image_path = conn.get_target_path() + "/" + self.name
         conn.close()
 
     def image_resize(self, disk_size):
@@ -74,8 +73,8 @@ class Image(object):
         conn.resize_volume(self.name, disk_size)
         conn.close()
 
-    def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud='public'):
-        err_msg = 'Error convert template to image'
+    def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud="public"):
+        err_msg = "Error convert template to image"
         template_name = template.template_name
         template_image_path = template.template_image_path
 
@@ -93,19 +92,13 @@ class Image(object):
             self.image_resize(disk_size)
         except libvirtError as err:
             err_msg = err
-        
+
         if err_msg is None:
             try:
                 # Load GuestFS
-                gstfish = GuestFSUtil(
-                    self.image_path,
-                    template_name
-                )
+                gstfish = GuestFSUtil(self.image_path, template_name)
                 gstfish.mount_root()
-                gstfish.setup_networking(
-                    networks,
-                    cloud=cloud
-                )
+                gstfish.setup_networking(networks, cloud=cloud)
                 gstfish.set_pubic_keys(public_key)
                 gstfish.set_hostname(hostname)
                 gstfish.reset_root_passwd(root_password)
@@ -134,12 +127,12 @@ class Image(object):
 
     def guestfs_resize(self, distro, disk_size):
         err_msg = None
-        
+
         try:
             self.image_resize(disk_size)
         except libvirtError as err:
             err_msg = err
-        
+
         if err_msg is None:
             try:
                 # Load GuestFS

@@ -13,9 +13,9 @@ from websockify import ProxyRequestHandler
 
 
 def get_xml_data(xml, path=None, element=None):
-    res = ''
+    res = ""
     if not path and not element:
-        return ''
+        return ""
 
     tree = ElementTree.fromstring(xml)
     if path:
@@ -30,42 +30,16 @@ def get_xml_data(xml, path=None, element=None):
     return res
 
 
-
 parser = OptionParser()
-parser.add_option("-v",
-                  "--verbose",
-                  dest="verbose",
-                  action="store_true",
-                  help="Verbose mode",
-                  default=False)
+parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="Verbose mode", default=False)
 
-parser.add_option("-d",
-                  "--debug",
-                  dest="debug",
-                  action="store_true",
-                  help="Debug mode",
-                  default=False)
+parser.add_option("-d", "--debug", dest="debug", action="store_true", help="Debug mode", default=False)
 
-parser.add_option("-H",
-                  "--host",
-                  dest="host",
-                  action="store",
-                  help="Listen host",
-                  default='0.0.0.0')
+parser.add_option("-H", "--host", dest="host", action="store", help="Listen host", default="0.0.0.0")
 
-parser.add_option("-p",
-                  "--port",
-                  dest="port",
-                  action="store",
-                  help="Listen port",
-                  default=6080)
+parser.add_option("-p", "--port", dest="port", action="store", help="Listen port", default=6080)
 
-parser.add_option("-c",
-                  "--cert",
-                  dest="cert",
-                  action="store",
-                  help="Certificate file path",
-                  default='cert.pem')
+parser.add_option("-c", "--cert", dest="cert", action="store", help="Certificate file path", default="cert.pem")
 
 (options, args) = parser.parse_args()
 
@@ -82,16 +56,15 @@ else:
 def get_conn_data(token):
     port = None
     try:
-        conn = libvirt.open('qemu:///system')
+        conn = libvirt.open("qemu:///system")
         for dom in conn.listDomainsID():
             if token == dom.UUIDString():
                 xml = dom.XMLDesc()
-                console_type = get_xml_data(xml, 'devices/graphics', 'type')
-                port = get_xml_data(xml, f"devices/graphics[@type='{console_type}']", 'port')
+                console_type = get_xml_data(xml, "devices/graphics", "type")
+                port = get_xml_data(xml, f"devices/graphics[@type='{console_type}']", "port")
         conn.close()
     except libvirt.libvirtError as err:
-        logging.error(
-            f'Fail to retrieve console connection infos for token {token} : {err}')
+        logging.error(f"Fail to retrieve console connection infos for token {token} : {err}")
         raise
     return port
 
@@ -99,14 +72,14 @@ def get_conn_data(token):
 class CompatibilityMixIn(object):
     def _new_client(self, daemon, socket_factory):
         cookie = cookies.SimpleCookie()
-        cookie.load(self.headers.get('cookie'))
+        cookie.load(self.headers.get("cookie"))
 
-        if 'token' not in cookie:
-            logging.error('- Token not found')
+        if "token" not in cookie:
+            logging.error("- Token not found")
             return False
-    
-        console_host = 'localhost'
-        console_port = get_conn_data(cookie.get('token').value)
+
+        console_host = "localhost"
+        console_port = get_conn_data(cookie.get("token").value)
 
         cnx_debug_msg = "Connection Info:\n"
         cnx_debug_msg += f"       - VNC host: {console_host}\n"
@@ -146,22 +119,24 @@ class NovaProxyRequestHandler(ProxyRequestHandler, CompatibilityMixIn):
         self._new_client(daemon, socket_factory)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create the WebSocketProxy with NovaProxyRequestHandler handler
-    server = WebSocketProxy(RequestHandlerClass=NovaProxyRequestHandler,
-                            listen_host=options.host,
-                            listen_port=options.port,
-                            source_is_ipv6=False,
-                            verbose=options.verbose,
-                            cert=options.cert,
-                            key=None,
-                            ssl_only=False,
-                            daemon=False,
-                            record=False,
-                            web=False,
-                            traffic=False,
-                            target_host='ignore',
-                            target_port='ignore',
-                            wrap_mode='exit',
-                            wrap_cmd=None)
+    server = WebSocketProxy(
+        RequestHandlerClass=NovaProxyRequestHandler,
+        listen_host=options.host,
+        listen_port=options.port,
+        source_is_ipv6=False,
+        verbose=options.verbose,
+        cert=options.cert,
+        key=None,
+        ssl_only=False,
+        daemon=False,
+        record=False,
+        web=False,
+        traffic=False,
+        target_host="ignore",
+        target_port="ignore",
+        wrap_mode="exit",
+        wrap_cmd=None,
+    )
     server.start_server()

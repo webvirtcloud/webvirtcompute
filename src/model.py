@@ -26,6 +26,7 @@ class InstanceMedia(BaseModel):
     image: str
     device: str
 
+
 class StorageCreate(BaseModel):
     name: str
     type: str
@@ -65,6 +66,7 @@ class NetworkCreate(BaseModel):
     bridge: Optional[str] = None
     openvswitch: Optional[str] = None
     fixed: Optional[str] = None
+
 
 class NetworkAction(BaseModel):
     action: str
