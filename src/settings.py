@@ -1,5 +1,5 @@
 """
-HostVirtMgr daemon for managing VM's filesystem.
+WebVirtCloud daemon for managing VM's filesystem.
 
 """
 import configparser
@@ -8,7 +8,7 @@ from optparse import OptionParser
 
 # HostVirtMgr options
 parser = OptionParser()
-parser.add_option("-c", "--conf", dest="config", action="store", help="Config file path", default="hostvirtmgr.ini")
+parser.add_option("-c", "--conf", dest="config", action="store", help="Config file path", default="webvirtcompute.ini")
 (options, args) = parser.parse_args()
 
 # Config file
@@ -33,7 +33,7 @@ BRIDGE_EXT = conf.get("bridge", "external", fallback="br-ext")
 
 # Backup settings
 BACKUP_USER = conf.get("backup", "user", fallback="virtmgr")
-BACKUP_KEY_FILE = conf.get("backup", "file", fallback="/etc/hostvirtmgr/privkey.pem")
+BACKUP_KEY_FILE = conf.get("backup", "file", fallback="/etc/webvirtcompute/privkey.pem")
 
 # Firewall rule name
 FIREWALL_IN_NAME = conf.get("firewall", "in_name", fallback="FW_I_")
