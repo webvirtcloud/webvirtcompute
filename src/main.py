@@ -6,7 +6,7 @@ from libvirt import libvirtError
 from settings import METRICS_URL
 from lib import network, backup, fwall, images, libvrt
 from fastapi import FastAPI, Query, Depends, HTTPException
-from model import InstanceCreate, InstanceStatus, InstanceResize, InstanceMedia
+from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
 
@@ -25,10 +25,10 @@ def metrics(query: Optional[str] = "", start: Optional[str] = "", end: Optional[
     return res
 
 
-@app.post("/instance/", response_model=InstanceCreate, dependencies=[Depends(basic_auth)])
-def instance(instance: InstanceCreate):
+@app.post("/virtances/", response_model=VirtanceCreate, dependencies=[Depends(basic_auth)])
+def virtance(virtance: VirtanceCreate):
     # Download and deploy images template
-    for img in instance.images:
+    for img in virtance.images:
         if img.get("primary") is True:
             template = images.Template(img.get("name"), img.get("md5sum"))
             err_msg, template_path = template.download(img.get("url"))
@@ -37,10 +37,10 @@ def instance(instance: InstanceCreate):
                 err_msg = image.deploy_template(
                     template=template,
                     disk_size=img.get("size"),
-                    networks=instance.network,
-                    public_key=instance.public_keys,
-                    hostname=instance.name,
-                    root_password=instance.root_password,
+                    networks=virtance.network,
+                    public_key=virtance.public_keys,
+                    hostname=virtance.name,
+                    root_password=virtance.root_password,
                 )
         else:
             try:
@@ -56,31 +56,31 @@ def instance(instance: InstanceCreate):
     # Create XML
     try:
         conn = libvrt.wvmCreate()
-        conn.create_xml(instance.name, instance.vcpu, instance.memory, instance.images, instance.network)
+        conn.create_xml(virtance.name, virtance.vcpu, virtance.memory, virtance.images, virtance.network)
         conn.close()
     except libvirtError as err:
         error_msg(err)
 
-    # Run Instance
+    # Run VM
     try:
-        conn = libvrt.wvmInstance(instance.name)
+        conn = libvrt.wvmInstance(virtance.name)
         conn.start()
         conn.close()
     except libvirtError as err:
         error_msg(err)
 
-    return instance
+    return virtance
 
 
-@app.get("/instances/", dependencies=[Depends(basic_auth)])
-def instances():
-    instances = []
+@app.get("/virtances/", dependencies=[Depends(basic_auth)])
+def virtances():
+    virtances = []
     conn = libvrt.wvmConnect()
-    instance_names = conn.get_instances()
+    virtance_names = conn.get_instances()
     conn.close()
-    for name in instance_names:
+    for name in virtance_names:
         dconn = libvrt.wvmInstance(name)
-        instances.append(
+        virtances.append(
             {
                 "name": name,
                 "status": dconn.get_state(),
@@ -93,14 +93,14 @@ def instances():
             }
         )
         dconn.close()
-    return {"instances": instances}
+    return {"virtances": virtances}
 
 
-@app.get("/instances/{name}/", dependencies=[Depends(basic_auth)])
-def instance(name):
+@app.get("/virtances/{name}/", dependencies=[Depends(basic_auth)])
+def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
-        instance = {
+        virtance = {
             "name": name,
             "status": conn.get_state(),
             "uuid": conn.get_uuid(),
@@ -114,11 +114,11 @@ def instance(name):
     except libvirtError as err:
         error_msg(err)
 
-    return {"instance": instance}
+    return {"virtances": virtance}
 
 
-@app.get("/instances/{name}/status/", dependencies=[Depends(basic_auth)])
-def instance(name):
+@app.get("/virtances/{name}/status/", dependencies=[Depends(basic_auth)])
+def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
         status = conn.get_state()
@@ -128,8 +128,8 @@ def instance(name):
     return {"status": status}
 
 
-@app.post("/instances/{name}/status/", response_model=InstanceStatus, dependencies=[Depends(basic_auth)])
-def instance(name, status: InstanceStatus):
+@app.post("/virtances/{name}/status/", response_model=VirtanceStatus, dependencies=[Depends(basic_auth)])
+def virtance(name, status: VirtanceStatus):
 
     if status.action not in ["start", "stop", "suspend", "resume"]:
         error_msg("Status does not exist.")
@@ -151,8 +151,8 @@ def instance(name, status: InstanceStatus):
     return status
 
 
-@app.post("/instances/{name}/resize/", response_model=InstanceResize, dependencies=[Depends(basic_auth)])
-def instance(name, resize: InstanceResize):
+@app.post("/virtances/{name}/resize/", response_model=VirtanceResize, dependencies=[Depends(basic_auth)])
+def virtance(name, resize: VirtanceResize):
     try:
         conn = libvrt.wvmInstance(name)
         if conn.get_state() != "shutoff":
@@ -172,8 +172,8 @@ def instance(name, resize: InstanceResize):
     return resize
 
 
-@app.get("/instances/{name}/media/", dependencies=[Depends(basic_auth)])
-def instance(name):
+@app.get("/virtances/{name}/media/", dependencies=[Depends(basic_auth)])
+def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
         media = conn.get_media_device()
@@ -183,8 +183,8 @@ def instance(name):
     return {"media": media}
 
 
-@app.post("/instances/{name}/media/", response_model=InstanceMedia, dependencies=[Depends(basic_auth)])
-def instance(name, media: InstanceMedia):
+@app.post("/virtances/{name}/media/", response_model=VirtanceMedia, dependencies=[Depends(basic_auth)])
+def virtance(name, media: VirtanceMedia):
     try:
         conn = libvrt.wvmInstance(name)
         conn.mount_iso(media.device, media.image)
@@ -195,8 +195,8 @@ def instance(name, media: InstanceMedia):
     return media
 
 
-@app.delete("/instances/{name}/media/", response_model=InstanceMedia, dependencies=[Depends(basic_auth)])
-def instance(name, media: InstanceMedia):
+@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia, dependencies=[Depends(basic_auth)])
+def virtance(name, media: VirtanceMedia):
     try:
         conn = libvrt.wvmInstance(name)
         conn.umount_iso(media.device, media.image)
@@ -207,8 +207,8 @@ def instance(name, media: InstanceMedia):
     return media
 
 
-@app.post("/instances/{name}/reset_password/", response_model=ResetPassword, dependencies=[Depends(basic_auth)])
-def instance(name, reset_pass: ResetPassword):
+@app.post("/virtances/{name}/reset_password/", response_model=ResetPassword, dependencies=[Depends(basic_auth)])
+def virtance(name, reset_pass: ResetPassword):
     error_msg = None
 
     try:
@@ -230,8 +230,8 @@ def instance(name, reset_pass: ResetPassword):
     return reset_pass
 
 
-@app.delete("/instances/{name}/", dependencies=[Depends(basic_auth)])
-def instance(name):
+@app.delete("/virtances/{name}/", dependencies=[Depends(basic_auth)])
+def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
         drivers = conn.get_disk_device()

@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class InstanceCreate(BaseModel):
+class VirtanceCreate(BaseModel):
     name: str
     vcpu: int
     memory: int
@@ -12,17 +12,17 @@ class InstanceCreate(BaseModel):
     root_password: str
 
 
-class InstanceStatus(BaseModel):
+class VirtanceStatus(BaseModel):
     action: str
 
 
-class InstanceResize(BaseModel):
+class VirtanceResize(BaseModel):
     vcpu: int
     memory: int
     disk_size: Optional[int] = None
 
 
-class InstanceMedia(BaseModel):
+class VirtanceMedia(BaseModel):
     image: str
     device: str
 
