@@ -31,6 +31,11 @@ CACHE_DIR = conf.get("cache", "directory", fallback="/var/lib/libvirt/template_c
 # External bridge name
 BRIDGE_EXT = conf.get("bridge", "external", fallback="br-ext")
 
+# Storage pools
+STORAGE_IMAGE_POOL = conf.get("storage", "image_pool", fallback="images")
+STORAGE_BACKUP_POOL = conf.get("storage", "bakup_pool", fallback="backups")
+STORAGE_VOLUME_POOL = conf.get("storage", "volume_pool", fallback="volumes")
+
 # Backup settings
 BACKUP_USER = conf.get("backup", "user", fallback="virtmgr")
 BACKUP_KEY_FILE = conf.get("backup", "file", fallback="/etc/webvirtcompute/privkey.pem")

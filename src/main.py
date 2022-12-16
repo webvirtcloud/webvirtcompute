@@ -9,7 +9,7 @@ from fastapi import FastAPI, Query, Depends, HTTPException
 from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
-
+from settings import STORAGE_IMAGE_POOL
 
 app = FastAPI()
 
@@ -33,7 +33,7 @@ def virtance(virtance: VirtanceCreate):
             template = images.Template(img.get("name"), img.get("md5sum"))
             err_msg, template_path = template.download(img.get("url"))
             if err_msg is None:
-                image = images.Image(img.get("name"), img.get("pool"))
+                image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
                 err_msg = image.deploy_template(
                     template=template,
                     disk_size=img.get("size"),
@@ -44,7 +44,7 @@ def virtance(virtance: VirtanceCreate):
                 )
         else:
             try:
-                conn = libvrt.wvmStorage(img.get("pool"))
+                conn = libvrt.wvmStorage(STORAGE_IMAGE_POOL)
                 conn.create_volume(img.get("name"), img.get("size"), fmt="raw")
                 conn.close()
             except libvirtError as err:
