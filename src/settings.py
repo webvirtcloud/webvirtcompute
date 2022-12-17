@@ -36,6 +36,10 @@ STORAGE_IMAGE_POOL = conf.get("storage", "image_pool", fallback="images")
 STORAGE_BACKUP_POOL = conf.get("storage", "bakup_pool", fallback="backups")
 STORAGE_VOLUME_POOL = conf.get("storage", "volume_pool", fallback="volumes")
 
+# Network pools
+NETWORK_PUBLIC_POOL = conf.get("network", "public_pool", fallback="public")
+NETWORK_PRIVATE_POOL = conf.get("network", "private_pool", fallback="private")
+
 # Backup settings
 BACKUP_USER = conf.get("backup", "user", fallback="virtmgr")
 BACKUP_KEY_FILE = conf.get("backup", "file", fallback="/etc/webvirtcompute/privkey.pem")

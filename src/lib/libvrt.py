@@ -8,8 +8,8 @@ import base64
 import string
 import libvirt
 import binascii
-from . import util
 from xml.etree import ElementTree
+from . import util, settings
 
 
 DISPLAY = "vnc"
@@ -862,6 +862,8 @@ class wvmCreate(wvmConnect):
 
             if network.get("v4", {}).get("public", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
+            else:
+                xml += f"""<source network='{settings.NETWORK_PUBLIC_POOL}'/>"""
 
             if nwfilter:
                 if network.get("v6", {}).get("public").get("primary") or network.get("v6", {}).get("public").get(
@@ -899,6 +901,8 @@ class wvmCreate(wvmConnect):
 
             if network.get("v4", {}).get("private", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('private', {}).get('pool')}'/>"""
+            else:
+                xml += f"""<source network='{settings.NETWORK_PRIVATE_POOL}'/>"""
 
             if nwfilter:
                 xml += """<filterref filter='clean-traffic'>"""
