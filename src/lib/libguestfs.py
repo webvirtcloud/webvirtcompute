@@ -242,12 +242,12 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.deb_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
@@ -256,7 +256,7 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def private_nic_setup(self, ipv4private):
         if self.get_distro() == "deb" or self.get_distro() == "alpn":
@@ -265,12 +265,12 @@ class GuestFSUtil(object):
             priv_nic_data = self.deb_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path(nic_type="private")
             network_file_data = self.rhl_eth1_data(ipv4private)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
@@ -283,7 +283,7 @@ class GuestFSUtil(object):
             priv_nic_data = self.rnch_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def vpc_gw_nic_setup(self, ipv4vpc):
         if self.get_distro() == "deb" or self.get_distro() == "alpn":
@@ -292,19 +292,19 @@ class GuestFSUtil(object):
             vpc_nic_data = self.deb_eth2_data(ipv4vpc)
             network_file_data = pub_nic_data + vpc_nic_data
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def vpc_nic_setup(self, ipv4vpc):
         if self.get_distro() == "deb":
             nic_f_path = self.nic_file_path()
             network_file_data = self.deb_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4vpc, cloud="private")
@@ -313,19 +313,19 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def private_cloud_nic_setup(self, ipv4public):
         if self.get_distro() == "deb":
             nic_f_path = self.nic_file_path()
             network_file_data = self.deb_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4public, cloud="private")
@@ -334,7 +334,7 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             network_file_data = self.rnch_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def setup_networking(self, networks, cloud="public"):
         ipv4vpc = networks.get("v4", {}).get("vpc", {}).get("primary")
@@ -361,21 +361,21 @@ class GuestFSUtil(object):
             new_line_nic_file = f"address {ipv4fixed.get('address')}"
             network_file_data = re.sub("^address 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
             new_line_nic_file = f"^IPADDR2={ipv4fixed.get('address')}"
             network_file_data = re.sub("^IPADDR2=.*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rnch":
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
             new_line_nic_file = f"address: {ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}"
             network_file_data = re.sub("^address: 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(644, nic_f_path)
+            self.gfs.chmod(int('0644', 8), nic_f_path)
 
     def change_root_passwd(self, password_hash, shadow_file):
         shadow_file_updated = ""
@@ -405,13 +405,13 @@ class GuestFSUtil(object):
                 account_data = f'\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:{pass_hash}:/g" /etc/shadow\n'
                 config_data_updated = config_data + account_data
             self.gfs.write(config_fl_path, config_data_updated)
-            self.gfs.chmod(644, config_fl_path)
+            self.gfs.chmod(int('0644', 8), config_fl_path)
         else:
             shadow_fl_path = self.shadow_file_path()
             file_shadow = self.gfs.cat(shadow_fl_path)
             shadow_file_updated = self.change_root_passwd(pass_hash, file_shadow)
             self.gfs.write(shadow_fl_path, shadow_file_updated)
-            self.gfs.chmod(640, shadow_fl_path)
+            self.gfs.chmod(int('0640', 8), shadow_fl_path)
 
     def set_pubic_keys(self, public_key):
         if public_key:
@@ -423,15 +423,15 @@ class GuestFSUtil(object):
                 key_data = f'\nssh_authorized_keys:\n- "{public_key}"\n'
                 config_data = f_data + key_data
                 self.gfs.write(f_path, config_data)
-                self.gfs.chmod(640, f_path)
+                self.gfs.chmod(int('0640', 8), f_path)
             else:
                 root_ssh_folder_path = self.root_ssh_dir_path()
                 root_fl_auth_key_path = self.root_auth_keys_path()
                 if not self.gfs.is_dir(root_ssh_folder_path):
                     self.gfs.mkdir(root_ssh_folder_path)
-                    self.gfs.chmod(700, root_ssh_folder_path)
+                    self.gfs.chmod(int('0700', 8), root_ssh_folder_path)
                 self.gfs.write(root_fl_auth_key_path, public_key)
-                self.gfs.chmod(600, root_fl_auth_key_path)
+                self.gfs.chmod(int('0600', 8), root_fl_auth_key_path)
 
     def set_hostname(self, hostname):
         if self.get_distro() == "alpn":
@@ -443,7 +443,7 @@ class GuestFSUtil(object):
             key_data = f'\nhostname: "{hostname}"\n'
             config_data = f_data + key_data
             self.gfs.write(f_path, config_data)
-            self.gfs.chmod(640, f_path)
+            self.gfs.chmod(int('0640', 8), f_path)
         elif self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
