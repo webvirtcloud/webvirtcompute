@@ -413,14 +413,14 @@ class GuestFSUtil(object):
             self.gfs.write(shadow_fl_path, shadow_file_updated)
             self.gfs.chmod(int('0640', 8), shadow_fl_path)
 
-    def set_pubic_keys(self, public_key):
+    def set_pubic_keys(self, keys_string):
         if public_key:
             if self.get_distro() == "win":
                 pass
             elif self.get_distro() == "rnch":
                 f_path = self.rancheros_config_path()
                 f_data = self.gfs.cat(f_path)
-                key_data = f'\nssh_authorized_keys:\n- "{public_key}"\n'
+                key_data = f'\nssh_authorized_keys:\n- "{keys_string}"\n'
                 config_data = f_data + key_data
                 self.gfs.write(f_path, config_data)
                 self.gfs.chmod(int('0640', 8), f_path)
@@ -430,7 +430,7 @@ class GuestFSUtil(object):
                 if not self.gfs.is_dir(root_ssh_folder_path):
                     self.gfs.mkdir(root_ssh_folder_path)
                     self.gfs.chmod(int('0700', 8), root_ssh_folder_path)
-                self.gfs.write(root_fl_auth_key_path, public_key)
+                self.gfs.write(root_fl_auth_key_path, keys_string)
                 self.gfs.chmod(int('0600', 8), root_fl_auth_key_path)
 
     def set_hostname(self, hostname):
