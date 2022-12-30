@@ -9,7 +9,8 @@ import string
 import libvirt
 import binascii
 from xml.etree import ElementTree
-from . import util, settings
+from settings import NETWORK_PUBLIC_POOL, NETWORK_PRIVATE_POOL
+from . import util
 
 
 DISPLAY = "vnc"
@@ -873,7 +874,7 @@ class wvmCreate(wvmConnect):
             if network.get("v4", {}).get("public", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
             else:
-                xml += f"""<source network='{settings.NETWORK_PUBLIC_POOL}'/>"""
+                xml += f"""<source network='{NETWORK_PUBLIC_POOL}'/>"""
 
             if nwfilter:
                 if network.get("v6", {}).get("public").get("primary") or network.get("v6", {}).get("public").get(
@@ -912,7 +913,7 @@ class wvmCreate(wvmConnect):
             if network.get("v4", {}).get("private", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('private', {}).get('pool')}'/>"""
             else:
-                xml += f"""<source network='{settings.NETWORK_PRIVATE_POOL}'/>"""
+                xml += f"""<source network='{NETWORK_PRIVATE_POOL}'/>"""
 
             if nwfilter:
                 xml += """<filterref filter='clean-traffic'>"""
