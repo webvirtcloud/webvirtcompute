@@ -140,6 +140,9 @@ class wvmConnect(object):
     def get_instance(self, name):
         return self.wvm.lookupByName(name)
 
+    def get_instance_by_uuid(self, uuid):
+        return self.wvm.lookupByUUIDString(uuid)
+
     def get_instance_status(self, name):
         dom = self.wvm.lookupByName(name)
         return dom.info()[0]
@@ -777,12 +780,19 @@ class wvmCreate(wvmConnect):
         vol = self.get_volume_by_path(path)
         vol.delete()
 
-    def create_xml(self, name, vcpu, memory, images, network, autostart=True, nwfilter=True, display=DISPLAY):
+    def create_xml(
+        self, name, vcpu, memory, images, network, uuid=None, autostart=True, nwfilter=True, display=DISPLAY
+    ):
+        
         xml = f"""
-                <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>
+                <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>"""
+        if uuid:
+            xml += f"""
+                    <uuid>{uuid}</uuid>"""
+        xml = f"""
                   <name>{name}</name>
                   <description>None</description>
-                  <memory unit='KiB'>{int(memory / 1024)}</memory>
+                  <memory unit='KiB'>{int(memory // 1024)}</memory>
                   <vcpu>{vcpu}</vcpu>"""
 
         if self.is_kvm_supported():
