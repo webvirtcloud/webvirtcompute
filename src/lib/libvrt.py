@@ -8,6 +8,7 @@ import base64
 import string
 import libvirt
 import binascii
+from uuid import UUID
 from xml.etree import ElementTree
 from settings import NETWORK_PUBLIC_POOL, NETWORK_PRIVATE_POOL
 from . import util
@@ -789,7 +790,7 @@ class wvmCreate(wvmConnect):
                 <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>"""
         if uuid:
             xml += f"""
-                    <uuid>{uuid}</uuid>"""
+                    <uuid>{str(UUID(uuid))}</uuid>"""
         xml = f"""
                   <name>{name}</name>
                   <description>None</description>
