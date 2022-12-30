@@ -35,7 +35,7 @@ def virtance(virtance: VirtanceCreate):
                     template=template,
                     disk_size=img.get("size"),
                     networks=virtance.network,
-                    public_key=virtance.public_keys,
+                    public_keys=virtance.keypairs,
                     hostname=virtance.name,
                     root_password=virtance.root_password,
                 )

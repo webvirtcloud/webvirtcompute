@@ -73,7 +73,7 @@ class Image(object):
         conn.resize_volume(self.name, disk_size)
         conn.close()
 
-    def deploy_template(self, template, disk_size, networks, public_key, hostname, root_password, cloud="public"):
+    def deploy_template(self, template, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = "Error convert template to image"
         template_name = template.template_name
         template_image_path = template.template_image_path
@@ -81,12 +81,19 @@ class Image(object):
         qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template.template_image_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
-            err_msg = self._run(disk_size, template_name, networks, public_key, hostname, cloud, root_password)
+            err_msg = self._run(disk_size, template_name, networks, public_keys, hostname, cloud, root_password)
 
         return err_msg
 
-    def _run(self, disk_size, template_name, networks, public_key, hostname, cloud, root_password):
+    def _run(self, disk_size, template_name, networks, public_keys, hostname, cloud, root_password):
         err_msg = None
+        public_key_strig = None
+        
+        for key in public_keys:
+            if public_key_strig is not None:
+                public_key_strig += "\n" + key
+            else:
+                public_key_strig = key
 
         try:
             self.image_resize(disk_size)
@@ -99,7 +106,7 @@ class Image(object):
                 gstfish = GuestFSUtil(self.image_path, template_name)
                 gstfish.mount_root()
                 gstfish.setup_networking(networks, cloud=cloud)
-                gstfish.set_pubic_keys(public_key)
+                gstfish.set_pubic_keys(public_key_strig)
                 gstfish.set_hostname(hostname)
                 gstfish.reset_root_passwd(root_password)
                 gstfish.resize_fs()
