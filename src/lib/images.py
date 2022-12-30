@@ -87,13 +87,13 @@ class Image(object):
 
     def _run(self, disk_size, template_name, networks, public_keys, hostname, cloud, root_password):
         err_msg = None
-        public_key_strig = None
+        public_key_string = None
         
         for key in public_keys:
-            if public_key_strig is not None:
-                public_key_strig += "\n" + key
+            if public_key_string is not None:
+                public_key_str += "\n" + key
             else:
-                public_key_strig = key
+                public_key_string = key
 
         try:
             self.image_resize(disk_size)
@@ -106,7 +106,7 @@ class Image(object):
                 gstfish = GuestFSUtil(self.image_path, template_name)
                 gstfish.mount_root()
                 gstfish.setup_networking(networks, cloud=cloud)
-                gstfish.set_pubic_keys(public_key_strig)
+                gstfish.set_pubic_keys(public_key_string)
                 gstfish.set_hostname(hostname)
                 gstfish.reset_root_passwd(root_password)
                 gstfish.resize_fs()
