@@ -6,12 +6,11 @@ data = """# This file describes the network interfaces available on your
 # The loopback network interface
 auto lo
 iface lo inet loopback
-    dns-nameservers {ipv4_dns1} {ipv4_dns2}
+    dns-nameservers {{ ipv4public.dns1 }} {{ ipv4public.dns2 }}
 
 # The primary network interface
 auto eth0
 iface eth0 inet static
-    address {ipv4_addr}
-    netmask {ipv4_mask}
-    gateway {ipv4_gw}
-"""
+    address {{ ipv4public.address }}
+    netmask {{ ipv4public.netmask }}
+    gateway {{ ipv4public.gateway }}"""

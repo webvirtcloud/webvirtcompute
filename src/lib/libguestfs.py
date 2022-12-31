@@ -5,6 +5,7 @@
 
 import re
 import guestfs
+from jinja2 import Template
 from ipaddress import IPv4Interface
 
 from tmpl import eth1_rnch
@@ -106,155 +107,134 @@ class GuestFSUtil(object):
             f_path = self.rancheros_config_path()
         return f_path
 
-    def deb_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud="public"):
-        f_eth0 = ""
+    def deb_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        data = ""
         if cloud == "public":
-            f_eth0 = eth0_deb_public.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
-                ipv4anch_addr=ipv4fixed.get("address"),
-                ipv4anch_mask=ipv4fixed.get("netmask"),
-                ipv6_addr=ipv6public.get("address"),
-                ipv6_mask=ipv6public.get("prefix"),
-                ipv6_gw=ipv6public.get("gateway"),
-                ipv6_dns1=ipv6public.get("dns1"),
-                ipv6_dns2=ipv6public.get("dns2"),
+            template = Template(eth0_deb_public.data)
+            data = template.render(
+                ipv4public=ipv4public,
+                ipv4compute=ipv4compute,
+                ipv6public=ipv6public
             )
         if cloud == "private":
-            f_eth0 = eth0_deb_private.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
+            template = Template(eth0_deb_private.data)
+            data = template.render(
+                ipv4public=ipv4public
             )
-        return f_eth0
+        return data
 
     def deb_eth1_data(self, ipv4private):
-        f_eth1 = eth1_deb.data.format(ipv4_addr=ipv4private.get("address"), ipv4_mask=ipv4private.get("netmask"))
-        return f_eth1
+        template = Template(eth1_deb.data)
+        data = template.render(
+            ipv4private=ipv4private
+        )
+        return data
 
     def deb_eth2_data(self, ipv4private):
-        f_eth2 = eth2_deb.data.format(ipv4_addr=ipv4private.get("address"), ipv4_mask=ipv4private.get("netmask"))
-        return f_eth2
+        template = Template(eth2_deb.data)
+        data = template.render(
+            ipv4private=ipv4private
+        )
+        return data
 
-    def rhl_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud="public"):
-        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
-        f_eth0 = ""
+    def rhl_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
+        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
-            f_eth0 = eth0_rhl_public.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
-                ipv4anch_addr=ipv4fixed.get("address"),
-                ipv4anch_mask=ipv4cidr.network.prefixlen,
-                ipv6_addr=ipv6public.get("address"),
-                ipv6_mask=ipv6public.get("prefix"),
-                ipv6_gw=ipv6public.get("gateway"),
-                ipv6_dns1=ipv6public.get("dns1"),
-                ipv6_dns2=ipv6public.get("dns2"),
+            template = Template(eth0_rhl_public.data)
+            data = template.render(
+                ipv4public=ipv4public,
+                ipv4compute=ipv4compute,
+                ipv6public=ipv6public
             )
         if cloud == "private":
-            f_eth0 = eth0_rhl_private.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
+            template = Template(eth0_rhl_private.data)
+            data = template.render(
+                ipv4public=ipv4public
             )
-        return f_eth0
+        return date
 
     def rhl_eth1_data(self, ipv4private):
-        f_eth1 = eth1_rhl.data.format(ipv4_addr=ipv4private.get("address"), ipv4_mask=ipv4private.get("netmask"))
-        return f_eth1
+        template = Template(eth1_rhl.data)
+        data = template.render(
+            ipv4private=ipv4private
+        )
+        return data
 
-    def win_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud="public"):
-        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
-        f_eth0 = ""
+    def win_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
+        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
-            f_eth0 = eth0_win_public.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
-                ipv4anch_addr=ipv4fixed.get("address"),
-                ipv4anch_mask=ipv4cidr.network.prefixlen,
-                ipv6_addr=ipv6public.get("address"),
-                ipv6_mask=ipv6public.get("prefix"),
-                ipv6_gw=ipv6public.get("gateway"),
-                ipv6_dns1=ipv6public.get("dns1"),
-                ipv6_dns2=ipv6public.get("dns2"),
+            template = Template(eth0_win_public.data)
+            data = template.render(
+                ipv4public=ipv4public,
+                ipv4compute=ipv4compute,
+                ipv6public=ipv6public
             )
         if cloud == "private":
-            f_eth0 = eth0_win_private.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("netmask"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
+            template = Template(eth0_win_private.data)
+            data = template.render(
+                ipv4public=ipv4public
             )
-        return f_eth0
+        return data
 
     def win_eth1_data(self, ipv4private):
-        f_eth1 = eth1_win.data.format(ipv4_addr=ipv4private.get("address"), ipv4_mask=ipv4private.get("netmask"))
-        return f_eth1
+        template = Template(eth1_win.data)
+        data = template.render(
+            ipv4private=ipv4private
+        )
+        return data
 
-    def rnch_eth0_data(self, ipv4public, ipv4fixed={}, ipv6public={}, cloud="public"):
-        ipv4cidr = IPv4Interface(f"{ipv4fixed.get('address')}/{ipv4fixed.get('netmaks')}")
-        f_eth0 = ""
+    def rnch_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
+        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})        
         if cloud == "public":
-            f_eth0 = eth0_rnch_public.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("prefix"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
-                ipv4anch_addr=ipv4fixed.get("address"),
-                ipv4anch_mask=ipv4cidr.network.prefixlen,
-                ipv6_addr=ipv6public.get("address"),
-                ipv6_mask=ipv6public.get("prefix"),
-                ipv6_gw=ipv6public.get("gateway"),
-                ipv6_dns1=ipv6public.get("dns1"),
-                ipv6_dns2=ipv6public.get("dns2"),
+            template = Template(eth0_rnch_public.data)
+            data = template.render(
+                ipv4public=ipv4public,
+                ipv4compute=ipv4compute,
+                ipv6public=ipv6public
             )
         if cloud == "private":
-            f_eth0 = eth0_rnch_private.data.format(
-                ipv4_addr=ipv4public.get("address"),
-                ipv4_mask=ipv4public.get("prefix"),
-                ipv4_gw=ipv4public.get("gateway"),
-                ipv4_dns1=ipv4public.get("dns1"),
-                ipv4_dns2=ipv4public.get("dns2"),
+            template = Template(eth0_rnch_private.data)
+            data = template.render(
+                ipv4public=ipv4public
             )
-        return f_eth0
+        return data
 
     def rnch_eth1_data(self, ipv4private):
-        f_eth1 = eth1_rnch.data.format(ipv4_addr=ipv4private.get("address"), ipv4_mask=ipv4private.get("prefix"))
-        return f_eth1
+        ipv4_private_iface = IPv4Interface(f"{ipv4private.get('address')}/{ipv4private.get('netmaks')}")
+        ipv4private.update({"prefix": ipv4_private_iface.network.prefixlen})
+        template = Template(eth1_rnch.data)
+        data = template.render(
+            ipv4private=ipv4private
+        )
+        return data
 
-    def public_nic_setup(self, ipv4public, ipv4fixed, ipv6public):
+    def public_nic_setup(self, ipv4public, ipv4compute, ipv6public):
         if self.get_distro() == "deb" or self.get_distro() == "alpn":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.deb_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
+            network_file_data = self.deb_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.rhl_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
+            network_file_data = self.rhl_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.win_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
+            network_file_data = self.win_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
         if self.get_distro() == "rnch":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.rnch_eth0_data(ipv4public, ipv4fixed, ipv6public=ipv6public)
+            network_file_data = self.rnch_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
 
@@ -338,13 +318,13 @@ class GuestFSUtil(object):
 
     def setup_networking(self, networks, cloud="public"):
         ipv4vpc = networks.get("v4", {}).get("vpc", {}).get("primary")
-        ipv4fixed = networks.get("v4", {}).get("public", {}).get("secondary")
         ipv4public = networks.get("v4", {}).get("public", {}).get("primary")
+        ipv4compute = networks.get("v4", {}).get("public", {}).get("secondary")
         ipv4private = networks.get("v4", {}).get("private", {}).get("primary")
         ipv6public = networks.get("v6", {}).get("public", {}).get("primary")
 
         if cloud == "public":
-            self.public_nic_setup(ipv4public, ipv4fixed=ipv4fixed, ipv6public=ipv6public)
+            self.public_nic_setup(ipv4public, ipv4compute, ipv6public=ipv6public)
             if ipv4private:
                 self.private_nic_setup(ipv4private)
             # Only for VPC gateway
@@ -354,25 +334,25 @@ class GuestFSUtil(object):
         if cloud == "private":
             self.ipv4_vpc(ipv4vpc)
 
-    def change_ipv4fixed(self, ipv4fixed):
+    def change_ipv4fixed(self, ipv4compute):
         if self.get_distro() == "deb" or self.get_distro() == "alpn":
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"address {ipv4fixed.get('address')}"
+            new_line_nic_file = f"address {ipv4compute.get('address')}"
             network_file_data = re.sub("^address 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"^IPADDR2={ipv4fixed.get('address')}"
+            new_line_nic_file = f"^IPADDR2={ipv4compute.get('address')}"
             network_file_data = re.sub("^IPADDR2=.*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rnch":
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"address: {ipv4fixed.get('address')}/{ipv4fixed.get('prefix')}"
+            new_line_nic_file = f"address: {ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
             network_file_data = re.sub("^address: 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)

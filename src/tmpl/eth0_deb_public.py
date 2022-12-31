@@ -6,22 +6,24 @@ data = """# This file describes the network interfaces available on your
 # The loopback network interface
 auto lo
 iface lo inet loopback
-    dns-nameservers {ipv4_dns1} {ipv4_dns2}
-    #dns-nameservers {ipv6_dns1} {ipv6_dns2}
-    
+    dns-nameservers {{ ipv4public.dns1 }} {{ ipv4public.dns2 }}
+{% if ipv6public %}
+    dns-nameservers {{ ipv6public.dns1 }} {{ ipv6public.dns2 }}
+{% endif %}
 # The primary network interface
 auto eth0
 iface eth0 inet static
-    address {ipv4_addr}
-    netmask {ipv4_mask}
-    gateway {ipv4_gw}
-
-iface eth0 inet6 static
-    address {ipv6_addr}
-    netmask {ipv6_mask}
-    gateway {ipv6_gw}
+    address {{ ipv4public.address }}
+    netmask {{ ipv4public.netmask }}
+    gateway {{ ipv4public.gateway }}
 
 iface eth0 inet static
-    address {ipv4anch_addr}
-    netmask {ipv4anch_mask}
-"""
+    address {{ ipv4compute.address }}
+    netmask {{ ipv4compute.netmask }}
+
+{% if ipv6public %}
+iface eth0 inet6 static
+    address {{ ipv6public.address }}
+    netmask {{ ipv6public.prefix }}
+    gateway {{ ipv6public.gateway }}
+{% if endif %}"""

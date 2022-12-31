@@ -6,9 +6,9 @@ rancher:
     interfaces:
       eth0:
         addresses:
-        - {ipv4_addr}/{ipv4_mask}
-        gateway: {ipv4_gw}
+        - {{ ipv4public.address }}/{{ ipv4public.prefix }}
+        gateway: {{ ipv4public.gateway }}
         dns:
           nameservers:
-          - {ipv4_dns1}
-          - {ipv4_dns2}"""
+          - {{ ipv4public.dns1 }}
+          - {{ ipv4public.dns2 }}"""

@@ -3,6 +3,5 @@ data = """
 # The third network interface
 auto eth2
 iface eth2 inet static
-    address {ipv4_addr}
-    netmask {ipv4_mask}
-"""
+    address {{ ipv4private.address }}
+    netmask {{ ipv4private.netmask }}"""

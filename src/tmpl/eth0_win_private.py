@@ -11,6 +11,6 @@ echo  ##########################################################################
 REM IPv4 Public
 netsh interface ipv4 delete dnsservers "Ethernet" all
 netsh interface ipv4 reset
-netsh interface ipv4 set address "Ethernet" static {ipv4_addr} {ipv4_mask} {ipv4_gw}
-netsh interface ipv4 add dnsservers "Ethernet" {ipv4_dns1}
-netsh interface ipv4 add dnsservers "Ethernet" {ipv4_dns2} index=2"""
+netsh interface ipv4 set address "Ethernet" static {{ ipv4public.address }} {{ ipv4public.netmask }} {{ ipv4public.gateway }}
+netsh interface ipv4 add dnsservers "Ethernet" {{ ipv4public.dns1 }}
+netsh interface ipv4 add dnsservers "Ethernet" {{ ipv4public.dns2 }} index=2"""
