@@ -8,22 +8,22 @@ import guestfs
 from jinja2 import Template
 from ipaddress import IPv4Interface
 
-from tmpl import eth1_rnch
-from tmpl import eth0_rnch_public
-from tmpl import eth0_rnch_private
+from templates import eth1_rnch
+from templates import eth0_rnch_public
+from templates import eth0_rnch_private
 
-from tmpl import eth1_win
-from tmpl import eth0_win_public
-from tmpl import eth0_win_private
+from templates import eth1_win
+from templates import eth0_win_public
+from templates import eth0_win_private
 
-from tmpl import eth1_rhl
-from tmpl import eth0_rhl_public
-from tmpl import eth0_rhl_private
+from templates import eth1_rhl
+from templates import eth0_rhl_public
+from templates import eth0_rhl_private
 
-from tmpl import eth1_deb
-from tmpl import eth2_deb
-from tmpl import eth0_deb_public
-from tmpl import eth0_deb_private
+from templates import eth1_deb
+from templates import eth2_deb
+from templates import eth0_deb_public
+from templates import eth0_deb_private
 
 
 class GuestFSUtil(object):
