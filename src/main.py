@@ -55,14 +55,7 @@ def virtance_create(virtnace: VirtanceCreate):
     # Create XML
     try:
         conn = libvrt.wvmCreate()
-        conn.create_xml(
-            virtnace.uuid,
-            virtnace.name,
-            virtnace.vcpu,
-            virtnace.memory,
-            virtnace.images,
-            virtnace.network
-        )
+        conn.create_xml(virtnace.uuid, virtnace.name, virtnace.vcpu, virtnace.memory, virtnace.images, virtnace.network)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -114,7 +107,7 @@ def virtance_info(name):
             "media": conn.get_media_device(),
             "status": conn.get_state(),
             "memory": conn.get_memory(),
-            "ifaces": conn.get_net_ifaces()
+            "ifaces": conn.get_net_ifaces(),
         }
         conn.close()
     except libvirtError as err:
