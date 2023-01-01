@@ -1,15 +1,12 @@
 import os
 import time
-from subprocess import call, STDOUT
 from firewall.client import FirewallClient
+from subprocess import call, STDOUT, DEVNULL
+
 from settings import FIREWALL_IN_NAME, FIREWALL_OUT_NAME
 from settings import FIREWALL_CHAIN_PREFIX, FIREWALL_INSERT_LINE
 from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
 
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
 
 
 class FirewallMgr(object):

@@ -10,6 +10,7 @@ import libvirt
 import binascii
 from uuid import UUID
 from xml.etree import ElementTree
+
 from settings import NETWORK_PUBLIC_POOL, NETWORK_PRIVATE_POOL
 from . import util
 
@@ -17,7 +18,7 @@ from . import util
 DISPLAY = "vnc"
 VENDOR = "WebVirtCloud"
 PRODUCT = "Virtance"
-VERSION = "20221125"
+VERSION = "20230101"
 MANUFACTURER = "WebVirtCloud"
 
 

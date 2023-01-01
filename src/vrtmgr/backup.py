@@ -1,15 +1,11 @@
 import os
 import paramiko
+from subprocess import call, STDOUT, DEVNULL
+
+from settings import BACKUP_USER, BACKUP_KEY_FILE
 from .util import md5sum
 from .libvrt import wvmConnect
 from .libguestfs import GuestFSUtil
-from subprocess import call, STDOUT
-from settings import BACKUP_USER, BACKUP_KEY_FILE
-
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))

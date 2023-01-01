@@ -1,16 +1,12 @@
 import os
 import requests
 from libvirt import libvirtError
-from subprocess import call, STDOUT
+from subprocess import call, STDOUT, DEVNULL
+
 from settings import CACHE_DIR
 from .util import md5sum
 from .libguestfs import GuestFSUtil
 from .libvrt import wvmConnect, wvmStorage
-
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))

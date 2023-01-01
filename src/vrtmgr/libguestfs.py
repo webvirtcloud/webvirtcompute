@@ -1,8 +1,3 @@
-#
-# util - HubGridCloud utils for managing VM's filesystem
-# UUID regexp - '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
-#
-
 import re
 import guestfs
 from jinja2 import Template

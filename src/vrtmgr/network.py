@@ -1,14 +1,10 @@
 import os
-from subprocess import call, STDOUT
+from subprocess import call, STDOUT, DEVNULL
+
+from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
 from .libguestfs import GuestFSUtil
 from .excpetions import IPRedirectError
 from .libredirect import FwRedirect, NetManager
-from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
-
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
 
 
 class FixedIP(object):
