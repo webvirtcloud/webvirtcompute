@@ -889,16 +889,24 @@ class wvmCreate(wvmConnect):
                     xml += """<filterref filter='clean-traffic'>"""
 
                 if network.get("v4", {}).get("public", {}).get("primary"):
-                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('primary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IP' value='{
+                                network.get('v4', {}).get('public', {}).get('primary', {}).get('address')
+                            }'/>"""
 
                 if network.get("v4", {}).get("public", {}).get("secondary"):
-                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('public', {}).get('secondary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IP' value='{
+                                network.get('v4', {}).get('public', {}).get('secondary', {}).get('address')
+                            }'/>"""
 
                 if network.get("v6", {}).get("public").get("primary"):
-                    xml += f"""<parameter name='IPV6' value='{network.get('v6', {}).get('public', {}).get('primary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IPV6' value='{
+                                network.get('v6', {}).get('public', {}).get('primary', {}).get('address')
+                            }'/>"""
 
                 if network.get("v6", {}).get("public").get("secondary"):
-                    xml += f"""<parameter name='IPV6' value='{network.get('v6', {}).get('public', {}).get('secondary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IPV6' value='{
+                                network.get('v6', {}).get('public', {}).get('secondary', {}).get('address')
+                            }'/>"""
 
                 xml += """</filterref>"""
 
@@ -923,10 +931,14 @@ class wvmCreate(wvmConnect):
                 xml += """<filterref filter='clean-traffic'>"""
 
                 if network.get("v4", {}).get("private", {}).get("primary"):
-                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('primary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IP' value='{
+                                network.get('v4', {}).get('private', {}).get('primary', {}).get('address')
+                            }'/>"""
 
                 if network.get("v4", {}).get("private", {}).get("secondary", {}):
-                    xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')}'/>"""
+                    xml += f"""<parameter name='IP' value='{
+                                network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')
+                                }'/>"""
 
                 xml += """</filterref>"""
 
