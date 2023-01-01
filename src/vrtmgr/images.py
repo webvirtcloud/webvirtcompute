@@ -5,8 +5,8 @@ from subprocess import call, STDOUT, DEVNULL
 
 from settings import CACHE_DIR
 from .util import md5sum
+from .libvrt import wvmStorage
 from .libguestfs import GuestFSUtil
-from .libvrt import wvmConnect, wvmStorage
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
@@ -74,7 +74,7 @@ class Image(object):
         template_name = template.template_name
         template_image_path = template.template_image_path
 
-        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template.template_image_path} {self.image_path}"
+        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template_image_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
             err_msg = self._run(disk_size, template_name, networks, public_keys, hostname, cloud, root_password)
@@ -84,10 +84,10 @@ class Image(object):
     def _run(self, disk_size, template_name, networks, public_keys, hostname, cloud, root_password):
         err_msg = None
         public_key_string = None
-        
+
         for key in public_keys:
             if public_key_string is not None:
-                public_key_str += "\n" + key
+                public_key_string += "\n" + key
             else:
                 public_key_string = key
 
@@ -113,7 +113,7 @@ class Image(object):
 
         return err_msg
 
-    def reset_password(self, name, root_password):
+    def reset_password(self, distro, root_password):
         err_msg = None
 
         try:

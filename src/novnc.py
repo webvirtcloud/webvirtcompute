@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import re
-import os
-import sys
-import socket
 import libvirt
 import logging
 from http import cookies
+from xml.etree import ElementTree
 from optparse import OptionParser
 from websockify import WebSocketProxy
 from websockify import ProxyRequestHandler

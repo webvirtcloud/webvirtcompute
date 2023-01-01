@@ -1,15 +1,13 @@
-#
-# libvrt - libvirt wrapper class
-#
-
 import os
-import re
+import time
 import base64
 import string
 import libvirt
 import binascii
+import datetime
 from uuid import UUID
 from xml.etree import ElementTree
+from ipaddress import IPv4Interface
 
 from settings import NETWORK_PUBLIC_POOL, NETWORK_PRIVATE_POOL
 from . import util
@@ -48,14 +46,14 @@ class wvmConnect(object):
         return util.get_xml_data(self.get_cap_xml(), "guest/arch/domain", "type")
 
     def get_host_mem_usage(self):
-        hostemem = self.wvm.getInfo()[1] * (1024**2)
-        freemem = self.wvm.getMemoryStats(-1, 0)
-        if isinstance(freemem, dict):
-            mem = list(freemem.values())
-            free = (mem[1] + mem[2] + mem[3]) * 1024
-            percent = 100 - ((free * 100) / hostmem)
-            usage = hostmem - free
-            return {"size": hostmem, "usage": usage, "percent": round(percent)}
+        host_memory = self.wvm.getInfo()[1] * (1024**2)
+        free_memory = self.wvm.getMemoryStats(-1, 0)
+        if isinstance(free_memory, dict):
+            memory = list(free_memory.values())
+            free = (memory[1] + memory[2] + memory[3]) * 1024
+            percent = 100 - ((free * 100) / host_memory)
+            memory_usage = host_memory - free
+            return {"size": host_memory, "usage": memory_usage, "percent": round(percent)}
         return {"size": 0, "usage": 0, "percent": 0}
 
     def get_host_cpu_usage(self):
@@ -252,7 +250,7 @@ class wvmStorages(wvmConnect):
                     <device path='{source}'/>
                     <name>{name}</name>
                     <format type='lvm2'/>
-                  </source>            
+                  </source>
                   <target>
                        <path>/dev/{name}</path>
                   </target>
@@ -571,24 +569,17 @@ class wvmNetwork(wvmConnect):
         if not util.get_xml_data(xml, "ip"):
             return None
 
-        addrStr = util.get_xml_data(xml, "ip", "address")
-        netmaskStr = util.get_xml_data(xml, "ip", "netmask")
+        ip = util.get_xml_data(xml, "ip", "address")
         prefix = util.get_xml_data(xml, "ip", "prefix")
+        netmask = util.get_xml_data(xml, "ip", "netmask")
+
+        if netmask:
+            ipv4_iface = IPv4Interface(f"{ip}/{netmask}")
 
         if prefix:
-            prefix = int(prefix)
-            binstr = (prefix * "1") + ((32 - prefix) * "0")
-            netmaskStr = str(IP(int(binstr, base=2)))
+            ipv4_iface = IPv4Interface(f"{ip}/{prefix}")
 
-        if netmaskStr:
-            netmask = IP(netmaskStr)
-            gateway = IP(addrStr)
-            network = IP(gateway.int() & netmask.int())
-            ret = IP(str(network) + "/" + netmaskStr)
-        else:
-            ret = IP(str(addrStr))
-
-        return ret
+        return f"{ipv4_iface.ip}/{str(ipv4_iface.netmask)}"
 
     def get_ipv4_forward(self):
         xml = self.XMLDesc(0)
@@ -602,7 +593,7 @@ class wvmNetwork(wvmConnect):
         dhcpend = util.get_xml_data(xml, "ip/dhcp/range[1]", "end")
         if not dhcpstart and not dhcpend:
             return None
-        return [IP(dhcpstart), IP(dhcpend)]
+        return [dhcpstart, dhcpend]
 
     def get_ipv4_dhcp_range_start(self):
         dhcp = self.get_ipv4_dhcp_range()
@@ -689,7 +680,7 @@ class wvmCreate(wvmConnect):
             stg = self.get_storage(storage)
             try:
                 stg.refresh(0)
-            except libvirtError:
+            except libvirt.libvirtError:
                 pass
             for img in stg.listVolumes():
                 if img.endswith(".iso"):
@@ -783,10 +774,21 @@ class wvmCreate(wvmConnect):
         vol = self.get_volume_by_path(path)
         vol.delete()
 
+    def get_rbd_storage_data(self, stg):
+        hosts = []
+        xml = stg.XMLDesc(0)
+        host_count = xml.find("host")
+        username = util.get_xml_data(xml, "source/auth", "username")
+        uuid = util.get_xml_data(xml, "source/auth/secret", "uuid")
+        for i in range(1, host_count + 1):
+            host = util.get_xml_data(xml, f"source/host[{i}]", "name")
+            if host:
+                hosts.append(host)
+        return username, uuid, hosts
+
     def create_xml(
         self, name, vcpu, memory, images, network, uuid=None, autostart=True, nwfilter=True, display=DISPLAY
     ):
-        
         xml = f"""
                 <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>"""
         if uuid:
@@ -840,7 +842,7 @@ class wvmCreate(wvmConnect):
             stg_type = util.get_xml_data(stg_xml, element="type")
 
             if stg_type == "rbd":
-                ceph_user, secrt_uuid, ceph_host = get_rbd_storage_data(stg)
+                ceph_user, secrt_uuid, ceph_host = self.get_rbd_storage_data(stg)
 
                 xml += f"""<disk type='network' device='disk'>
                             <driver name='qemu' type='raw' cache='writeback'/>
@@ -868,7 +870,7 @@ class wvmCreate(wvmConnect):
 
         # Create public pool device with IPv4 and IPv6 and internal IPv4
         if network.get("v4", {}).get("public"):
-            xml += f"""<interface type='network'>"""
+            xml += """<interface type='network'>"""
 
             if network.get("v4", {}).get("public", {}).get("mac"):
                 xml += f"""<mac address='{network.get('v4', {}).get('public', {}).get('mac')}'/>"""
@@ -907,7 +909,7 @@ class wvmCreate(wvmConnect):
         if network.get("v4", {}).get("private", {}).get("primary") or network.get("v4", {}).get("private", {}).get(
             "secondary"
         ):
-            xml += f"""<interface type='network'>"""
+            xml += """<interface type='network'>"""
 
             if network.get("v4", {}).get("private", {}).get("mac"):
                 xml += f"""<mac address='{network.get('v4', {}).get('private', {}).get('mac')}'/>"""
@@ -926,7 +928,7 @@ class wvmCreate(wvmConnect):
                 if network.get("v4", {}).get("private", {}).get("secondary", {}):
                     xml += f"""<parameter name='IP' value='{network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')}'/>"""
 
-                xml += f"""</filterref>"""
+                xml += """</filterref>"""
 
             xml += """<model type='virtio'/>
                       </interface>"""
@@ -1238,7 +1240,7 @@ class wvmInstance(wvmConnect):
               </disk>
         """
 
-        tree = ET.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
+        tree = ElementTree.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
         for disk in tree.findall("devices/disk"):
             if disk.get("device") == "cdrom":
                 disk_target = disk.find("target")
@@ -1250,14 +1252,14 @@ class wvmInstance(wvmConnect):
                             disk.remove(disk.find("backingStore"))
                         break
 
-        xmldev = ET.tostring(disk).decode()
+        xmldev = ElementTree.tostring(disk).decode()
         if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
             self.updateDevice(xmldev, live=True)
             xmldom = self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE)
 
         if self.get_status() == libvirt.VIR_DOMAIN_SHUTOFF:
             self.updateDevice(xmldev, live=False)
-            xmldom = ET.tostring(tree).decode()
+            xmldom = ElementTree.tostring(tree).decode()
 
         self.defineXML(xmldom)
 

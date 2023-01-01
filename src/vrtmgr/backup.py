@@ -62,7 +62,6 @@ class Backup(object):
 
     def deploy(self, template_name, template_md5sum, networks, cloud, public_key, hostname, root_password, disk_size):
         err_msg = "MD5 sum mismatch"
-        resize_disk = False
         backup_image_md5 = None
 
         try:
@@ -92,12 +91,14 @@ class Backup(object):
     def _prepare_image(self, disk_size, distro, clearfix=False):
         err_msg = None
         resize_disk = False
-        vrt = LibVrt()
-        if vrt.get_disk_size(self.backup_image_path) < disk_size:
+        conn = wvmConnect()
+        backup_image_libvirt = conn.get_volume_by_path(self.backup_image_path)
+        if backup_image_libvirt.info()[1] < disk_size:
             qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (self.backup_image_path, self.image_path)
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
-                vrt.image_resize(self.image_path, disk_size)
+                image_libvirt = conn.get_volume_by_path(self.image_path)
+                image_libvirt.resize(disk_size)
                 resize_disk = True
             else:
                 err_msg = "Error convert snapshot to image"
@@ -106,7 +107,7 @@ class Backup(object):
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd != 0:
                 err_msg = "Error convert snapshot to image"
-        vrt.close()
+        conn.close()
 
         if resize_disk:
             try:
@@ -131,10 +132,11 @@ class Backup(object):
             qemu_img_cmd = "qemu-img convert -c -f raw -O qcow2 %s %s" % (self.image_path, self.backup_image_path)
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
-                vrt = LibVrt()
-                image_size = vrt.get_image_size(self.backup_image_path)
-                disk_size = vrt.get_disk_size(self.backup_image_path)
-                vrt.close()
+                conn = wvmConnect()
+                image_libvirt = conn.get_volume_by_path(self.image_path)
+                disk_size = image_libvirt.info()[1]
+                image_size = image_libvirt.info()[2]
+                conn.close()
 
                 image_md5 = md5sum(self.backup_image_path)
             else:

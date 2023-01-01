@@ -8,7 +8,6 @@ from settings import FIREWALL_CHAIN_PREFIX, FIREWALL_INSERT_LINE
 from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
 
 
-
 class FirewallMgr(object):
     def __init__(self, rules_id, ipv4_public_addr=None, ipv4_private_addr=None):
         self.fw = FirewallClient()

@@ -1,4 +1,3 @@
-import os
 from subprocess import call, STDOUT, DEVNULL
 
 from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT

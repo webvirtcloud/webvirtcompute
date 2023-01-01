@@ -149,7 +149,7 @@ class GuestFSUtil(object):
             data = template.render(
                 ipv4public=ipv4public
             )
-        return date
+        return data
 
     def rhl_eth1_data(self, ipv4private):
         template = Template(eth1_rhl.data)
@@ -188,7 +188,7 @@ class GuestFSUtil(object):
         ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
         ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
-        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})        
+        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_rnch_public.data)
             data = template.render(
@@ -334,7 +334,7 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
             new_line_nic_file = f"address {ipv4compute.get('address')}"
-            network_file_data = re.sub("^address 10\.255\..*?", new_line_nic_file, nic_file)
+            network_file_data = re.sub(r"^address 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
         if self.get_distro() == "rhl":
@@ -348,7 +348,7 @@ class GuestFSUtil(object):
             nic_f_path = self.rancheros_config_path()
             nic_file = self.gfs.cat(nic_f_path)
             new_line_nic_file = f"address: {ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
-            network_file_data = re.sub("^address: 10\.255\..*?", new_line_nic_file, nic_file)
+            network_file_data = re.sub(r"^address: 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int('0644', 8), nic_f_path)
 
@@ -357,7 +357,7 @@ class GuestFSUtil(object):
         if self.get_distro() == "win":
             pass
         elif self.get_distro() == "rnch":
-            new_pass_line = f'- sed -i "s/^rancher:\*:/rancher:{password_hash}:/g" /etc/shadow'
+            new_pass_line = rf'- sed -i "s/^rancher:\*:/rancher:{password_hash}:/g" /etc/shadow'
             shadow_file_updated = re.sub('^- sed -i "s/^rancher:.*?', new_pass_line, shadow_file)
         else:
             root_shadow_line = f"root:{password_hash}:"
@@ -374,10 +374,10 @@ class GuestFSUtil(object):
         elif self.get_distro() == "rnch":
             config_fl_path = self.rancheros_config_path()
             config_data = self.gfs.cat(config_fl_path)
-            if "rancher:\*:" in config_data:
+            if r"rancher:\*:" in config_data:
                 config_data_updated = self.change_root_passwd(pass_hash, config_data)
             else:
-                account_data = f'\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:{pass_hash}:/g" /etc/shadow\n'
+                account_data = rf'\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:{pass_hash}:/g" /etc/shadow\n'
                 config_data_updated = config_data + account_data
             self.gfs.write(config_fl_path, config_data_updated)
             self.gfs.chmod(int('0644', 8), config_fl_path)
@@ -389,7 +389,7 @@ class GuestFSUtil(object):
             self.gfs.chmod(int('0640', 8), shadow_fl_path)
 
     def set_pubic_keys(self, keys_string):
-        if public_key:
+        if keys_string:
             if self.get_distro() == "win":
                 pass
             elif self.get_distro() == "rnch":
@@ -422,7 +422,7 @@ class GuestFSUtil(object):
         elif self.get_distro() == "win":
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
-            h_data = 'wmic computersystem where name="{' % COMPUTERNAME % '}" call rename name="%s"\r\n' % hostname
+            h_data = rf"wmic computersystem where name='%COMPUTERNAME%' call rename name='{hostname}'\r\n"
             f_data += h_data
             self.gfs.write(nic_f_path, f_data)
 

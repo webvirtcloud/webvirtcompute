@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import main
 import uvicorn
 from settings import HOST, PORT
 

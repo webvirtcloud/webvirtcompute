@@ -1,24 +1,16 @@
-#!/usr/bin/env python
-#
-# libfloatingip - simple class for iptables, iputils and NetworkManager
-#
-
 import os
 import time
 import socket
 import gi
-
-gi.require_version("NM", "1.0")
 from gi.repository import NM
-from subprocess import call, STDOUT
+from subprocess import call, STDOUT, DEVNULL
 from firewall.client import FirewallClient
+
 from settings import BRIDGE_EXT, FIREWALL_CHAIN_PREFIX
 from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
 
-try:
-    from subprocess import DEVNULL
-except ImportError:
-    DEVNULL = open(os.devnull, "wb")
+
+gi.require_version("NM", "1.0")
 
 
 class FwRedirect(object):

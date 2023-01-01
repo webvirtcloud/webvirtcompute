@@ -1,13 +1,12 @@
-import json
 import requests
 from auth import basic_auth
 from typing import Optional
 from libvirt import libvirtError
-from fastapi import FastAPI, Query, Depends, HTTPException
+from fastapi import FastAPI, Depends
 
 from helper import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL
-from vrtmgr import network, backup, fwall, images, libvrt
+from vrtmgr import network, images, libvrt
 from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
@@ -56,10 +55,10 @@ def virtance(virtance: VirtanceCreate):
         conn = libvrt.wvmCreate()
         conn.create_xml(
             virtance.uuid,
-            virtance.name, 
-            virtance.vcpu, 
-            virtance.memory, 
-            virtance.images, 
+            virtance.name,
+            virtance.vcpu,
+            virtance.memory,
+            virtance.images,
             virtance.network
         )
         conn.close()
@@ -105,7 +104,7 @@ def virtances():
 def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
-        virtance = {
+        response = {
             "name": name,
             "status": conn.get_state(),
             "uuid": conn.get_uuid(),
@@ -119,7 +118,7 @@ def virtance(name):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"virtances": virtance}
+    return {"virtances": response}
 
 
 @app.get("/virtances/{name}/status/")
@@ -226,7 +225,7 @@ def virtance(name, reset_pass: ResetPassword):
     try:
         image = images.Image(drives[0].get("name"), drives[0].get("pool"))
         err_msg = image.reset_password(reset_pass.get("distro"), reset_pass.get("password"))
-    except Exception as e:
+    except Exception as err:
         raise_error_msg(err)
 
     if err_msg:
@@ -403,7 +402,7 @@ def storage(pool, volume):
 def storage(pool, volume, val: VolumeAction):
     try:
         conn = libvrt.wvmStorage(pool)
-        vol = conn.get_volume(volume)
+        conn.get_volume(volume)
     except libvirtError as err:
         raise_error_msg(err)
 
@@ -434,7 +433,7 @@ def storage(pool, volume, val: VolumeAction):
 def storage(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
-        vol = conn.del_volume(volume)
+        conn.del_volume(volume)
     except libvirtError as err:
         raise_error_msg(err)
     conn.close()
@@ -479,7 +478,7 @@ def network(name):
 
 
 @app.post("/networks/{name}/", response_model=NetworkAction)
-def network(name):
+def network(name, val: NetworkAction):
     try:
         conn = libvrt.wvmNetwork(name)
     except libvirtError as err:
@@ -596,7 +595,7 @@ def nwfilters():
 def nwfilters(nwfilter: NwFilterCreate):
     conn = libvrt.wvmNWfilter()
     try:
-        conn.create_nwfilter(xml)
+        conn.create_nwfilter(nwfilter.xml)
     except libvirtError as err:
         raise_error_msg(err)
     conn.close()
@@ -619,7 +618,7 @@ def nwfilter(name):
 def nwfilter(name):
     conn = libvrt.wvmNWfilter()
     try:
-        nwfilter = conn.delete_nwfilter(name)
+        conn.delete_nwfilter(name)
     except libvirtError as err:
         raise_error_msg(err)
 
