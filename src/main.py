@@ -1,13 +1,13 @@
 import requests
-from auth import basic_auth
 from typing import Optional
 from libvirt import libvirtError
 from fastapi import FastAPI, Depends
 
-from helper import raise_error_msg
 from vrtmgr import libvrt
 from vrtmgr import images
 from vrtmgr import network
+from auth import basic_auth
+from helper import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL
 from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
@@ -17,7 +17,7 @@ from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, Float
 app = FastAPI(dependencies=[Depends(basic_auth)])
 
 
-@app.get("/metrics/", dependencies=[Depends(basic_auth)])
+@app.get("/metrics/")
 def metrics(query: Optional[str] = "", start: Optional[str] = "", end: Optional[str] = "", step: Optional[str] = ""):
     params = {"query": query, "start": start, "end": end, "step": step}
     res = requests.get(METRICS_URL, params=params).json()

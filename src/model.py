@@ -8,7 +8,7 @@ class VirtanceCreate(BaseModel):
     memory: int
     images: list
     network: dict
-    public_keys: str
+    keypairs: list
     root_password: str
 
 
