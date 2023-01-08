@@ -842,7 +842,7 @@ class wvmCreate(wvmConnect):
 
         disk_letters = list(string.ascii_lowercase)
         for image in images:
-            stg = self.get_storage(image.get("pool"))
+            stg = self.get_storage(settings.STORAGE_IMAGE_POOL)
             stg_xml = stg.XMLDesc(0)
             stg_type = util.get_xml_data(stg_xml, element="type")
 
