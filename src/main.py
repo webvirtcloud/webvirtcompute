@@ -25,9 +25,9 @@ def metrics(query: Optional[str] = "", start: Optional[str] = "", end: Optional[
 
 
 @app.post("/virtances/", response_model=VirtanceCreate)
-def virtance_create(virtnace: VirtanceCreate):
+def virtance_create(virtance: VirtanceCreate):
     # Download and deploy images template
-    for img in virtnace.images:
+    for img in virtance.images:
         if img.get("primary") is True:
             template = images.Template(img.get("name"), img.get("md5sum"))
             err_msg, template_path = template.download(img.get("url"))
@@ -36,10 +36,10 @@ def virtance_create(virtnace: VirtanceCreate):
                 err_msg = image.deploy_template(
                     template=template,
                     disk_size=img.get("size"),
-                    networks=virtnace.network,
-                    public_keys=virtnace.keypairs,
-                    hostname=virtnace.name,
-                    root_password=virtnace.root_password,
+                    networks=virtance.network,
+                    public_keys=virtance.keypairs,
+                    hostname=virtance.name,
+                    root_password=virtance.root_password,
                 )
         else:
             try:
@@ -55,7 +55,9 @@ def virtance_create(virtnace: VirtanceCreate):
     # Create XML
     try:
         conn = libvrt.wvmCreate()
-        conn.create_xml(virtnace.uuid, virtnace.name, virtnace.vcpu, virtnace.memory, virtnace.images, virtnace.network)
+        conn.create_xml(
+            virtance.name, virtance.vcpu, virtance.memory, virtance.images, virtance.network, uuid=virtance.uuid
+        )
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -68,7 +70,7 @@ def virtance_create(virtnace: VirtanceCreate):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return virtnace
+    return virtance
 
 
 @app.get("/virtances/")

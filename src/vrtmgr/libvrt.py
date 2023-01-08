@@ -30,6 +30,9 @@ class wvmConnect(object):
     def is_kvm_supported(self):
         return util.is_kvm_available(self.get_cap_xml())
 
+    def get_domain_type(self):
+        return "kvm" if self.is_kvm_supported() else "qemu"
+
     def get_host_info(self):
         nodeinfo = self.wvm.getInfo()
         processor = util.get_xml_data(self.wvm.getSysinfo(0), "processor/entry[6]")
@@ -788,17 +791,17 @@ class wvmCreate(wvmConnect):
 
     def create_xml(
         self, name, vcpu, memory, images, network, uuid=None, autostart=True, nwfilter=True, display=DISPLAY
-    ):
-        xml = f"""
-                <domain type='{'kvm' if self.is_kvm_supported() else 'qemu'}'>"""
+    ):        
+        xml = f"""<domain type='{self.get_domain_type()}'>
+                    <name>{name}</name>
+                """
         if uuid:
-            xml += f"""
-                    <uuid>{str(UUID(uuid))}</uuid>"""
-        xml = f"""
-                  <name>{name}</name>
-                  <description>None</description>
+            xml += f"""<uuid>{str(UUID(uuid))}</uuid>"""
+        
+        xml += f"""<description>None</description>
                   <memory unit='KiB'>{int(memory // 1024)}</memory>
-                  <vcpu>{vcpu}</vcpu>"""
+                  <vcpu>{vcpu}</vcpu>
+                """
 
         if self.is_kvm_supported():
             xml += """<cpu mode='host-passthrough'/>"""
@@ -816,24 +819,26 @@ class wvmCreate(wvmConnect):
                       <entry name='serial'>{name.split('-')[1]}</entry>
                       <entry name='family'>{MANUFACTURER}_{PRODUCT}</entry>
                     </system>
-                   </sysinfo>"""
+                   </sysinfo>
+                """
 
         xml += f"""<os>
                     <type arch='{self.get_host_arch()}'>{self.get_os_type()}</type>
                     <boot dev='cdrom'/>
                     <boot dev='hd'/>
                     <smbios mode='sysinfo'/>
-                   </os>"""
+                   </os>
+                """
 
         xml += """<features>
                    <acpi/><apic/><pae/>
                   </features>
-
                   <clock offset="utc"/>
                   <on_poweroff>destroy</on_poweroff>
                   <on_reboot>restart</on_reboot>
                   <on_crash>restart</on_crash>
-                  <devices>"""
+                  <devices>
+                """
 
         disk_letters = list(string.ascii_lowercase)
         for image in images:
@@ -852,21 +857,24 @@ class wvmCreate(wvmConnect):
                             <source protocol='rbd' name='{image.get('name')}'>
                              <host name='{ceph_host}' port='6789'/>
                             </source>
-                           </disk>"""
+                           </disk>
+                        """
             else:
                 stg_path = util.get_xml_data(stg_xml, path="target/path")
                 xml += f"""<disk type='file' device='disk'>
                             <driver name='qemu' type='raw'/>
-                            <source file='{stg_path}/{image.get('name')}'/>
+                            <source file='{stg_path}/{image.get('name')}.img'/>
                             <target dev='vd{disk_letters.pop(0)}' bus='virtio'/>
-                           </disk>"""
+                           </disk>
+                        """
 
         xml += """<disk type='file' device='cdrom'>
                    <driver name='qemu' type='raw'/>
                    <source file=''/>
                    <target dev='hda' bus='ide'/>
                    <readonly/>
-                  </disk>"""
+                  </disk>
+                """
 
         # Create public pool device with IPv4 and IPv6 and internal IPv4
         if network.get("v4", {}).get("public"):
@@ -881,9 +889,7 @@ class wvmCreate(wvmConnect):
                 xml += f"""<source network='{NETWORK_PUBLIC_POOL}'/>"""
 
             if nwfilter:
-                if network.get("v6", {}).get("public").get("primary") or network.get("v6", {}).get("public").get(
-                    "secondary"
-                ):
+                if network.get("v6"):
                     xml += """<filterref filter='clean-traffic-ipv6'>"""
                 else:
                     xml += """<filterref filter='clean-traffic'>"""
@@ -898,25 +904,19 @@ class wvmCreate(wvmConnect):
                                 network.get('v4', {}).get('public', {}).get('secondary', {}).get('address')
                             }'/>"""
 
-                if network.get("v6", {}).get("public").get("primary"):
+                if network.get("v6"):
                     xml += f"""<parameter name='IPV6' value='{
-                                network.get('v6', {}).get('public', {}).get('primary', {}).get('address')
-                            }'/>"""
-
-                if network.get("v6", {}).get("public").get("secondary"):
-                    xml += f"""<parameter name='IPV6' value='{
-                                network.get('v6', {}).get('public', {}).get('secondary', {}).get('address')
+                                network.get('v6', {}).get('address')
                             }'/>"""
 
                 xml += """</filterref>"""
 
             xml += """<model type='virtio'/>
-                      </interface>"""
+                      </interface>
+                    """
 
         # Create private pool device with IPv4
-        if network.get("v4", {}).get("private", {}).get("primary") or network.get("v4", {}).get("private", {}).get(
-            "secondary"
-        ):
+        if network.get("v4", {}).get("private"):
             xml += """<interface type='network'>"""
 
             if network.get("v4", {}).get("private", {}).get("mac"):
@@ -930,24 +930,22 @@ class wvmCreate(wvmConnect):
             if nwfilter:
                 xml += """<filterref filter='clean-traffic'>"""
 
-                if network.get("v4", {}).get("private", {}).get("primary"):
+                if network.get("v4", {}).get("private", {}):
                     xml += f"""<parameter name='IP' value='{
-                                network.get('v4', {}).get('private', {}).get('primary', {}).get('address')
+                                network.get('v4', {}).get('private', {}).get('address')
                             }'/>"""
 
-                if network.get("v4", {}).get("private", {}).get("secondary", {}):
-                    xml += f"""<parameter name='IP' value='{
-                                network.get('v4', {}).get('private', {}).get('secondary', {}).get('address')
-                                }'/>"""
 
                 xml += """</filterref>"""
 
             xml += """<model type='virtio'/>
-                      </interface>"""
+                      </interface>
+                    """
 
+        vnc_password = util.gen_password(length=8)
         xml += f"""<input type='mouse' bus='ps2'/>
                    <input type='tablet' bus='usb'/>
-                   <graphics type='{display}' port='-1' autoport='yes' listen='0.0.0.0' passwd='{util.gen_password()}'>
+                   <graphics type='{display}' port='-1' autoport='yes' listen='0.0.0.0' passwd='{vnc_password}'>
                     <listen type='address' address='0.0.0.0'/>
                    </graphics>
                    <console type='pty'/>
@@ -956,7 +954,8 @@ class wvmCreate(wvmConnect):
                    </model>
                    <memballoon model='virtio'/>
                    </devices>
-                   </domain>"""
+                   </domain>
+                """
 
         self.defineXML(xml)
 

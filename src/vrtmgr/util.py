@@ -121,7 +121,7 @@ def pretty_bytes(val):
         return "%2.2f MB" % (val / (1024.0 * 1024.0))
 
 
-def gen_password(length=22, symbols=False):
+def gen_password(length=24, symbols=False):
     simple_symbols = ""
     if symbols:
         simple_symbols = "!@#$%^&*()_+[]-=:;{}?|<>"

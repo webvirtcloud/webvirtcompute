@@ -278,11 +278,11 @@ class GuestFSUtil(object):
             self.gfs.chmod(int("0644", 8), nic_f_path)
 
     def setup_networking(self, networks, cloud="public"):
-        ipv4vpc = networks.get("v4", {}).get("vpc", {}).get("primary")
+        ipv6public = networks.get("v6")
+        ipv4vpc = networks.get("v4", {}).get("vpc")
+        ipv4private = networks.get("v4", {}).get("private")
         ipv4public = networks.get("v4", {}).get("public", {}).get("primary")
         ipv4compute = networks.get("v4", {}).get("public", {}).get("secondary")
-        ipv4private = networks.get("v4", {}).get("private", {}).get("primary")
-        ipv6public = networks.get("v6", {}).get("public", {}).get("primary")
 
         if cloud == "public":
             self.public_nic_setup(ipv4public, ipv4compute, ipv6public=ipv6public)

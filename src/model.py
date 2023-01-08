@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 
 class VirtanceCreate(BaseModel):
+    uuid: str
     name: str
     vcpu: int
     memory: int

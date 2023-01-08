@@ -55,7 +55,7 @@ class Template(object):
 
 class Image(object):
     def __init__(self, name, pool):
-        self.name = name
+        self.name = name + ".img"
         self.pool = pool
 
         conn = wvmStorage(self.pool)
