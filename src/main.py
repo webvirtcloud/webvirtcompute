@@ -29,16 +29,16 @@ def virtance_create(virtance: VirtanceCreate):
     # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
-            template = images.Template(img.get("name"), img.get("md5sum"))
-            err_msg, template_path = template.download(img.get("url"))
+            template = images.Template(img.get("url"), img.get("md5sum"))
+            err_msg = template.download()
             if err_msg is None:
                 image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
                 err_msg = image.deploy_template(
-                    template=template,
+                    template_path=template.path,
                     disk_size=img.get("size"),
                     networks=virtance.network,
                     public_keys=virtance.keypairs,
-                    hostname=virtance.name,
+                    hostname=virtance.hostname,
                     root_password=virtance.root_password,
                 )
         else:

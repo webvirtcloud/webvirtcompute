@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class VirtanceCreate(BaseModel):
     uuid: str
     name: str
+    hostname: str
     vcpu: int
     memory: int
     images: list

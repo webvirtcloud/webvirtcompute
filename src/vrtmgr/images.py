@@ -13,44 +13,43 @@ ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
 
 
 class Template(object):
-    def __init__(self, template_name, template_md5sum):
-        self.template_name = template_name
-        self.template_md5sum = template_md5sum
-        self.template_image_path = None
+    def __init__(self, url, md5sum):
+        self.url = url
+        self.md5sum = md5sum
+        self.path = None
 
-    def download(self, template_url):
+    def download(self):
         err_msg = None
-        download_image = True
-        template_image_md5 = None
-        template_image_url = template_url
-        template_image_path = os.path.join(CACHE_DIR, os.path.basename(template_image_url))
+        try_download = True
+        template_md5 = None
+        template_path = os.path.join(CACHE_DIR, os.path.basename(self.url))
 
         # Check if cache dir exist
         if not os.path.isdir(CACHE_DIR):
             os.mkdir(CACHE_DIR)
 
-        if os.path.exists(template_image_path):
-            template_image_md5 = md5sum(template_image_path)
-            if template_image_md5 == self.template_md5sum:
-                download_image = False
+        if os.path.exists(template_path):
+            template_md5 = md5sum(template_path)
+            if template_md5 == self.md5sum:
+                try_download = False
 
-        if download_image:
+        if try_download:
             try:
                 r = requests.get(template_image_url, stream=True)
-                with open(template_image_path, "wb") as f:
+                with open(template_path, "wb") as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
             except Exception as err:
                 err_msg = err
 
-            template_image_md5 = md5sum(template_image_path)
+            template_md5 = md5sum(template_path)
 
-        self.template_image_path = template_image_path
+        self.path = template_path
 
-        if self.template_md5sum != template_image_md5:
+        if self.md5sum != template_md5:
             err_msg = "MD5 sum mismatch"
 
-        return err_msg, template_image_path
+        return err_msg
 
 
 class Image(object):
@@ -69,19 +68,17 @@ class Image(object):
         conn.resize_volume(self.name, disk_size)
         conn.close()
 
-    def deploy_template(self, template, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
+    def deploy_template(self, template_path, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = "Error convert template to image"
-        template_name = template.template_name
-        template_image_path = template.template_image_path
 
-        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template_image_path} {self.image_path}"
+        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
-            err_msg = self._run(disk_size, template_name, networks, public_keys, hostname, cloud, root_password)
+            err_msg = self._run(disk_size, networks, public_keys, hostname, root_password, cloud=cloud)
 
         return err_msg
 
-    def _run(self, disk_size, template_name, networks, public_keys, hostname, cloud, root_password):
+    def _run(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):   
         err_msg = None
         public_key_string = None
 
@@ -99,7 +96,7 @@ class Image(object):
         if err_msg is None:
             try:
                 # Load GuestFS
-                gstfish = GuestFSUtil(self.image_path, template_name)
+                gstfish = GuestFSUtil(self.image_path)     
                 gstfish.mount_root()
                 gstfish.setup_networking(networks, cloud=cloud)
                 gstfish.set_pubic_keys(public_key_string)
@@ -118,7 +115,7 @@ class Image(object):
 
         try:
             # Load GuestFS
-            gstfish = GuestFSUtil(self.image_path, distro)
+            gstfish = GuestFSUtil(self.image_path)
             gstfish.mount_root()
             gstfish.reset_root_passwd(root_password)
             gstfish.clearfix(firstboot=False)
@@ -139,7 +136,7 @@ class Image(object):
         if err_msg is None:
             try:
                 # Load GuestFS
-                gstfish = GuestFSUtil(self.image_path, distro)
+                gstfish = GuestFSUtil(self.image_path)
                 gstfish.resize_fs()
                 gstfish.clearfix(firstboot=False)
                 gstfish.close()

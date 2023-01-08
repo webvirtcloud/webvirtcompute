@@ -22,9 +22,8 @@ from templates import eth0_deb_private
 
 
 class GuestFSUtil(object):
-    def __init__(self, drive, distro):
+    def __init__(self, drive):
         self.drive = drive
-        self.distro = distro
         self.gfs = guestfs.GuestFS(python_return_dict=True)
         self.gfs.add_drive(drive)
         self.gfs.launch()
@@ -39,19 +38,20 @@ class GuestFSUtil(object):
         return distro
 
     def get_distro(self):
-        if "fedora" in self.distro:
+        distro = self.inspect_distro()
+        if "fedora" in distro:
             return "rhl"
-        if "centos" in self.distro:
+        if "centos" in distro:
             return "rhl"
-        if "ubuntu" in self.distro:
+        if "ubuntu" in distro:
             return "deb"
-        if "debian" in self.distro:
+        if "debian" in distro:
             return "deb"
-        if "windows" in self.distro:
+        if "windows" in distro:
             return "win"
-        if "rancheros" in self.distro:
+        if "rancheros" in distro:
             return "rnch"
-        if "alpine" in self.distro:
+        if "alpine" in distro:
             return "alpn"
 
     def root_device(self):
@@ -123,8 +123,8 @@ class GuestFSUtil(object):
         return data
 
     def rhl_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
         ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
@@ -141,8 +141,8 @@ class GuestFSUtil(object):
         return data
 
     def win_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
         ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
@@ -159,8 +159,8 @@ class GuestFSUtil(object):
         return data
 
     def rnch_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmaks')}")
+        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
+        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
         ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
@@ -172,7 +172,7 @@ class GuestFSUtil(object):
         return data
 
     def rnch_eth1_data(self, ipv4private):
-        ipv4_private_iface = IPv4Interface(f"{ipv4private.get('address')}/{ipv4private.get('netmaks')}")
+        ipv4_private_iface = IPv4Interface(f"{ipv4private.get('address')}/{ipv4private.get('netmask')}")
         ipv4private.update({"prefix": ipv4_private_iface.network.prefixlen})
         template = Template(eth1_rnch.data)
         data = template.render(ipv4private=ipv4private)
@@ -265,6 +265,7 @@ class GuestFSUtil(object):
         if self.get_distro() == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, cloud="private")
+            print(network_file_data)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
         if self.get_distro() == "win":

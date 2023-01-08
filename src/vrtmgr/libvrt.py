@@ -9,7 +9,7 @@ from uuid import UUID
 from xml.etree import ElementTree
 from ipaddress import IPv4Interface
 
-from settings import NETWORK_PUBLIC_POOL, NETWORK_PRIVATE_POOL
+import settings
 from . import util
 
 
@@ -886,7 +886,7 @@ class wvmCreate(wvmConnect):
             if network.get("v4", {}).get("public", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('public', {}).get('pool')}'/>"""
             else:
-                xml += f"""<source network='{NETWORK_PUBLIC_POOL}'/>"""
+                xml += f"""<source network='{settings.NETWORK_PUBLIC_POOL}'/>"""
 
             if nwfilter:
                 if network.get("v6"):
@@ -925,7 +925,7 @@ class wvmCreate(wvmConnect):
             if network.get("v4", {}).get("private", {}).get("pool"):
                 xml += f"""<source network='{network.get('v4', {}).get('private', {}).get('pool')}'/>"""
             else:
-                xml += f"""<source network='{NETWORK_PRIVATE_POOL}'/>"""
+                xml += f"""<source network='{settings.NETWORK_PRIVATE_POOL}'/>"""
 
             if nwfilter:
                 xml += """<filterref filter='clean-traffic'>"""
