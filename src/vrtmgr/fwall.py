@@ -20,8 +20,8 @@ class FirewallMgr(object):
         self.rules_id = rules_id
         self.ipv4_public_addr = ipv4_public_addr
         self.ipv4_private_addr = ipv4_private_addr
-        self.firewall_in_chain = FIREWALL_IN_NAME + str(rules_id)
-        self.firewall_out_chain = FIREWALL_OUT_NAME + str(rules_id)
+        self.firewall_in_chain = f"{FIREWALL_IN_NAME}{str(rules_id)}"
+        self.firewall_out_chain = f"{FIREWALL_OUT_NAME}{str(rules_id)}"
 
     def attach(self, rules_inbound, rules_outbound):
         err_msg = None
@@ -32,7 +32,7 @@ class FirewallMgr(object):
             self.create_rule("outbound", rules_outbound)
             self.save()
         else:
-            err_msg = "Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT
+            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
         return err_msg
 
     def detach(self):
@@ -42,7 +42,7 @@ class FirewallMgr(object):
             self.remove_firewall()
             self.save()
         else:
-            err_msg = "Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT
+            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
         return err_msg
 
     def add_rule(self, rules_inbound, rules_outbound):
@@ -55,7 +55,7 @@ class FirewallMgr(object):
                 self.create_rule("outbound", rules_outbound)
             self.save()
         else:
-            err_msg = "Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT
+            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
         return err_msg
 
     def delete_rule(self, rules_inbound, rules_outbound):
@@ -68,7 +68,7 @@ class FirewallMgr(object):
                 self.remove_rule("outbound", rules_outbound)
             self.save()
         else:
-            err_msg = "Firewall closed connection by timeout %ssec." % FIREWALLD_STATE_TIMEOUT
+            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
         return err_msg
 
     def set_state(self):
@@ -111,7 +111,7 @@ class FirewallMgr(object):
 
     def query_rule(self, args):
         chain = self.chain + FIREWALL_CHAIN_PREFIX
-        ipt_cmd = "iptables -t {0} -C {1} {2}".format(self.table, chain, " ".join(args))
+        ipt_cmd = f"iptables -t {self.table} -C {chain} {' '.join(args)}"
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_ipt_cmd == 1:
             return False
@@ -122,7 +122,7 @@ class FirewallMgr(object):
         return check
 
     def query_chain(self, chain):
-        ipt_cmd = "iptables -t {0} -L {1}".format(self.table, chain)
+        ipt_cmd = f"iptables -t {self.table} -L {chain}"
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_ipt_cmd == 1:
             return False
@@ -133,7 +133,7 @@ class FirewallMgr(object):
         return check
 
     def query_chain_rule(self, chain, args):
-        ipt_cmd = "iptables -t {0} -C {1} {2}".format(self.table, chain, " ".join(args))
+        ipt_cmd = f"iptables -t {self.table} -C {chain} {' '.join(args)}"
         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_ipt_cmd == 1:
             return False
@@ -197,7 +197,7 @@ class FirewallMgr(object):
 
             # Create firewall IN chain
             if not self.query_chain(self.firewall_in_chain):
-                ipt_cmd = "iptables -N {0}".format(self.firewall_in_chain)
+                ipt_cmd = f"iptables -N {self.firewall_in_chain}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if not self.query_chain_cfg(self.firewall_in_chain):
@@ -206,9 +206,7 @@ class FirewallMgr(object):
             # Create firewall IN rule for instance
             if not self.query_rule(in_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
-                ipt_cmd = "iptables -t {0} -I {1} {2} {3}".format(
-                    self.table, chain, FIREWALL_INSERT_LINE, " ".join(in_args)
-                )
+                ipt_cmd = f"iptables -t {self.table} -I {chain} {FIREWALL_INSERT_LINE} {' '.join(in_args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if not self.query_rule_cfg(in_args):
@@ -216,7 +214,7 @@ class FirewallMgr(object):
 
             # Create firewall OUT chain
             if not self.query_chain(self.firewall_out_chain):
-                ipt_cmd = "iptables -N {0}".format(self.firewall_out_chain)
+                ipt_cmd = f"iptables -N {self.firewall_out_chain}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if not self.query_chain_cfg(self.firewall_out_chain):
@@ -225,9 +223,7 @@ class FirewallMgr(object):
             # Create firewall OUT rule for instance
             if not self.query_rule(out_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
-                ipt_cmd = "iptables -t {0} -I {1} {2} {3}".format(
-                    self.table, chain, FIREWALL_INSERT_LINE, " ".join(out_args)
-                )
+                ipt_cmd = f"iptables -t {self.table} -I {chain} {FIREWALL_INSERT_LINE} {' '.join(out_args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if not self.query_rule_cfg(out_args):
@@ -250,7 +246,7 @@ class FirewallMgr(object):
             # Remove firewall IN rule for instance
             if self.query_rule(in_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
-                ipt_cmd = "iptables -t {0} -D {1} {2}".format(self.table, chain, " ".join(in_args))
+                ipt_cmd = f"iptables -t {self.table} -D {chain} {' '.join(in_args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if self.query_rule_cfg(in_args):
@@ -259,7 +255,7 @@ class FirewallMgr(object):
             # Remove firewall OUT rule for instance
             if self.query_rule(out_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
-                ipt_cmd = "iptables -t {0} -D {1} {2}".format(self.table, chain, " ".join(out_args))
+                ipt_cmd = f"iptables -t {self.table} -D {chain} {' '.join(out_args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if self.query_rule_cfg(out_args):
@@ -275,28 +271,24 @@ class FirewallMgr(object):
             if not used_firewall_rules:
                 for rule in self.fw_direct.getAllRules():
                     if self.firewall_in_chain in rule:
-                        ipt_cmd = "iptables -t {0} -D {1} {2}".format(
-                            self.table, self.firewall_in_chain, " ".join(rule[4])
-                        )
+                        ipt_cmd = f"iptables -t {self.table} -D {self.firewall_in_chain} {' '.join(rule[4])}"
                         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                         if run_ipt_cmd == 0:
                             self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
                     if self.firewall_out_chain in rule:
-                        ipt_cmd = "iptables -t {0} -D {1} {2}".format(
-                            self.table, self.firewall_out_chain, " ".join(rule[4])
-                        )
+                        ipt_cmd = f"iptables -t {self.table} -D {self.firewall_out_chain} {''.join(rule[4])}"
                         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                         if run_ipt_cmd == 0:
                             self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
 
                 for chain in self.fw_direct.getAllChains():
                     if self.firewall_in_chain in chain:
-                        ipt_cmd = "iptables -X {0}".format(self.firewall_in_chain)
+                        ipt_cmd = f"iptables -X {self.firewall_in_chain}"
                         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                         if run_ipt_cmd == 0:
                             self.fw_direct.removeChain(chain[0], chain[1], chain[2])
                     if self.firewall_out_chain in chain:
-                        ipt_cmd = "iptables -X {0}".format(self.firewall_out_chain)
+                        ipt_cmd = f"iptables -X {self.firewall_out_chain}"
                         run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                         if run_ipt_cmd == 0:
                             self.fw_direct.removeChain(chain[0], chain[1], chain[2])
@@ -309,9 +301,9 @@ class FirewallMgr(object):
         for rule in rules:
             args = self.rule_args(chain, rule)
             if not self.query_chain_rule(firewall_chain, args):
-                ipt_cmd = "iptables -t {0} -I {1} {2}".format(self.table, firewall_chain, " ".join(args))
+                ipt_cmd = f"iptables -t {self.table} -I {firewall_chain} {' '.join(args)}"
                 if "DROP" in args:
-                    ipt_cmd = "iptables -t {0} -A {1} {2}".format(self.table, firewall_chain, " ".join(args))
+                    ipt_cmd = f"iptables -t {self.table} -A {firewall_chain} {' '.join(args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if "DROP" in args:
@@ -329,7 +321,7 @@ class FirewallMgr(object):
         for rule in rules:
             args = self.rule_args(chain, rule)
             if self.query_chain_rule(firewall_chain, args):
-                ipt_cmd = "iptables -t {0} -D {1} {2}".format(self.table, firewall_chain, " ".join(args))
+                ipt_cmd = f"iptables -t {self.table} -D {firewall_chain} {' '.join(args)}"
                 run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
                 if run_ipt_cmd == 0:
                     if "DROP" in args:
