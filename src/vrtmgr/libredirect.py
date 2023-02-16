@@ -4,7 +4,9 @@ import socket
 from subprocess import call, STDOUT, DEVNULL
 from firewall.client import FirewallClient
 
-import gi; gi.require_version("NM", "1.0")
+import gi
+
+gi.require_version("NM", "1.0")
 from gi.repository import NM
 
 from settings import BRIDGE_EXT, FIREWALL_CHAIN_PREFIX
@@ -12,18 +14,19 @@ from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
 
 
 class FwRedirect(object):
-    def __init__(self, float_addr, anchor_addr):
+    def __init__(self, float_addr, compute_addr):
         self.float_addr = float_addr
-        self.anchor_addr = anchor_addr
+        self.compute_addr = compute_addr
         self.fw = FirewallClient()
         self.config = self.fw.config()
         self.fw_direct = self.config.direct()
+        self.prio = 0
         self.ipv = "ipv4"
         self.table = "nat"
-        self.chain = "PREROUTING"
         self.jump = "DNAT"
-        self.prio = 0
-        self.args = ["-d", self.float_addr, "-j", self.jump, "--to-destination", self.anchor_addr]
+        self.ipt = f"iptables -t {self.table}"
+        self.chain = f"PREROUTING{FIREWALL_CHAIN_PREFIX}"
+        self.args = ["-d", self.float_addr, "-j", self.jump, "--to-destination", self.compute_addr]
 
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
@@ -67,11 +70,8 @@ class FwRedirect(object):
         self.fw.reload()
 
     def query_rule(self):
-        chain = self.chain + FIREWALL_CHAIN_PREFIX
-        ipt_cmd = "iptables -t {} -C {} -d {} -j {} --to-destination {}".format(
-            self.table, chain, self.float_addr, self.jump, self.anchor_addr
-        )
-        run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+        cmd = f"{self.ipt} -C {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+        run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_ipt_cmd == 1:
             return False
         return True
@@ -82,24 +82,18 @@ class FwRedirect(object):
 
     def add_rule(self):
         if not self.query_rule():
-            chain = self.chain + FIREWALL_CHAIN_PREFIX
-            ipt_cmd = "iptables -t {} -A {} -d {} -j {} --to-destination {}".format(
-                self.table, chain, self.float_addr, self.jump, self.anchor_addr
-            )
-            run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-            if run_ipt_cmd == 0:
+            cmd = f"{self.ipt} -A {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+            run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+            if run_cmd == 0:
                 if not self.check_rule_in_xml():
                     self.fw_direct.addRule(self.ipv, self.table, self.chain, self.prio, self.args)
                     self.save()
 
     def remove_rule(self):
         if self.query_rule():
-            chain = self.chain + FIREWALL_CHAIN_PREFIX
-            ipt_cmd = "iptables -t {} -D {} -d {} -j {} --to-destination {}".format(
-                self.table, chain, self.float_addr, self.jump, self.anchor_addr
-            )
-            run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-            if run_ipt_cmd == 0:
+            cmd = f"{self.ipt} -D {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+            run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+            if run_cmd == 0:
                 if self.check_rule_in_xml():
                     self.fw_direct.removeRule(self.ipv, self.table, self.chain, self.prio, self.args)
                     self.save()

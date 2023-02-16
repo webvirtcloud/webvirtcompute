@@ -59,7 +59,7 @@ class Image(object):
 
         conn = wvmStorage(self.pool)
         conn.refresh()
-        self.image_path = conn.get_target_path() + "/" + self.name
+        self.image_path = f"{conn.get_target_path()}/{self.name}"
         conn.close()
 
     def image_resize(self, disk_size):
@@ -84,7 +84,7 @@ class Image(object):
 
         for key in public_keys:
             if public_key_string is not None:
-                public_key_string += "\n" + key
+                public_key_string += f"\n{key}"
             else:
                 public_key_string = key
 

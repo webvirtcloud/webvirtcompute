@@ -50,7 +50,7 @@ class Backup(object):
         try:
             backup_image_md5 = md5sum(self.backup_image_path)
         except IOError as err:
-            err_msg = "Check image MD5: " + str(err)
+            err_msg = f"Check image MD5: {str(err)}"
 
         if backup_image_md5:
             if image_md5sum == backup_image_md5:
@@ -94,7 +94,7 @@ class Backup(object):
         conn = wvmConnect()
         backup_image_libvirt = conn.get_volume_by_path(self.backup_image_path)
         if backup_image_libvirt.info()[1] < disk_size:
-            qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (self.backup_image_path, self.image_path)
+            qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {self.backup_image_path} {self.image_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 image_libvirt = conn.get_volume_by_path(self.image_path)
@@ -103,7 +103,7 @@ class Backup(object):
             else:
                 err_msg = "Error convert snapshot to image"
         else:
-            qemu_img_cmd = "qemu-img convert -f qcow2 -O raw %s %s" % (self.backup_image_path, self.image_path)
+            qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {self.backup_image_path} {self.image_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd != 0:
                 err_msg = "Error convert snapshot to image"
@@ -129,7 +129,7 @@ class Backup(object):
 
         # Full image backup path
         if os.path.isdir(os.path.dirname(self.backup_image_path)):
-            qemu_img_cmd = "qemu-img convert -c -f raw -O qcow2 %s %s" % (self.image_path, self.backup_image_path)
+            qemu_img_cmd = f"qemu-img convert -c -f raw -O qcow2 {self.image_path} {self.backup_image_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 conn = wvmConnect()
