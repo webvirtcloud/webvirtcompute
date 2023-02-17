@@ -702,7 +702,7 @@ class wvmCreate(wvmConnect):
         stg = self.get_storage(storage)
         storage_type = util.get_xml_data(stg.XMLDesc(0), element="type")
         if storage_type == "dir":
-            name = str(name) + ".img"
+            name = f"{str(name)}.img"
             alloc = 0
         else:
             alloc = size
@@ -1615,16 +1615,16 @@ class wvmInstance(wvmConnect):
 
         for num, net in enumerate(tree.findall("devices/interface")):
             elm = net.find("mac")
-            elm.set("address", clone_data["net-" + str(num)])
+            elm.set("address", clone_data[f"net-{str(num)}"])
 
         for disk in tree.findall("devices/disk"):
             if disk.get("device") == "disk":
                 elm = disk.find("target")
                 device_name = elm.get("dev")
                 if device_name:
-                    target_file = clone_data["disk-" + device_name]
+                    target_file = clone_data[f"disk-{device_name}"]
                     try:
-                        meta_prealloc = clone_data["meta-" + device_name]
+                        meta_prealloc = clone_data[f"meta-{device_name}"]
                     except Exception:
                         meta_prealloc = False
                     elm.set("dev", device_name)

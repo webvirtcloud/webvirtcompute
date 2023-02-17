@@ -14,28 +14,28 @@ from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
 
 
 class FwRedirect(object):
-    def __init__(self, float_addr, compute_addr):
-        self.float_addr = float_addr
-        self.compute_addr = compute_addr
+    def __init__(self, src, dst):
+        self.src = src
+        self.dst = dst
         self.fw = FirewallClient()
         self.config = self.fw.config()
         self.fw_direct = self.config.direct()
         self.prio = 0
-        self.ipv = "ipv4"
+        self.ipv4 = "ipv4"
         self.table = "nat"
-        self.jump = "DNAT"
-        self.ipt = f"iptables -t {self.table}"
+        self.jmp = "DNAT"
+        self.iptable = f"iptables -t {self.table}"
         self.chain = f"PREROUTING{FIREWALL_CHAIN_PREFIX}"
-        self.args = ["-d", self.float_addr, "-j", self.jump, "--to-destination", self.compute_addr]
+        self.args = ["-d", self.src, "-j", self.jmp, "--to-destination", self.dst]
 
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write("True")
+        f.write("1")
         f.close()
 
     def unset_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
-        f.write("False")
+        f.write("0")
         f.close()
 
     def read_state(self):
@@ -70,39 +70,39 @@ class FwRedirect(object):
         self.fw.reload()
 
     def query_rule(self):
-        cmd = f"{self.ipt} -C {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+        cmd = f"{self.iptable} -C {self.chain} -d {self.src} -j {self.jmp} --to-destination {self.dst}"
         run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-        if run_ipt_cmd == 1:
+        if run_cmd == 1:
             return False
         return True
 
     def check_rule_in_xml(self):
-        res = self.fw_direct.queryRule(self.ipv, self.table, self.chain, self.prio, self.args)
+        res = self.fw_direct.queryRule(self.ipv4, self.table, self.chain, self.prio, self.args)
         return res
 
     def add_rule(self):
         if not self.query_rule():
-            cmd = f"{self.ipt} -A {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+            cmd = f"{self.iptable} -A {self.chain} -d {self.src} -j {self.jmp} --to-destination {self.dst}"
             run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_cmd == 0:
                 if not self.check_rule_in_xml():
-                    self.fw_direct.addRule(self.ipv, self.table, self.chain, self.prio, self.args)
+                    self.fw_direct.addRule(self.ipv4, self.table, self.chain, self.prio, self.args)
                     self.save()
 
     def remove_rule(self):
         if self.query_rule():
-            cmd = f"{self.ipt} -D {self.chain} -d {self.float_addr} -j {self.jump} --to-destination {self.compute_addr}"
+            cmd = f"{self.iptable} -D {self.chain} -d {self.src} -j {self.jmp} --to-destination {self.dst}"
             run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_cmd == 0:
                 if self.check_rule_in_xml():
-                    self.fw_direct.removeRule(self.ipv, self.table, self.chain, self.prio, self.args)
+                    self.fw_direct.removeRule(self.ipv4, self.table, self.chain, self.prio, self.args)
                     self.save()
 
 
 class NetManager(object):
-    def __init__(self, float_addr):
+    def __init__(self, src_ip):
         self.dev = BRIDGE_EXT
-        self.float_addr = float_addr
+        self.src = src_ip
         self.nmc = NM.Client.new(None)
 
     def get_ip_addresses(self):
@@ -114,7 +114,7 @@ class NetManager(object):
         return ip_addrs
 
     def add_address(self, prefix=32):
-        ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))
+        ip_addr = NM.IPAddress.new(socket.AF_INET, self.src, int(prefix))
         dev = self.nmc.get_device_by_iface(self.dev)
         dev_conn = dev.get_active_connection()
         conn = self.nmc.get_connection_by_id(dev_conn.get_id())
@@ -123,7 +123,7 @@ class NetManager(object):
         conn.commit_changes(True)
 
     def remove_address(self, prefix=32):
-        ip_addr = NM.IPAddress.new(socket.AF_INET, self.float_addr, int(prefix))
+        ip_addr = NM.IPAddress.new(socket.AF_INET, self.src, int(prefix))
         dev = self.nmc.get_device_by_iface(self.dev)
         dev_conn = dev.get_active_connection()
         conn = self.nmc.get_connection_by_id(dev_conn.get_id())
