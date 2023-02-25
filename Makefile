@@ -37,14 +37,13 @@ package:
 		echo "==> Compile the app first";\
 		exit 1;\
 	fi
-	@echo "==> Package binary to archive"
 	@cp conf/webvirtcompute.ini src/dist/
 	@if [ ! -d release ]; then\
 		mkdir release;\
 	fi
 	@docker run --rm -it --platform linux/amd64 -v $(PWD):/app -w /app $(IMAGE):$(TAG) bash -c \
 		"tar -czf release/webvirtcompute-rockylinux9-amd64.tar.gz --transform s/dist/webvirtcompute/ src/dist"
-	@echo "==> Package archived"
+	@echo "==> Package archived to release directory"
 
 .PHONY: test
 test:
