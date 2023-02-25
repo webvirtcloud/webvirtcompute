@@ -1,5 +1,6 @@
 *.pyc
 *.pyo
+*.spec
 .DS_*
 .venv
 .idea
