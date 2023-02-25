@@ -24,27 +24,33 @@ build:
 compile:
 	@if [ ! `docker images $(IMAGE):$(TAG) -q` ]; then\
 		echo "==> Build docker image first";\
+		exit 1;\
 	fi
 	@echo "==> Compile binary"
 	@docker run --rm -it --platform linux/amd64 -v $(PWD)/src:/src -w /src $(IMAGE):$(TAG) bash -c \
-		"python3 -m pip install -U pip; \
-		 python3 -m pip install -r requirements/build.txt; \
-		 /usr/local/bin/pyinstaller -p $(PWD) -F webvirtcompute.py"
+		"/usr/local/bin/pyinstaller -p $(PWD) -F webvirtcompute.py"
 	@echo "==> Binary compiled"
 
 .PHONY: package
 package:
-	@if [ ! -d dist ]; then\
+	@if [ ! -d src/dist ]; then\
 		echo "==> Compile the app first";\
+		exit 1;\
 	fi
 	@echo "==> Package binary to archive"
 	@cp conf/webvirtcompute.ini src/dist/
 	@if [ ! -d release ]; then\
 		mkdir release;\
 	fi
-	@docker run --rm -it --platform linux/amd64 -v $(PWD):/src -w /src $(IMAGE):$(TAG) bash -c \
+	@docker run --rm -it --platform linux/amd64 -v $(PWD):/app -w /app $(IMAGE):$(TAG) bash -c \
 		"tar -czf release/webvirtcompute-rockylinux9-amd64.tar.gz --transform s/dist/webvirtcompute/ src/dist"
 	@echo "==> Package archived"
+
+.PHONY: test
+test:
+	@echo "==> Start testing"
+	@docker run --rm -it --platform linux/amd64 -v $(PWD)/src:/src -w /src $(IMAGE):$(TAG) flake8
+	@echo "==> Testing complited"
 
 .PHONY: clean
 clean:

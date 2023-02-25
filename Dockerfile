@@ -14,5 +14,18 @@
 
 FROM rockylinux:9
 
-RUN dnf install -y epel-release
-RUN dnf install -y python3-pip python3-devel python3-firewall python3-libnmstate python3-lxml python3-jinja2 python3-libvirt python3-paramiko python3-libguestfs
+COPY src /src
+
+RUN dnf install -y epel-release && \
+    dnf install -y python3-pip \
+                   python3-lxml \
+                   python3-devel \
+                   python3-jinja2 \
+                   python3-libvirt \
+                   python3-paramiko \
+                   python3-firewall \
+                   python3-libnmstate \
+                   python3-libguestfs
+
+RUN python3 -m pip install -U pip wheel setuptools && \
+    python3 -m pip install -r /src/requirements/build.txt
