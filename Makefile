@@ -38,6 +38,7 @@ package:
 		exit 1;\
 	fi
 	@cp conf/webvirtcompute.ini src/dist/
+	@cp conf/webvirtcompute.service src/dist/
 	@if [ ! -d release ]; then\
 		mkdir release;\
 	fi
