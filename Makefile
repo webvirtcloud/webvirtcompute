@@ -28,7 +28,7 @@ compile:
 	fi
 	@echo "==> Compile binary"
 	@docker run --rm -it --platform linux/amd64 -v $(PWD)/src:/src -w /src $(IMAGE):$(TAG) bash -c \
-		"/usr/local/bin/pyinstaller -p $(PWD) -F webvirtcompute.py"
+		"/usr/local/bin/pyinstaller -p /src --hiddenimport main -F webvirtcompute.py"
 	@echo "==> Binary compiled"
 
 .PHONY: package
