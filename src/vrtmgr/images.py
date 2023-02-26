@@ -35,7 +35,7 @@ class Template(object):
 
         if try_download:
             try:
-                r = requests.get(template_image_url, stream=True)
+                r = requests.get(self.url, stream=True)
                 with open(template_path, "wb") as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
@@ -78,7 +78,7 @@ class Image(object):
 
         return err_msg
 
-    def _run(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):   
+    def _run(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = None
         public_key_string = None
 
@@ -96,7 +96,7 @@ class Image(object):
         if err_msg is None:
             try:
                 # Load GuestFS
-                gstfish = GuestFSUtil(self.image_path)     
+                gstfish = GuestFSUtil(self.image_path)
                 gstfish.mount_root()
                 gstfish.setup_networking(networks, cloud=cloud)
                 gstfish.set_pubic_keys(public_key_string)

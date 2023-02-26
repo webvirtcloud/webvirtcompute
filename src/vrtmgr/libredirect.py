@@ -3,14 +3,12 @@ import time
 import socket
 from subprocess import call, STDOUT, DEVNULL
 from firewall.client import FirewallClient
-
-import gi
-
-gi.require_version("NM", "1.0")
-from gi.repository import NM
-
 from settings import BRIDGE_EXT, FIREWALL_CHAIN_PREFIX
 from settings import FIREWALLD_STATE_TIMEOUT, FIREWALLD_STATE_FILE
+
+import gi
+gi.require_version("NM", "1.0")
+from gi.repository import NM
 
 
 class FwRedirect(object):

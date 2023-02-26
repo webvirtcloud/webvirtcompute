@@ -791,13 +791,13 @@ class wvmCreate(wvmConnect):
 
     def create_xml(
         self, name, vcpu, memory, images, network, uuid=None, autostart=True, nwfilter=True, display=DISPLAY
-    ):        
+    ):
         xml = f"""<domain type='{self.get_domain_type()}'>
                     <name>{name}</name>
                 """
         if uuid:
             xml += f"""<uuid>{str(UUID(uuid))}</uuid>"""
-        
+
         xml += f"""<description>None</description>
                   <memory unit='KiB'>{int(memory // 1024)}</memory>
                   <vcpu>{vcpu}</vcpu>
@@ -934,7 +934,6 @@ class wvmCreate(wvmConnect):
                     xml += f"""<parameter name='IP' value='{
                                 network.get('v4', {}).get('private', {}).get('address')
                             }'/>"""
-
 
                 xml += """</filterref>"""
 

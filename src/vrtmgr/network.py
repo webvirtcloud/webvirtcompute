@@ -1,5 +1,4 @@
 from subprocess import call, STDOUT, DEVNULL
-
 from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
 from .libguestfs import GuestFSUtil
 from .excpetions import IPRedirectError
@@ -90,7 +89,7 @@ class FixedIP(object):
                 self.clear_arp(float_addr, float_gw, dev)
             else:
                 self.del_addr(nmc, float_addr, dev, prefix=float_pref)
-                raise IPRedirectError(f"Firewall closed connection by timeout FIREWALLD_STATE_TIMEOUTsec.")
+                raise IPRedirectError(f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec.")
         else:
             raise IPRedirectError("Error adding IP address to the network device.")
 
@@ -101,6 +100,6 @@ class FixedIP(object):
                 self.del_rule(fwd)
             else:
                 self.add_addr(float_addr, nmc, dev, prefix=float_pref)
-                raise IPRedirectError(f"Firewall closed connection by timeout FIREWALLD_STATE_TIMEOUTsec.")
+                raise IPRedirectError(f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec.")
         else:
             raise IPRedirectError("Error deleting IP address from the network device.")
