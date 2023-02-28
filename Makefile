@@ -54,6 +54,5 @@ test:
 
 .PHONY: clean
 clean:
-	@docker rmi $(IMAGE):$(TAG)
 	@rm -rf release src/build src/dist src/__pycache__ src/webvirtcompute.spec
 	@echo "==> Cleaned"
