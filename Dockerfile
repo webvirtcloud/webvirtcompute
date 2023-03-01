@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM rockylinux:9
+FROM rockylinux:8
 
 COPY src /src
 

@@ -43,7 +43,7 @@ package:
 		mkdir release;\
 	fi
 	@docker run --rm -it --platform linux/amd64 -v $(PWD):/app -w /app $(IMAGE):$(TAG) bash -c \
-		"cd src; tar -czf ../release/webvirtcompute-rockylinux9-amd64.tar.gz --transform s/dist/webvirtcompute/ dist"
+		"cd src; tar -czf ../release/webvirtcompute-rockylinux8-amd64.tar.gz --transform s/dist/webvirtcompute/ dist"
 	@echo "==> Package archived to release directory"
 
 .PHONY: test
