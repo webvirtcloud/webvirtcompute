@@ -132,7 +132,7 @@ def virtance(name):
 @app.post("/virtances/{name}/status/", response_model=VirtanceStatus)
 def virtance_status(name, status: VirtanceStatus):
 
-    if status.action not in ["start", "stop", "suspend", "resume"]:
+    if status.action not in ["start", "stop", "reboot", "suspend", "resume"]:
         raise_error_msg("Status does not exist.")
 
     try:
