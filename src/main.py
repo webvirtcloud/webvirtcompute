@@ -132,14 +132,16 @@ def virtance(name):
 @app.post("/virtances/{name}/status/", response_model=VirtanceStatus)
 def virtance_status(name, status: VirtanceStatus):
 
-    if status.action not in ["start", "stop", "reboot", "suspend", "resume"]:
+    if status.action not in ["power_on", "power_off", "shutdown", "reboot", "suspend", "resume"]:
         raise_error_msg("Status does not exist.")
 
     try:
         conn = libvrt.wvmInstance(name)
-        if status.action == "start":
+        if status.action == "power_on":
             conn.start()
-        if status.action == "stop":
+        if status.action == "power_off":
+            conn.force_shutdown()
+        if status.action == "shutdown":
             conn.shutdown()
         if status.action == "reboot":
             conn.reboot()
