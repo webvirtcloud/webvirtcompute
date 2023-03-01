@@ -141,6 +141,8 @@ def virtance_status(name, status: VirtanceStatus):
             conn.start()
         if status.action == "stop":
             conn.shutdown()
+        if status.action == "reboot":
+            conn.reboot()
         if status.action == "suspend":
             conn.suspend()
         if status.action == "resume":
