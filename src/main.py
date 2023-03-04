@@ -7,7 +7,7 @@ from vrtmgr import libvrt
 from vrtmgr import images
 from vrtmgr import network
 from auth import basic_auth
-from helper import raise_error_msg
+from execption import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL
 from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
@@ -56,7 +56,12 @@ def virtance_create(virtance: VirtanceCreate):
     try:
         conn = libvrt.wvmCreate()
         conn.create_xml(
-            virtance.name, virtance.vcpu, virtance.memory, virtance.images, virtance.network, uuid=virtance.uuid
+            virtance.name, 
+            virtance.vcpu, 
+            virtance.memory, 
+            virtance.images, 
+            virtance.network, 
+            uuid=virtance.uuid
         )
         conn.close()
     except libvirtError as err:
@@ -76,25 +81,29 @@ def virtance_create(virtance: VirtanceCreate):
 @app.get("/virtances/")
 def virtances():
     virtances = []
-    conn = libvrt.wvmConnect()
-    virtance_names = conn.get_instances()
-    conn.close()
-    
-    for name in virtance_names:
-        dconn = libvrt.wvmInstance(name)
-        virtances.append(
-            {
-                "name": name,
-                "status": dconn.get_state(),
-                "uuid": dconn.get_uuid(),
-                "vcpu": dconn.get_vcpu(),
-                "memory": dconn.get_memory(),
-                "disks": dconn.get_disk_device(),
-                "media": dconn.get_media_device(),
-                "ifaces": dconn.get_net_ifaces(),
-            }
-        )
-        dconn.close()
+
+    try:
+        conn = libvrt.wvmConnect()
+        virtance_names = conn.get_instances()
+        conn.close()
+        
+        for name in virtance_names:
+            dconn = libvrt.wvmInstance(name)
+            virtances.append(
+                {
+                    "name": name,
+                    "status": dconn.get_state(),
+                    "uuid": dconn.get_uuid(),
+                    "vcpu": dconn.get_vcpu(),
+                    "memory": dconn.get_memory(),
+                    "disks": dconn.get_disk_device(),
+                    "media": dconn.get_media_device(),
+                    "ifaces": dconn.get_net_ifaces(),
+                }
+            )
+            dconn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
 
     return {"virtances": virtances}
 
@@ -201,7 +210,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"message": "success"}
+    return {"success": True}
 
 
 @app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
@@ -212,8 +221,6 @@ def virtance_media_umount(name, media: VirtanceMedia):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    return {"message": "success"}
 
 
 @app.post("/virtances/{name}/reset_password/", response_model=ResetPassword)
@@ -236,7 +243,7 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
     if err_msg:
         raise_error_msg(err_msg)
 
-    return {"message": "success"}
+    return reset_pass
 
 
 @app.delete("/virtances/{name}/")
@@ -255,8 +262,6 @@ def virtance_detele(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    return {"message": "success"}
 
 
 @app.get("/host/")
@@ -304,7 +309,9 @@ def storages_list(pool: StorageCreate):
         if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
             raise_error_msg("Source, pool, secret and host fields required for rbd storage pool.")
         try:
-            conn.create_storage_ceph(pool.name, pool.pool, pool.user, pool.secret, pool.host, pool.host2, pool.host3)
+            conn.create_storage_ceph(
+                pool.name, pool.pool, pool.user, pool.secret, pool.host, pool.host2, pool.host3
+            )
         except libvirtError as err:
             raise_error_msg(err)
     if pool.type == "nfs":
@@ -340,26 +347,25 @@ def storage_info(pool):
 
 
 @app.post("/storages/{pool}/", response_model=StorageAction)
-def storage_action(pool, val: StorageAction):
-    try:
-        conn = libvrt.wvmStorage(pool)
-    except libvirtError as err:
-        raise_error_msg(err)
-
-    if val.action not in ["start", "stop", "autostart", "manualstart"]:
+def storage_action(pool, stg: StorageAction):
+    if stg.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
 
-    if val.action == "start":
-        conn.start()
-    if val.action == "stop":
-        conn.stop()
-    if val.action == "autostart":
-        conn.set_autostart(True)
-    if val.action == "manualstart":
-        conn.set_autostart(False)
-    conn.close()
+    try:
+        conn = libvrt.wvmStorage(pool)
+        if stg.action == "start":
+            conn.start()
+        if stg.action == "stop":
+            conn.stop()
+        if stg.action == "autostart":
+            conn.set_autostart(True)
+        if stg.action == "manualstart":
+            conn.set_autostart(False)
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
     
-    return val
+    return stg
 
 
 @app.delete("/storages/{pool}/")
@@ -368,23 +374,20 @@ def storage_delete(pool):
         conn = libvrt.wvmStorage(pool)
         conn.stop()
         conn.delete()
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    conn.close()
-
-    return {"message": "success"}
 
 
 @app.get("/storages/{pool}/volumes/")
 def storage_volume_list(pool):
     try:
         conn = libvrt.wvmStorage(pool)
+        volumes = conn.get_volumes_info()
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
 
-    volumes = conn.get_volumes_info()
-    conn.close()
-    
     return {"volumes": volumes}
 
 
@@ -404,41 +407,42 @@ def storage_volume_create(pool, volume: VolumeCreate):
 def storage_volume_info(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
-        vol = conn.get_volume_info(volume)
+        volomue_data = conn.get_volume_info(volume)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"volume": vol}
+    return {"volume": volomue_data}
 
 
 @app.post("/storages/{pool}/volumes/{volume}/", response_model=VolumeAction)
 def storage_volume_action(pool, volume, val: VolumeAction):
+    if val.action not in ["resize", "clone"]:
+        raise_error_msg("Action not exist.")
+    
     try:
         conn = libvrt.wvmStorage(pool)
         conn.get_volume(volume)
+
+        if val.action == "resize":
+            if not val.size:
+                raise_error_msg("Size required for resize ation.")
+            try:
+                conn.resize_volume(val.size)
+            except libvirtError as err:
+                raise_error_msg(err)
+
+        if val.action == "clone":
+            if not val.name:
+                raise_error_msg("Name required for clone ation.")
+            try:
+                conn.clone_volume(volume, val.name)
+            except libvirtError as err:
+                raise_error_msg(err)
+
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    if val.action not in ["resize", "clone"]:
-        raise_error_msg("Action not exist.")
-
-    if val.action == "resize":
-        if not val.size:
-            raise_error_msg("Size required for resize ation.")
-        try:
-            conn.resize_volume(val.size)
-        except libvirtError as err:
-            raise_error_msg(err)
-
-    if val.action == "clone":
-        if not val.name:
-            raise_error_msg("Name required for clone ation.")
-        try:
-            conn.clone_volume(volume, val.name)
-            conn.close()
-        except libvirtError as err:
-            raise_error_msg(err)
 
     return val
 
@@ -451,8 +455,6 @@ def storage_volume_delete(pool, volume):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    return {"message": "success"}
 
 
 @app.get("/networks/")
@@ -504,23 +506,23 @@ def network_info(name):
 
 @app.post("/networks/{name}/", response_model=NetworkAction)
 def network_action(name, val: NetworkAction):
-    try:
-        conn = libvrt.wvmNetwork(name)
-    except libvirtError as err:
-        raise_error_msg(err)
-
     if val.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
 
-    if val.action == "start":
-        conn.start()
-    if val.action == "stop":
-        conn.stop()
-    if val.action == "autostart":
-        conn.set_autostart(True)
-    if val.action == "manualstart":
-        conn.set_autostart(False)
-    conn.close()
+    try:
+        conn = libvrt.wvmNetwork(name)
+
+        if val.action == "start":
+            conn.start()
+        if val.action == "stop":
+            conn.stop()
+        if val.action == "autostart":
+            conn.set_autostart(True)
+        if val.action == "manualstart":
+            conn.set_autostart(False)
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
 
     return {"network": network}
 
@@ -534,8 +536,6 @@ def network_delete(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    return {"message": "success"}
 
 
 @app.get("/secrets/")
@@ -559,39 +559,38 @@ def secrets_list():
 
 @app.post("/secrets/", response_model=SecretCreate)
 def secret_create(secret: SecretCreate):
-    conn = libvrt.wvmSecrets()
     try:
+        conn = libvrt.wvmSecrets()
         conn.create_secret(secret.ephemeral, secret.private, secret.secret_type, secret.data)
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    conn.close()
     
     return secret
 
 
 @app.get("/secrets/{uuid}/")
 def secret_info(uuid):
-    conn = libvrt.wvmSecrets()
     try:
+        conn = libvrt.wvmSecrets()
         secret = conn.get_secret(uuid)
+        secret = {
+            "usage": secret.usageID(),
+            "uuid": secret.UUIDString(),
+            "usageType": secret.usageType(),
+            "value": conn.get_secret_value(uuid),
+        }
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-
-    secret = {
-        "usage": secret.usageID(),
-        "uuid": secret.UUIDString(),
-        "usageType": secret.usageType(),
-        "value": conn.get_secret_value(uuid),
-    }
-    conn.close()
     
     return {"secret": secret}
 
 
 @app.post("/secrets/{uuid}/", response_model=SecretValue)
 def secret_value(uuid, secret: SecretValue):
-    conn = libvrt.wvmSecrets()
     try:
+        conn = libvrt.wvmSecrets()
         conn.set_secret_value(uuid, secret.value)
         conn.close()
     except libvirtError as err:
@@ -602,20 +601,19 @@ def secret_value(uuid, secret: SecretValue):
 
 @app.delete("/secrets/{uuid}/", status_code=204)
 def secret_detele(uuid):
-    conn = libvrt.wvmSecrets()
     try:
+        conn = libvrt.wvmSecrets()
         conn.delete_secret(uuid)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"message": "success"}
 
 @app.get("/nwfilters/")
 def nwfilters_list():
     nwfilters_list = []
     try:
-    conn = libvrt.wvmNWfilter()
+        conn = libvrt.wvmNWfilter()
         nwfilters = conn.get_nwfilter()
         for nwfilter in nwfilters:
             nwfilters_list.append({"name": nwfilter, "xml": conn.get_nwfilter_xml(nwfilter)})
@@ -659,11 +657,11 @@ def nwfilter_delete(name):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"message": "success"}
-
 
 @app.post("/floating_ips/", response_model=FloatingIPs)
 def floating_ip_attach(name, floating_ip: FloatingIPs):
+    err_msg = None
+
     try:
         ip = network.FixedIP(floating_ip.fixed_address)
         err_msg = ip.attach_floating_ip(floating_ip.address, floating_ip.prefix, floating_ip.gateway)
@@ -678,7 +676,7 @@ def floating_ip_attach(name, floating_ip: FloatingIPs):
 
 @app.delete("/floating_ips/", response_model=FloatingIPs)
 def floating_ip_detach(name, floating_ip: FloatingIPs):
-    raise_error_msg = None
+    err_msg = None
 
     try:
         ip = network.FixedIP(floating_ip.fixed_address)
@@ -688,5 +686,3 @@ def floating_ip_detach(name, floating_ip: FloatingIPs):
 
     if err_msg:
         raise_error_msg(err_msg)
-
-    return floating_ip
