@@ -1,7 +1,7 @@
 import requests
 from typing import Optional
 from libvirt import libvirtError
-from fastapi import FastAPI, Depends, status
+from fastapi import status, FastAPI, Depends, Response
 
 from vrtmgr import libvrt
 from vrtmgr import images
@@ -213,7 +213,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
     return {"success": True}
 
 
-@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia, status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
 def virtance_media_umount(name, media: VirtanceMedia):
     try:
         conn = libvrt.wvmInstance(name)
@@ -221,6 +221,8 @@ def virtance_media_umount(name, media: VirtanceMedia):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/virtances/{name}/reset_password/", response_model=ResetPassword)
@@ -246,7 +248,7 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
     return reset_pass
 
 
-@app.delete("/virtances/{name}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/virtances/{name}/")
 def virtance_detele(name):
     try:
         dom = libvrt.wvmInstance(name)
@@ -263,6 +265,8 @@ def virtance_detele(name):
         dom.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/host/")
@@ -369,7 +373,7 @@ def storage_action(pool, stg: StorageAction):
     return stg
 
 
-@app.delete("/storages/{pool}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/storages/{pool}/")
 def storage_delete(pool):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -378,6 +382,8 @@ def storage_delete(pool):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/storages/{pool}/volumes/")
@@ -448,7 +454,7 @@ def storage_volume_action(pool, volume, val: VolumeAction):
     return val
 
 
-@app.delete("/storages/{pool}/volumes/{volume}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/storages/{pool}/volumes/{volume}/")
 def storage_volume_delete(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -456,6 +462,8 @@ def storage_volume_delete(pool, volume):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/networks/")
@@ -528,7 +536,7 @@ def network_action(name, val: NetworkAction):
     return {"network": network}
 
 
-@app.delete("/networks/{name}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/networks/{name}/")
 def network_delete(name):
     try:
         conn = libvrt.wvmNetwork(name)
@@ -537,6 +545,8 @@ def network_delete(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/secrets/")
@@ -600,7 +610,7 @@ def secret_value(uuid, secret: SecretValue):
     return secret
 
 
-@app.delete("/secrets/{uuid}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/secrets/{uuid}/")
 def secret_detele(uuid):
     try:
         conn = libvrt.wvmSecrets()
@@ -608,6 +618,8 @@ def secret_detele(uuid):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/nwfilters/")
@@ -649,7 +661,7 @@ def nwfilter_info(name):
     return {"nwfilter": nwfilter}
 
 
-@app.delete("/nwfilters/{name}/", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/nwfilters/{name}/")
 def nwfilter_delete(name):
     try:
         conn = libvrt.wvmNWfilter()
@@ -657,6 +669,8 @@ def nwfilter_delete(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/floating_ips/", response_model=FloatingIPs)
@@ -675,7 +689,7 @@ def floating_ip_attach(name, floating_ip: FloatingIPs):
     return floating_ip
 
 
-@app.delete("/floating_ips/", response_model=FloatingIPs, status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/floating_ips/", response_model=FloatingIPs)
 def floating_ip_detach(name, floating_ip: FloatingIPs):
     err_msg = None
 
@@ -687,3 +701,5 @@ def floating_ip_detach(name, floating_ip: FloatingIPs):
 
     if err_msg:
         raise_error_msg(err_msg)
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
