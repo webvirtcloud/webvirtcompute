@@ -1,7 +1,7 @@
 import requests
 from typing import Optional
 from libvirt import libvirtError
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, status
 
 from vrtmgr import libvrt
 from vrtmgr import images
@@ -213,7 +213,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
     return {"success": True}
 
 
-@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
+@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia, status_code=status.HTTP_204_NO_CONTENT)
 def virtance_media_umount(name, media: VirtanceMedia):
     try:
         conn = libvrt.wvmInstance(name)
@@ -246,7 +246,7 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
     return reset_pass
 
 
-@app.delete("/virtances/{name}/")
+@app.delete("/virtances/{name}/", status_code=status.HTTP_204_NO_CONTENT)
 def virtance_detele(name):
     try:
         dom = libvrt.wvmInstance(name)
@@ -369,7 +369,7 @@ def storage_action(pool, stg: StorageAction):
     return stg
 
 
-@app.delete("/storages/{pool}/")
+@app.delete("/storages/{pool}/", status_code=status.HTTP_204_NO_CONTENT)
 def storage_delete(pool):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -448,7 +448,7 @@ def storage_volume_action(pool, volume, val: VolumeAction):
     return val
 
 
-@app.delete("/storages/{pool}/volumes/{volume}/", status_code=204)
+@app.delete("/storages/{pool}/volumes/{volume}/", status_code=status.HTTP_204_NO_CONTENT)
 def storage_volume_delete(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -528,7 +528,7 @@ def network_action(name, val: NetworkAction):
     return {"network": network}
 
 
-@app.delete("/networks/{name}/", status_code=204)
+@app.delete("/networks/{name}/", status_code=status.HTTP_204_NO_CONTENT)
 def network_delete(name):
     try:
         conn = libvrt.wvmNetwork(name)
@@ -600,7 +600,7 @@ def secret_value(uuid, secret: SecretValue):
     return secret
 
 
-@app.delete("/secrets/{uuid}/", status_code=204)
+@app.delete("/secrets/{uuid}/", status_code=status.HTTP_204_NO_CONTENT)
 def secret_detele(uuid):
     try:
         conn = libvrt.wvmSecrets()
@@ -649,7 +649,7 @@ def nwfilter_info(name):
     return {"nwfilter": nwfilter}
 
 
-@app.delete("/nwfilters/{name}/", status_code=204)
+@app.delete("/nwfilters/{name}/", status_code=status.HTTP_204_NO_CONTENT)
 def nwfilter_delete(name):
     try:
         conn = libvrt.wvmNWfilter()
@@ -675,7 +675,7 @@ def floating_ip_attach(name, floating_ip: FloatingIPs):
     return floating_ip
 
 
-@app.delete("/floating_ips/", response_model=FloatingIPs)
+@app.delete("/floating_ips/", response_model=FloatingIPs, status_code=status.HTTP_204_NO_CONTENT)
 def floating_ip_detach(name, floating_ip: FloatingIPs):
     err_msg = None
 
