@@ -201,98 +201,89 @@ class wvmConnect(object):
 
 class wvmStorages(wvmConnect):
     def get_storages_info(self):
+        get_storages = self.get_storages()
         storages = []
-        for storage in self.get_storages():
-            stg = self.get_storage(storage)
-            active = bool(stg.isActive())
-            if active is True:
-                for volume in stg.listVolumes():
-                    volumes = []
-                    vol = stg.storageVolLookupByName(volume)
-                    volumes.append(
-                        {
-                            "name": volume,
-                            "type": util.get_xml_data(vol.XMLDesc(0), "target/format", "type"),
-                            "size": vol.info()[1],
-                        }
-                    )
+        for pool in get_storages:
+            stg = self.get_storage(pool)
+            stg_status = stg.isActive()
+            stg_type = util.get_xml_data(stg.XMLDesc(0), element="type")
+            if stg_status:
+                stg_vol = len(stg.listVolumes())
+            else:
+                stg_vol = None
+            stg_size = stg.info()[1]
             storages.append(
                 {
-                    "name": storage,
-                    "active": active,
-                    "type": util.get_xml_data(stg.XMLDesc(0), element="type"),
-                    "volumes": volumes,
-                    "size": {"total": stg.info()[1], "used": stg.info()[2], "free": stg.info()[3]},
-                    "autostart": bool(stg.autostart()),
+                    "name": pool,
+                    "status": stg_status,
+                    "type": stg_type,
+                    "volumes": stg_vol,
+                    "size": stg_size,
                 }
             )
         return storages
 
-    def define_storage(self, xml, flag=0):
+    def define_storage(self, xml, flag):
         self.wvm.storagePoolDefineXML(xml, flag)
 
-    def create_storage_dir(self, name, target):
+    def create_storage(self, stg_type, name, source, target):
         xml = f"""
-                <pool type='dir'>
-                <name>{name}</name>
-                <target>
-                    <path>{target}</path>
-                </target>
-                </pool>"""
-        self.define_storage(xml, 0)
-        stg = self.get_storage(name)
-        stg.create(0)
-        stg.setAutostart(1)
-
-    def create_storage_logic(self, name, source):
-        xml = f"""
-                <pool type='logical'>
-                <name>{name}</name>
+                <pool type='{stg_type}'>
+                <name>{name}</name>"""
+        if stg_type == "logical":
+            xml += f"""
                   <source>
                     <device path='{source}'/>
                     <name>{name}</name>
                     <format type='lvm2'/>
-                  </source>
+                  </source>"""
+        if stg_type == "logical":
+            target = "/dev/" + name
+        xml += f"""
                   <target>
-                       <path>/dev/{name}</path>
+                       <path>{target}</path>
                   </target>
                 </pool>"""
         self.define_storage(xml, 0)
         stg = self.get_storage(name)
-        stg.build(0)
+        if stg_type == "logical":
+            stg.build(0)
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_ceph(self, name, pool, user, secret, host, host2=None, host3=None):
+    def create_storage_ceph(self, stg_type, name, pool, host1, host2, host3, user, secret):
         xml = f"""
-                <pool type='rbd'>
+                <pool type='{stg_type}'>
                 <name>{name}</name>
                 <source>
                     <name>{pool}</name>
-                    <host name='{host}' port='6789'/>"""
+                    <host name='{host1}' port='6789'/>"""
         if host2:
             xml += f"""<host name='{host2}' port='6789'/>"""
         if host3:
             xml += f"""<host name='{host3}' port='6789'/>"""
 
-        xml += f"""<auth username='{user}' type='ceph'>
-                        <secret uuid='{secret}'/>
+        xml += """<auth username='%s' type='ceph'>
+                        <secret uuid='%s'/>
                     </auth>
                 </source>
-                </pool>"""
+                </pool>""" % (
+            user,
+            secret,
+        )
         self.define_storage(xml, 0)
         stg = self.get_storage(name)
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_netfs(self, name, host, source, format, target):
+    def create_storage_netfs(self, stg_type, name, netfs_host, source, source_format, target):
         xml = f"""
-                <pool type='nfs'>
+                <pool type='{stg_type}'>
                 <name>{name}</name>
                 <source>
-                    <host name='{host}'/>
+                    <host name='{netfs_host}'/>
                     <dir path='{source}'/>
-                    <format type='{format}'/>
+                    <format type='{source_format}'/>
                 </source>
                 <target>
                     <path>{target}</path>
