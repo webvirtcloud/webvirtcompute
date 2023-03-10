@@ -54,10 +54,9 @@ class wvmConnect(object):
         if isinstance(free_memory, dict):
             memory = list(free_memory.values())
             free = (memory[1] + memory[2] + memory[3]) * 1024
-            percent = 100 - ((free * 100) / host_memory)
             memory_usage = host_memory - free
-            return {"size": host_memory, "usage": memory_usage, "percent": round(percent)}
-        return {"size": 0, "usage": 0, "percent": 0}
+            return {"usage": memory_usage}
+        return {"usage": 0}
 
     def get_host_cpu_usage(self):
         prev_idle = prev_total = diff_usage = 0

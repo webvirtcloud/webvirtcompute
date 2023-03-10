@@ -272,10 +272,12 @@ def virtance_detele(name):
 @app.get("/host/")
 def host():
     conn = libvrt.wvmConnect()
-    hostinfo = conn.get_host_info()
+    host = conn.get_host_info()
+    cpu = conn.get_host_cpu_usage()
+    memory = conn.get_host_mem_usage()
     conn.close()
     
-    return {"host": hostinfo}
+    return {"host": host, "memory": memory, "cpu": cpu}
 
 
 @app.get("/storages/")
