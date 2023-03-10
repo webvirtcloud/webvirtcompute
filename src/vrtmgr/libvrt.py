@@ -201,24 +201,22 @@ class wvmConnect(object):
 
 class wvmStorages(wvmConnect):
     def get_storages_info(self):
-        get_storages = self.get_storages()
         storages = []
-        for pool in get_storages:
+        stg_volumes = 0
+        for pool in self.get_storages():
             stg = self.get_storage(pool)
-            stg_status = stg.isActive()
+            stg_active = bool(stg.isActive())
             stg_type = util.get_xml_data(stg.XMLDesc(0), element="type")
-            if stg_status:
-                stg_vol = len(stg.listVolumes())
-            else:
-                stg_vol = None
+            if stg_active:
+                stg_volumes = len(stg.listVolumes())                
             stg_size = stg.info()[1]
             storages.append(
                 {
                     "name": pool,
-                    "status": stg_status,
                     "type": stg_type,
-                    "volumes": stg_vol,
                     "size": stg_size,
+                    "active": stg_active,
+                    "volumes": stg_volumes,
                 }
             )
         return storages
@@ -473,10 +471,10 @@ class wvmNetworks(wvmConnect):
         networks = []
         for network in self.get_networks():
             net = self.get_network(network)
-            net_status = bool(net.isActive())
+            net_active = bool(net.isActive())
             net_bridge = net.bridgeName()
             net_forwd = util.get_xml_data(net.XMLDesc(0), "forward", "mode")
-            networks.append({"name": network, "active": net_status, "device": net_bridge, "forward": net_forwd})
+            networks.append({"name": network, "active": net_active, "device": net_bridge, "forward": net_forwd})
         return networks
 
     def define_network(self, xml):
