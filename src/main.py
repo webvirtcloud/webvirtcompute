@@ -292,6 +292,7 @@ def storages():
 @app.post("/storages/", response_model=StorageCreate)
 def storages_list(pool: StorageCreate):
     conn = libvrt.wvmStorages()
+    
     if pool.type == "dir":
         if pool.target is None:
             raise_error_msg("Target field required for dir storage pool.")
@@ -302,6 +303,7 @@ def storages_list(pool: StorageCreate):
             )
         except libvirtError as err:
             raise_error_msg(err)
+    
     if pool.type == "logical":
         if pool.source is None:
             raise_error_msg("Source field required for dir storage pool.")
@@ -312,6 +314,7 @@ def storages_list(pool: StorageCreate):
             )
         except libvirtError as err:
             raise_error_msg(err)
+    
     if pool.type == "rbd":
         if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
             raise_error_msg("Source, pool, secret and host fields required for rbd storage pool.")
@@ -321,6 +324,7 @@ def storages_list(pool: StorageCreate):
             )
         except libvirtError as err:
             raise_error_msg(err)
+    
     if pool.type == "nfs":
         if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
             raise_error_msg("Pool, source, source and target fields required for nfs storage pool.")
@@ -328,8 +332,8 @@ def storages_list(pool: StorageCreate):
             conn.create_storage_netfs(pool.name, pool.host, pool.source, pool.format, pool.target)
         except libvirtError as err:
             raise_error_msg(err)
+
     conn.close()
-    
     return pool
 
 
@@ -629,7 +633,7 @@ def nwfilters_list():
     nwfilters_list = []
     try:
         conn = libvrt.wvmNWfilter()
-        nwfilters = conn.get_nwfilter()
+        nwfilters = conn.get_nwfilters()
         for nwfilter in nwfilters:
             nwfilters_list.append({"name": nwfilter, "xml": conn.get_nwfilter_xml(nwfilter)})
         conn.close()
