@@ -17,14 +17,14 @@ from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, Float
 app = FastAPI(dependencies=[Depends(basic_auth)])
 
 
-@app.get("/metrics/")
+@app.get("/metrics/", status_code=status.HTTP_200_OK)
 def metrics(query: Optional[str] = "", start: Optional[str] = "", end: Optional[str] = "", step: Optional[str] = ""):
     params = {"query": query, "start": start, "end": end, "step": step}
     responce = requests.get(METRICS_URL, params=params).json()
     return responce
 
 
-@app.post("/virtances/", response_model=VirtanceCreate)
+@app.post("/virtances/", response_model=VirtanceCreate, status_code=status.HTTP_201_CREATED)
 def virtance_create(virtance: VirtanceCreate):
     # Download and deploy images template
     for img in virtance.images:
@@ -78,7 +78,7 @@ def virtance_create(virtance: VirtanceCreate):
     return virtance
 
 
-@app.get("/virtances/")
+@app.get("/virtances/", status_code=status.HTTP_200_OK)
 def virtances():
     virtances = []
 
@@ -108,7 +108,7 @@ def virtances():
     return {"virtances": virtances}
 
 
-@app.get("/virtances/{name}/")
+@app.get("/virtances/{name}/", status_code=status.HTTP_200_OK)
 def virtance_info(name):
     try:
         conn = libvrt.wvmInstance(name)
@@ -129,7 +129,7 @@ def virtance_info(name):
     return {"virtances": response}
 
 
-@app.get("/virtances/{name}/status/")
+@app.get("/virtances/{name}/status/", status_code=status.HTTP_200_OK)
 def virtance(name):
     try:
         conn = libvrt.wvmInstance(name)
@@ -141,7 +141,7 @@ def virtance(name):
     return {"status": status}
 
 
-@app.post("/virtances/{name}/status/", response_model=VirtanceStatus)
+@app.post("/virtances/{name}/status/", response_model=VirtanceStatus, status_code=status.HTTP_200_OK)
 def virtance_status(name, status: VirtanceStatus):
 
     if status.action not in ["power_on", "power_off", "shutdown", "reboot", "suspend", "resume"]:
@@ -168,7 +168,7 @@ def virtance_status(name, status: VirtanceStatus):
     return status
 
 
-@app.post("/virtances/{name}/resize/", response_model=VirtanceResize)
+@app.post("/virtances/{name}/resize/", response_model=VirtanceResize, status_code=status.HTTP_200_OK)
 def virtance_resize(name, resize: VirtanceResize):
     try:
         conn = libvrt.wvmInstance(name)
@@ -189,7 +189,7 @@ def virtance_resize(name, resize: VirtanceResize):
     return resize
 
 
-@app.get("/virtances/{name}/media/", dependencies=[Depends(basic_auth)])
+@app.get("/virtances/{name}/media/", status_code=status.HTTP_200_OK)
 def virtance_media_info(name):
     try:
         conn = libvrt.wvmInstance(name)
@@ -201,7 +201,7 @@ def virtance_media_info(name):
     return {"media": media}
 
 
-@app.post("/virtances/{name}/media/", response_model=VirtanceMedia)
+@app.post("/virtances/{name}/media/", response_model=VirtanceMedia, status_code=status.HTTP_200_OK)
 def virtance_media_mount(name, media: VirtanceMedia):
     try:
         conn = libvrt.wvmInstance(name)
@@ -210,7 +210,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"success": True}
+    return media
 
 
 @app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
@@ -225,7 +225,7 @@ def virtance_media_umount(name, media: VirtanceMedia):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.post("/virtances/{name}/reset_password/", response_model=ResetPassword)
+@app.post("/virtances/{name}/reset_password/", response_model=ResetPassword, status_code=status.HTTP_200_OK)
 def virtance_reset_password(name, reset_pass: ResetPassword):
     raise_error_msg = None
 
@@ -269,7 +269,7 @@ def virtance_detele(name):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/host/")
+@app.get("/host/", status_code=status.HTTP_200_OK)
 def host():
     conn = libvrt.wvmConnect()
     host = conn.get_host_info()
@@ -280,7 +280,7 @@ def host():
     return {"host": host, "memory": memory, "cpu": cpu}
 
 
-@app.get("/storages/")
+@app.get("/storages/", status_code=status.HTTP_200_OK)
 def storages():
     conn = libvrt.wvmStorages()
     storages = conn.get_storages_info()
@@ -289,7 +289,7 @@ def storages():
     return {"storages": storages}
 
 
-@app.post("/storages/", response_model=StorageCreate)
+@app.post("/storages/", response_model=StorageCreate, status_code=status.HTTP_201_CREATED)
 def storages_list(pool: StorageCreate):
     conn = libvrt.wvmStorages()
     
@@ -334,10 +334,11 @@ def storages_list(pool: StorageCreate):
             raise_error_msg(err)
 
     conn.close()
+    
     return pool
 
 
-@app.get("/storages/{pool}/")
+@app.get("/storages/{pool}/", status_code=status.HTTP_200_OK)
 def storage_info(pool):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -357,7 +358,7 @@ def storage_info(pool):
     return {"storage": storage}
 
 
-@app.post("/storages/{pool}/", response_model=StorageAction)
+@app.post("/storages/{pool}/", response_model=StorageAction, status_code=status.HTTP_200_OK)
 def storage_action(pool, stg: StorageAction):
     if stg.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
@@ -392,7 +393,7 @@ def storage_delete(pool):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/storages/{pool}/volumes/")
+@app.get("/storages/{pool}/volumes/", status_code=status.HTTP_200_OK)
 def storage_volume_list(pool):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -404,7 +405,7 @@ def storage_volume_list(pool):
     return {"volumes": volumes}
 
 
-@app.post("/storages/{pool}/volumes/", response_model=VolumeCreate)
+@app.post("/storages/{pool}/volumes/", response_model=VolumeCreate, status_code=status.HTTP_201_CREATED)
 def storage_volume_create(pool, volume: VolumeCreate):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -416,7 +417,7 @@ def storage_volume_create(pool, volume: VolumeCreate):
     return volume
 
 
-@app.get("/storages/{pool}/volumes/{volume}/")
+@app.get("/storages/{pool}/volumes/{volume}/", status_code=status.HTTP_200_OK)
 def storage_volume_info(pool, volume):
     try:
         conn = libvrt.wvmStorage(pool)
@@ -428,7 +429,7 @@ def storage_volume_info(pool, volume):
     return {"volume": volomue_data}
 
 
-@app.post("/storages/{pool}/volumes/{volume}/", response_model=VolumeAction)
+@app.post("/storages/{pool}/volumes/{volume}/", response_model=VolumeAction, status_code=status.HTTP_200_OK)
 def storage_volume_action(pool, volume, val: VolumeAction):
     if val.action not in ["resize", "clone"]:
         raise_error_msg("Action not exist.")
@@ -472,7 +473,7 @@ def storage_volume_delete(pool, volume):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/networks/")
+@app.get("/networks/", status_code=status.HTTP_200_OK)
 def networks_list():
     conn = libvrt.wvmNetworks()
     networks = conn.get_networks_info()
@@ -481,18 +482,18 @@ def networks_list():
     return {"networks": networks}
 
 
-@app.post("/networks/", response_model=NetworkCreate)
+@app.post("/networks/", response_model=NetworkCreate, status_code=status.HTTP_201_CREATED)
 def network_create(net: NetworkCreate):
     conn = libvrt.wvmNetworks()
     try:
         conn.create_network(
-            net.name, 
-            net.forward, 
-            net.gateway, 
-            net.mask, 
-            net.dhcp, 
-            net.bridge, 
-            net.openvswitch, 
+            net.name,
+            net.forward,
+            net.gateway,
+            net.mask,
+            net.dhcp,
+            net.bridge,
+            net.openvswitch,
             net.fixed
         )
         conn.close()
@@ -502,7 +503,7 @@ def network_create(net: NetworkCreate):
     return net
 
 
-@app.get("/networks/{name}/")
+@app.get("/networks/{name}/", status_code=status.HTTP_200_OK)
 def network_info(name):
     try:
         conn = libvrt.wvmNetwork(name)
@@ -519,7 +520,7 @@ def network_info(name):
     return {"network": network}
 
 
-@app.post("/networks/{name}/", response_model=NetworkAction)
+@app.post("/networks/{name}/", response_model=NetworkAction, status_code=status.HTTP_200_OK)
 def network_action(name, val: NetworkAction):
     if val.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
@@ -555,7 +556,7 @@ def network_delete(name):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/secrets/")
+@app.get("/secrets/", status_code=status.HTTP_200_OK)
 def secrets_list():
     secrets_list = []
     conn = libvrt.wvmSecrets()
@@ -574,7 +575,7 @@ def secrets_list():
     return {"secrets": secrets_list}
 
 
-@app.post("/secrets/", response_model=SecretCreate)
+@app.post("/secrets/", response_model=SecretCreate, status_code=status.HTTP_201_CREATED)
 def secret_create(secret: SecretCreate):
     try:
         conn = libvrt.wvmSecrets()
@@ -586,7 +587,7 @@ def secret_create(secret: SecretCreate):
     return secret
 
 
-@app.get("/secrets/{uuid}/")
+@app.get("/secrets/{uuid}/", status_code=status.HTTP_200_OK)
 def secret_info(uuid):
     try:
         conn = libvrt.wvmSecrets()
@@ -600,11 +601,11 @@ def secret_info(uuid):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return {"secret": secret}
 
 
-@app.post("/secrets/{uuid}/", response_model=SecretValue)
+@app.post("/secrets/{uuid}/", response_model=SecretValue, status_code=status.HTTP_200_OK)
 def secret_value(uuid, secret: SecretValue):
     try:
         conn = libvrt.wvmSecrets()
@@ -628,7 +629,7 @@ def secret_detele(uuid):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/nwfilters/")
+@app.get("/nwfilters/", status_code=status.HTTP_200_OK)
 def nwfilters_list():
     nwfilters_list = []
     try:
@@ -643,7 +644,7 @@ def nwfilters_list():
     return {"nwfilters": nwfilters_list}
 
 
-@app.post("/nwfilters/", response_model=NwFilterCreate)
+@app.post("/nwfilters/", response_model=NwFilterCreate, status_code=status.HTTP_201_CREATED)
 def nwfilter_ctreate(nwfilter: NwFilterCreate):
     try:
         conn = libvrt.wvmNWfilter()
@@ -654,8 +655,7 @@ def nwfilter_ctreate(nwfilter: NwFilterCreate):
     
     return nwfilter
 
-
-@app.get("/nwfilters/{name}/")
+@app.get("/nwfilters/{name}/", status_code=status.HTTP_200_OK)
 def nwfilter_info(name):
     try:
         conn = libvrt.wvmNWfilter()
@@ -679,8 +679,8 @@ def nwfilter_delete(name):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.post("/floating_ips/", response_model=FloatingIPs)
-def floating_ip_attach(name, floating_ip: FloatingIPs):
+@app.post("/floating_ips/", response_model=FloatingIPs, status_code=status.HTTP_200_OK)
+def floating_ip_attach(floating_ip: FloatingIPs):
     err_msg = None
 
     try:
@@ -696,7 +696,7 @@ def floating_ip_attach(name, floating_ip: FloatingIPs):
 
 
 @app.delete("/floating_ips/", response_model=FloatingIPs)
-def floating_ip_detach(name, floating_ip: FloatingIPs):
+def floating_ip_detach(floating_ip: FloatingIPs):
     err_msg = None
 
     try:
