@@ -349,6 +349,7 @@ def storage_info(pool):
         "name": pool,
         "active": conn.get_active(),
         "type": conn.get_type(),
+        "path": conn.get_target_path(),
         "volumes": conn.get_volumes_info(),
         "size": {"total": conn.get_total_size(), "used": conn.get_used_size(), "free": conn.get_free_size()},
         "autostart": conn.get_autostart(),
