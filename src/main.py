@@ -410,7 +410,7 @@ def storage_volume_list(pool):
 def storage_volume_create(pool, volume: VolumeCreate):
     try:
         conn = libvrt.wvmStorage(pool)
-        conn.create_volume(name=volume.name, size=volume.size * (1024**3), fmt=volume.format)
+        conn.create_volume(name=volume.name, size=volume.size, fmt=volume.format)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -513,6 +513,7 @@ def network_info(name):
             "active": conn.get_active(),
             "device": conn.get_bridge_device(),
             "forward": conn.get_ipv4_forward()[0],
+            "autostart": conn.get_autostart(),
         }
         conn.close()
     except libvirtError as err:
@@ -541,7 +542,7 @@ def network_action(name, val: NetworkAction):
     except libvirtError as err:
         raise_error_msg(err)
 
-    return {"network": network}
+    return val
 
 
 @app.delete("/networks/{name}/")
@@ -580,7 +581,7 @@ def secrets_list():
 def secret_create(secret: SecretCreate):
     try:
         conn = libvrt.wvmSecrets()
-        conn.create_secret(secret.ephemeral, secret.private, secret.secret_type, secret.data)
+        conn.create_secret(secret.ephemeral, secret.private, secret.type, secret.data)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -655,6 +656,7 @@ def nwfilter_ctreate(nwfilter: NwFilterCreate):
         raise_error_msg(err)
     
     return nwfilter
+
 
 @app.get("/nwfilters/{name}/", status_code=status.HTTP_200_OK)
 def nwfilter_info(name):
