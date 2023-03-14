@@ -443,7 +443,7 @@ def storage_volume_action(pool, volume, val: VolumeAction):
             if not val.size:
                 raise_error_msg("Size required for resize ation.")
             try:
-                conn.resize_volume(val.size)
+                conn.resize_volume(volume, val.size)
             except libvirtError as err:
                 raise_error_msg(err)
 
