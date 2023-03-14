@@ -205,6 +205,10 @@ class wvmStorages(wvmConnect):
         stg_volumes = 0
         for pool in self.get_storages():
             stg = self.get_storage(pool)
+            try:
+                 stg.refresh()
+            except Exception:
+                pass
             stg_active = bool(stg.isActive())
             stg_type = util.get_xml_data(stg.XMLDesc(0), element="type")
             if stg_active:
