@@ -513,6 +513,7 @@ def network_info(name):
             "device": conn.get_bridge_device(),
             "forward": conn.get_ipv4_forward()[0],
             "autostart": conn.get_autostart(),
+            "openvswitch": conn.get_openvswitch(),
         }
         conn.close()
     except libvirtError as err:

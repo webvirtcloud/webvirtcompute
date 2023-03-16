@@ -66,7 +66,7 @@ class NetworkCreate(BaseModel):
     mask: Optional[str] = None
     dhcp: Optional[str] = None
     bridge: Optional[str] = None
-    openvswitch: Optional[str] = None
+    openvswitch: Optional[bool] = None
     fixed: Optional[str] = None
 
 

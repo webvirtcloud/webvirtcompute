@@ -478,7 +478,16 @@ class wvmNetworks(wvmConnect):
             net_active = bool(net.isActive())
             net_bridge = net.bridgeName()
             net_forwd = util.get_xml_data(net.XMLDesc(0), "forward", "mode")
-            networks.append({"name": network, "active": net_active, "device": net_bridge, "forward": net_forwd})
+            openvswitch = bool(util.get_xml_data(net.XMLDesc(0), "virtualport", "type") == "openvswitch")
+            networks.append(
+                {
+                    "name": network, 
+                    "active": net_active, 
+                    "device": net_bridge, 
+                    "forward": net_forwd,
+                    "openvswitch": openvswitch
+                }
+            )
         return networks
 
     def define_network(self, xml):
@@ -549,6 +558,11 @@ class wvmNetwork(wvmConnect):
             return self.net.bridgeName()
         except Exception:
             return None
+    
+    def get_openvswitch(self):
+        return bool(
+            util.get_xml_data(self.XMLDesc(0), "virtualport", "type") == "openvswitch"
+        )
 
     def start(self):
         self.net.create()
