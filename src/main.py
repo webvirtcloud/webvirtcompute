@@ -297,9 +297,8 @@ def storages_list(pool: StorageCreate):
         if pool.target is None:
             raise_error_msg("Target field required for dir storage pool.")
         try:
-            conn.create_storage_dir(
-                pool.name,
-                pool.target,
+            conn.create_storage(
+                pool.type, pool.name, pool.source, pool.target
             )
         except libvirtError as err:
             raise_error_msg(err)
@@ -308,9 +307,8 @@ def storages_list(pool: StorageCreate):
         if pool.source is None:
             raise_error_msg("Source field required for dir storage pool.")
         try:
-            conn.create_storage_logic(
-                pool.name,
-                pool.source,
+            conn.create_storage(
+                pool.type, pool.name, pool.source, pool.target
             )
         except libvirtError as err:
             raise_error_msg(err)
@@ -559,10 +557,13 @@ def network_delete(name):
 
 @app.get("/interfaces/", status_code=status.HTTP_200_OK)
 def interfaces_list():
-    conn = libvrt.get_ifaces_info()
-    interfaces = conn.get_networks_info()
-    conn.close()
-    
+    try:
+        conn = libvrt.wvmInterfaces()
+        interfaces = conn.get_iface_list()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
+
     return {"interfaces": interfaces}
 
 

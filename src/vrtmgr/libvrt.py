@@ -634,13 +634,19 @@ class wvmNetwork(wvmConnect):
 
 
 class wvmInterfaces(wvmConnect):
-    def get_ifaces_info(self, name):
+    def get_iface_info(self, name):
         iface = self.get_iface(name)
         xml = iface.XMLDesc(1)
         mac = iface.MACString()
         itype = util.get_xml_data(xml, element="type")
         state = iface.isActive()
         return {"name": name, "type": itype, "state": state, "mac": mac}
+    
+    def get_iface_list(self):
+        ifaces_list = []
+        for iface in self.get_ifaces():
+            ifaces_list.append(self.get_iface_info(iface))
+        return ifaces_list
 
 
 class wvmSecrets(wvmConnect):
