@@ -253,26 +253,23 @@ class wvmStorages(wvmConnect):
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_ceph(self, stg_type, name, pool, host1, host2, host3, user, secret):
+    def create_storage_rbd(self, stg_type, name, pool, user, secret, host, host2, host3):
         xml = f"""
                 <pool type='{stg_type}'>
                 <name>{name}</name>
                 <source>
                     <name>{pool}</name>
-                    <host name='{host1}' port='6789'/>"""
+                    <host name='{host}' port='6789'/>"""
         if host2:
             xml += f"""<host name='{host2}' port='6789'/>"""
         if host3:
             xml += f"""<host name='{host3}' port='6789'/>"""
 
-        xml += """<auth username='%s' type='ceph'>
-                        <secret uuid='%s'/>
+        xml += f"""<auth type='ceph' username='{user}'>
+                        <secret uuid='{secret}'/>
                     </auth>
                 </source>
-                </pool>""" % (
-            user,
-            secret,
-        )
+                </pool>"""
         self.define_storage(xml, 0)
         stg = self.get_storage(name)
         stg.create(0)

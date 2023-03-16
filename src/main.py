@@ -317,8 +317,8 @@ def storages_list(pool: StorageCreate):
         if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
             raise_error_msg("Source, pool, secret and host fields required for rbd storage pool.")
         try:
-            conn.create_storage_ceph(
-                pool.name, pool.pool, pool.user, pool.secret, pool.host, pool.host2, pool.host3
+            conn.create_storage_rbd(
+                pool.type, pool.name, pool.pool, pool.user, pool.secret, pool.host, pool.host2, pool.host3
             )
         except libvirtError as err:
             raise_error_msg(err)
@@ -327,7 +327,7 @@ def storages_list(pool: StorageCreate):
         if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
             raise_error_msg("Pool, source, source and target fields required for nfs storage pool.")
         try:
-            conn.create_storage_netfs(pool.name, pool.host, pool.source, pool.format, pool.target)
+            conn.create_storage_netfs(pool.type, pool.name, pool.host, pool.source, pool.format, pool.target)
         except libvirtError as err:
             raise_error_msg(err)
 
