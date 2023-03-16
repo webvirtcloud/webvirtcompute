@@ -619,6 +619,16 @@ class wvmNetwork(wvmConnect):
         return fixed_mac
 
 
+class wvmInterfaces(wvmConnect):
+    def get_ifaces_info(self, name):
+        iface = self.get_iface(name)
+        xml = iface.XMLDesc(1)
+        mac = iface.MACString()
+        itype = util.get_xml_data(xml, element="type")
+        state = iface.isActive()
+        return {"name": name, "type": itype, "state": state, "mac": mac}
+
+
 class wvmSecrets(wvmConnect):
     def create_secret(self, ephemeral, private, secret_type, data):
         xml = f"""<secret ephemeral='{ephemeral}' private='{private}'>

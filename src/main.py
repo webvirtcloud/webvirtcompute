@@ -385,7 +385,6 @@ def storage_action(pool, stg: StorageAction):
 def storage_delete(pool):
     try:
         conn = libvrt.wvmStorage(pool)
-        conn.stop()
         conn.delete()
         conn.close()
     except libvirtError as err:
@@ -549,13 +548,21 @@ def network_action(name, val: NetworkAction):
 def network_delete(name):
     try:
         conn = libvrt.wvmNetwork(name)
-        conn.stop()
         conn.delete()
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/interfaces/", status_code=status.HTTP_200_OK)
+def interfaces_list():
+    conn = libvrt.get_ifaces_info()
+    interfaces = conn.get_networks_info()
+    conn.close()
+    
+    return {"interfaces": interfaces}
 
 
 @app.get("/secrets/", status_code=status.HTTP_200_OK)
