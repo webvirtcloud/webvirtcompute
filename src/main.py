@@ -168,6 +168,19 @@ def virtance_status(name, status: VirtanceStatus):
     return status
 
 
+@app.get("/virtances/{name}/vnc/", status_code=status.HTTP_200_OK)
+def virtance(name):
+    try:
+        conn = libvrt.wvmInstance(name)
+        vnc_port = conn.get_console_port()
+        vnc_password = conn.get_console_passwd()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
+    
+    return {"vnc_port": vnc_port, "vnc_password": vnc_password}
+
+
 @app.post("/virtances/{name}/resize/", response_model=VirtanceResize, status_code=status.HTTP_200_OK)
 def virtance_resize(name, resize: VirtanceResize):
     try:
