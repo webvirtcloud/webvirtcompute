@@ -19,17 +19,17 @@ fi
 /root/.venv/bin/pip install --no-use-pep517 --no-cache -r build.txt
 
 echo "Creating hostvirtmgr binary..."
-/root/.venv/bin/pyinstaller -y --clean webvirtcompute.spec
+/root/.venv/bin/pyinstaller -p /src --hiddenimport main -F webvirtcompute.py
 
 # Copy INI files
-cp ../conf/webvirtcompute.ini dist/
+cp ../conf/webvirtcompute.* dist/
 
 # Check release folder
 if [[ ! -d ../release ]]; then
   mkdir ../release
 fi
 
-tar -czf ../release/webvirtcompute-rocky8-amd64.tar.gz --transform s/dist/webvirtcompute/ dist
+tar -czf ../release/webvirtcompute-rockylinux8-amd64.tar.gz --transform s/dist/webvirtcompute/ dist
 
 echo ""
 echo "Release is ready!"
