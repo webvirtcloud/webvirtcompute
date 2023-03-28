@@ -245,7 +245,8 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
     try:
         conn = libvrt.wvmInstance(name)
         drives = conn.get_disk_device()
-        conn.force_shutdown()
+        if conn.get_state() != "shutoff":
+            conn.force_shutdown()
     except libvirtError as err:
         conn.close()
         raise_error_msg(err)
