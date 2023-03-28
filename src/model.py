@@ -97,5 +97,4 @@ class FloatingIPs(BaseModel):
 
 
 class ResetPassword(BaseModel):
-    distro: str
     password: str

@@ -245,18 +245,25 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
     try:
         conn = libvrt.wvmInstance(name)
         drives = conn.get_disk_device()
-        conn.close()
+        conn.force_shutdown()
     except libvirtError as err:
+        conn.close()
         raise_error_msg(err)
 
     try:
         image = images.Image(drives[0].get("name"), drives[0].get("pool"))
-        err_msg = image.reset_password(reset_pass.get("distro"), reset_pass.get("password"))
+        err_msg = image.reset_password(reset_pass.get("password"))
     except Exception as err:
         raise_error_msg(err)
 
     if err_msg:
         raise_error_msg(err_msg)
+
+    try:
+        conn.start()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
 
     return reset_pass
 

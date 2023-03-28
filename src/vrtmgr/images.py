@@ -110,7 +110,7 @@ class Image(object):
 
         return err_msg
 
-    def reset_password(self, distro, root_password):
+    def reset_password(self, root_password):
         err_msg = None
 
         try:
@@ -125,7 +125,7 @@ class Image(object):
 
         return err_msg
 
-    def guestfs_resize(self, distro, disk_size):
+    def guestfs_resize(self, disk_size):
         err_msg = None
 
         try:
