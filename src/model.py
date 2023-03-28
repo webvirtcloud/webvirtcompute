@@ -97,4 +97,4 @@ class FloatingIPs(BaseModel):
 
 
 class ResetPassword(BaseModel):
-    password: str
+    password_hash: str

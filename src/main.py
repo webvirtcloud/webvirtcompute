@@ -240,7 +240,7 @@ def virtance_media_umount(name, media: VirtanceMedia):
 
 @app.post("/virtances/{name}/reset_password/", response_model=ResetPassword, status_code=status.HTTP_200_OK)
 def virtance_reset_password(name, reset_pass: ResetPassword):
-    raise_error_msg = None
+    err_msg = None
 
     try:
         conn = libvrt.wvmInstance(name)
@@ -253,7 +253,7 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
 
     try:
         image = images.Image(drives[0].get("name"), drives[0].get("pool"))
-        err_msg = image.reset_password(reset_pass.get("password"))
+        err_msg = image.reset_password(reset_pass.password_hash)
     except Exception as err:
         raise_error_msg(err)
 
