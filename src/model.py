@@ -30,6 +30,10 @@ class VirtanceMedia(BaseModel):
     image: Optional[str] = None
 
 
+class VirtanceImage(BaseModel):
+    name: str
+    pool: str
+
 class StorageCreate(BaseModel):
     name: str
     type: str
