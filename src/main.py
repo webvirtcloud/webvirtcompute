@@ -192,9 +192,10 @@ def virtance_resize(name, resize: VirtanceResize):
             drivers = conn.get_disk_device()
             for drive in drivers:
                 if drive.get("dev") == "vda" or drive.get("dev") == "sda":
-                    sconn = libvrt.wvmStorage(drive.get("pool"))
-                    sconn.resize_volume(drive.get("name"), resize.disk_size)
-                    sconn.close()
+                    stg = libvrt.wvmStorage(drive.get("pool"))
+                    stg.resize_volume(drive.get("name"), resize.disk_size)
+                    stg.close()
+        conn.start()
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
