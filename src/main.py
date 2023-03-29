@@ -216,6 +216,9 @@ def virtance_media_info(name):
 
 @app.post("/virtances/{name}/media/", response_model=VirtanceMedia, status_code=status.HTTP_200_OK)
 def virtance_media_mount(name, media: VirtanceMedia):
+    if media.image is None:
+            raise_error_msg("Image is required.")
+
     try:
         conn = libvrt.wvmInstance(name)
         conn.mount_iso(media.device, media.image)
@@ -228,9 +231,12 @@ def virtance_media_mount(name, media: VirtanceMedia):
 
 @app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
 def virtance_media_umount(name, media: VirtanceMedia):
+    if media.path is None:
+            raise_error_msg("Path is required.")
+
     try:
         conn = libvrt.wvmInstance(name)
-        conn.umount_iso(media.device, media.image)
+        conn.umount_iso(media.device, media.path)
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)

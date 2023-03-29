@@ -25,8 +25,9 @@ class VirtanceResize(BaseModel):
 
 
 class VirtanceMedia(BaseModel):
-    image: str
     device: str
+    path: Optional[str] = None
+    image: Optional[str] = None
 
 
 class StorageCreate(BaseModel):

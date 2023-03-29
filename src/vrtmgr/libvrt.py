@@ -1108,16 +1108,32 @@ class wvmInstance(wvmConnect):
     def defineXML(self, xml):
         return self.wvm.defineXML(xml)
 
-    def attachDevice(self, xml):
+    def attachDevice(self, xml, live=False):
         if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
-            self.instance.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CURRENT)
+            if live is True:
+                self.instance.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+            else:
+                self.instance.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CURRENT)
             self.instance.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         else:
             self.instance.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
 
-    def detachDevice(self, xml):
+    def updateDevice(self, xml, live=False):
         if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
-            self.instance.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CURRENT)
+            if live is True:
+                self.instance.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+            else:
+                self.instance.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CURRENT)
+            self.instance.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        else:
+            self.instance.updateDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+
+    def detachDevice(self, xml, live=False):
+        if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
+            if live is True:
+                self.instance.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)
+            else:
+                self.instance.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CURRENT)
             self.instance.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         else:
             self.instance.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
@@ -1259,6 +1275,52 @@ class wvmInstance(wvmConnect):
                 result.append({"dev": disk_dev, "image": vol_name, "pool": stg_name, "path": disk_img})
 
         return result
+
+    def mount_iso(self, dev, image):
+        vol_path = ""
+        disk = """
+            <disk type='file' device='cdrom'>
+                <driver name='qemu'/>
+                <target dev='hda' bus='ide'/>
+                <readonly/>
+                <serial>0</serial>
+            </disk>
+         """
+
+        for storage in self.get_storages():
+            stg = self.get_storage(storage)
+            if stg.info()[0] != 0:
+                for img in stg.listVolumes():
+                    if image == img:
+                        vol = stg.storageVolLookupByName(image)
+                        vol_path = vol.path()
+                        break
+
+        tree = ElementTree.fromstring(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE))
+        for disk in tree.findall("devices/disk"):
+            if disk.get("device") == "cdrom":
+                disk_target = disk.find("target")
+                if disk_target.get("dev") == dev:
+                    disk_source = disk.find("source")
+                    if disk_source is None:
+                        disk.append(ElementTree.Element("source", file=vol_path))
+                    else:
+                        if disk_source.get("index"):
+                            disk_source.set("file", vol_path)
+                        else:
+                            disk.append(ElementTree.Element("source", file=vol_path))
+                        break
+
+        xmldev = ElementTree.tostring(disk).decode()
+        if self.get_status() == libvirt.VIR_DOMAIN_RUNNING:
+            self.updateDevice(xmldev, live=True)
+            xmldom = self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE)
+
+        if self.get_status() == libvirt.VIR_DOMAIN_SHUTOFF:
+            self.updateDevice(xmldev, live=False)
+            xmldom = ElementTree.tostring(tree).decode()
+
+        self.defineXML(xmldom)
 
     def umount_iso(self, dev, image_path):
         disk = """
