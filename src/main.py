@@ -253,14 +253,16 @@ def virtance_restore(name, snapshot: VirtanceSnapshot):
             conn.force_shutdown()
         drive = conn.get_disk_device()[0]
         target_name = drive.get("name")
-
+        
+        storages = conn.get_storages()
         backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
         for pool in backup_image_pools:
             stg = libvrt.wvmStorage(pool)
-            if snapshot.name in stg.listVolumes():
+            if snapshot.name in stg.get_volumes():
                 backup_pool = pool
                 break
             stg.close()
+        
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
