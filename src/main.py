@@ -239,6 +239,51 @@ def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     return VirtanceSnapshotReponse(**data)
 
 
+@app.post("/virtances/{name}/restore/", response_model=VirtanceSnapshot, status_code=status.HTTP_200_OK)
+def virtance_restore(name, snapshot: VirtanceSnapshot):
+    target_name = None
+    backup_pool = None
+
+    if snapshot.name is None:
+        raise_error_msg("Snapshot name does not exist.")
+
+    try:
+        conn = libvrt.wvmInstance(name)
+        if conn.get_state() != "shutoff":
+            conn.force_shutdown()
+        drive = conn.get_disk_device()[0]
+        target_name = drive.get("name")
+
+        backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
+        for pool in backup_image_pools:
+            stg = libvrt.wvmStorage(pool)
+            if snapshot.name in stg.listVolumes():
+                backup_pool = pool
+                break
+            stg.close()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
+
+    if backup_pool is None:
+        raise_error_msg("Snapshot not found.")
+
+    image = images.Image(snapshot.name, backup_pool)
+    data = image.restore_copy(target_name, STORAGE_IMAGE_POOL, disk_size=snapshot.disk_size)
+
+    if data.get("error"):
+        raise_error_msg(data.get("error"))
+
+    try:
+        conn = libvrt.wvmInstance(name)
+        conn.start()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
+
+    return snapshot
+
+
 @app.get("/virtances/{name}/media/", status_code=status.HTTP_200_OK)
 def virtance_media_info(name):
     try:

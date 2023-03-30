@@ -72,7 +72,7 @@ class Image(object):
         err_msg = None
         target_name = name if '.img' in name else name + ".img"
         target_size = 0
-        targe_disk_size = 0
+        target_disk_size = 0
         target_md5sum = None
     
         conn = wvmStorage(pool)
@@ -86,15 +86,44 @@ class Image(object):
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 conn.refresh()
-                vol = conn.get_volume_by_path(taraget_path)
-                targe_disk_size, target_size = vol.info()[1:3]
+                vol = conn.get_volume(target_name)
+                target_disk_size, target_size = vol.info()[1:3]
                 conn.close()
 
                 target_md5sum = md5sum(taraget_path)
             else:
                 err_msg = 'Error convert image to snapshot'
 
-        return {"error": err_msg, "size": target_size, "disk_size": targe_disk_size, "md5sum": target_md5sum}
+        return {
+            "error": err_msg, "size": target_size,  "md5sum": target_md5sum,
+            "disk_size": target_disk_size, "file_name": target_name,
+        }
+    
+    def restore_copy(self, name, pool, disk_size):
+        err_msg = None
+        target_disk_size = 0
+        target_name = name if '.img' in name else name + ".img"
+    
+        conn = wvmStorage(pool)
+        conn.refresh()
+        taraget_path = f"{conn.get_target_path()}/{target_name}"
+
+        if err_msg is None:
+            qemu_img_cmd = f'qemu-img convert -O raw {self.image_path} {taraget_path}'
+            run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+            if run_qemu_img_cmd == 0:
+                conn.refresh()
+                vol = conn.get_volume(target_name)
+                target_disk_size = vol.info()[1]
+            else:
+                err_msg = 'Error convert image to snapshot'
+            
+        if disk_size > target_disk_size:
+            vol.resize(disk_size)
+
+        conn.close()
+
+        return {"error": err_msg}
 
     def deploy_template(self, template_path, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = "Error convert template to image"
