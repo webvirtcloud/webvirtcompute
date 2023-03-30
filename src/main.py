@@ -11,7 +11,7 @@ from vrtmgr import network
 from auth import basic_auth
 from execption import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
-from model import VirtanceSnapshot, VirtanceReponseSnapshot
+from model import VirtanceSnapshot, VirtanceSnapshotReponse
 from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
@@ -206,7 +206,7 @@ def virtance_resize(name, resize: VirtanceResize):
     return resize
 
 
-@app.post("/virtances/{name}/snapshot/", response_model=VirtanceReponseSnapshot, status_code=status.HTTP_200_OK)
+@app.post("/virtances/{name}/snapshot/", response_model=VirtanceSnapshotReponse, status_code=status.HTTP_200_OK)
 def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     image_name = None
 
@@ -236,8 +236,7 @@ def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     if data.get("error"):
         raise_error_msg(data.get("error"))
     
-    data.pop("error")
-    return VirtanceReponseSnapshot(**data)
+    return VirtanceSnapshotReponse(**data)
 
 
 @app.get("/virtances/{name}/media/", status_code=status.HTTP_200_OK)

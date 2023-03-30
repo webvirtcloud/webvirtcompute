@@ -34,13 +34,12 @@ class VirtanceSnapshot(BaseModel):
     name: str
 
 
-class VirtanceReponseSnapshot(BaseModel):
-    error = str
-    size = int
+class VirtanceSnapshotReponse(BaseModel):
+    size: int
     disk_size: int
     md5sum: str
 
-
+    
 class StorageCreate(BaseModel):
     name: str
     type: str
