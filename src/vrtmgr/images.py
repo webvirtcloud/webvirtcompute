@@ -62,7 +62,7 @@ class Image(object):
         self.image_path = f"{conn.get_target_path()}/{self.name}"
         conn.close()
 
-    def image_resize(self, disk_size):
+    def resize(self, disk_size):
         conn = wvmStorage(self.pool)
         conn.refresh()
         conn.resize_volume(self.name, disk_size)
@@ -70,10 +70,10 @@ class Image(object):
 
     def create_copy(self, name, pool, compress=False):
         err_msg = None
-        disk_size = 0
         target_name = name if '.img' in name else name + ".img"
         target_size = 0
-        target_md5 = None
+        targe_disk_size = 0
+        target_md5sum = None
     
         conn = wvmStorage(pool)
         conn.refresh()
@@ -85,15 +85,16 @@ class Image(object):
                 qemu_img_cmd = f'qemu-img convert -U -c -O qcow2 {self.image_path} {taraget_path}'
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
+                conn.refresh()
                 vol = conn.get_volume_by_path(taraget_path)
-                disk_size, target_size = vol.info()[1:3]
+                targe_disk_size, target_size = vol.info()[1:3]
                 conn.close()
 
-                target_md5 = md5sum(taraget_path)
+                target_md5sum = md5sum(taraget_path)
             else:
                 err_msg = 'Error convert image to snapshot'
 
-        return {"err_msg": err_msg, "size": target_size, "disk_size": disk_size, "md5sum": target_md5}
+        return {"error": err_msg, "size": target_size, "disk_size": targe_disk_size, "md5sum": target_md5sum}
 
     def deploy_template(self, template_path, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = "Error convert template to image"
@@ -116,7 +117,7 @@ class Image(object):
                 public_key_string = key
 
         try:
-            self.image_resize(disk_size)
+            self.resize(disk_size)
         except libvirtError as err:
             err_msg = err
 
@@ -156,7 +157,7 @@ class Image(object):
         err_msg = None
 
         try:
-            self.image_resize(disk_size)
+            self.resize(disk_size)
         except libvirtError as err:
             err_msg = err
 

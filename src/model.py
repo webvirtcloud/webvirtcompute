@@ -30,9 +30,16 @@ class VirtanceMedia(BaseModel):
     image: Optional[str] = None
 
 
-class VirtanceImage(BaseModel):
+class VirtanceSnapshot(BaseModel):
     name: str
-    pool: str
+
+
+class VirtanceReponseSnapshot(BaseModel):
+    error = str
+    size = int
+    disk_size: int
+    md5sum: str
+
 
 class StorageCreate(BaseModel):
     name: str

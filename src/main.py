@@ -1,6 +1,8 @@
+import random
 import requests
 from typing import Optional
 from libvirt import libvirtError
+from difflib import get_close_matches
 from fastapi import status, FastAPI, Depends, Response
 
 from vrtmgr import libvrt
@@ -8,8 +10,9 @@ from vrtmgr import images
 from vrtmgr import network
 from auth import basic_auth
 from execption import raise_error_msg
-from settings import METRICS_URL, STORAGE_IMAGE_POOL
-from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia, VirtanceImage
+from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
+from model import VirtanceSnapshot, VirtanceReponseSnapshot
+from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
 
@@ -203,29 +206,38 @@ def virtance_resize(name, resize: VirtanceResize):
     return resize
 
 
-@app.post("/virtances/{name}/snapshot/", response_model=VirtanceImage, status_code=status.HTTP_200_OK)
-def virtance_snapshot(name, image: VirtanceImage):
+@app.post("/virtances/{name}/snapshot/", response_model=VirtanceReponseSnapshot, status_code=status.HTTP_200_OK)
+def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     image_name = None
+
+    if snapshot.name is None:
+        raise_error_msg("Snapshot name does not exist.")
 
     try:
         conn = libvrt.wvmInstance(name)
         drive = conn.get_disk_device()[0]
         image_name = drive.get("name")
+        storages = conn.get_storages()
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
 
     if image_name is None:
         raise_error_msg("Image name does not exist.")
-    
-    image = images.Image(image_name, STORAGE_IMAGE_POOL)
-    data = image.create_copy(image.name, image.pool, compress=True)
-    
-    if data.get("err_msg"):
-        raise_error_msg(data.get("err_msg"))
 
-    image.update(data)
-    return image
+    backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
+    random.shuffle(backup_image_pools)
+    if len(backup_image_pools) == 0:
+        raise_error_msg("Backup image pool does not exist.")
+  
+    image = images.Image(image_name, STORAGE_IMAGE_POOL)
+    data = image.create_copy(snapshot.name, backup_image_pools[0], compress=True)
+    
+    if data.get("error"):
+        raise_error_msg(data.get("error"))
+    
+    data.pop("error")
+    return VirtanceReponseSnapshot(**data)
 
 
 @app.get("/virtances/{name}/media/", status_code=status.HTTP_200_OK)
