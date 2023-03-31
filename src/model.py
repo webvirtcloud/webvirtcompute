@@ -11,7 +11,15 @@ class VirtanceCreate(BaseModel):
     images: list
     network: dict
     keypairs: list
-    root_password: str
+    password_hash: str
+
+
+class VirtanceRebuild(BaseModel):
+    hostname: str
+    images: list
+    network: dict
+    keypairs: list
+    password_hash: str
 
 
 class VirtanceStatus(BaseModel):

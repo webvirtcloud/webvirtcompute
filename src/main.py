@@ -11,10 +11,10 @@ from vrtmgr import network
 from auth import basic_auth
 from execption import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
-from model import VirtanceSnapshot, VirtanceSnapshotReponse
-from model import VirtanceCreate, VirtanceStatus, VirtanceResize, VirtanceMedia
+from model import VirtanceCreate,VirtanceRebuild, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
+from model import VirtanceSnapshot, VirtanceSnapshotReponse
 
 
 app = FastAPI(dependencies=[Depends(basic_auth)])
@@ -42,7 +42,7 @@ def virtance_create(virtance: VirtanceCreate):
                     networks=virtance.network,
                     public_keys=virtance.keypairs,
                     hostname=virtance.hostname,
-                    root_password=virtance.root_password,
+                    root_password=virtance.password_hash,
                 )
         else:
             try:
@@ -69,6 +69,46 @@ def virtance_create(virtance: VirtanceCreate):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
+
+    # Run VM
+    try:
+        conn = libvrt.wvmInstance(virtance.name)
+        conn.start()
+        conn.close()
+    except libvirtError as err:
+        raise_error_msg(err)
+
+    return virtance
+
+
+
+@app.post("/virtances/{name}/rebuild", response_model=VirtanceRebuild, status_code=status.HTTP_200_OK)
+def virtance_create(virtance: VirtanceRebuild):
+    # Download and deploy images template
+    for img in virtance.images:
+        if img.get("primary") is True:
+            template = images.Template(img.get("url"), img.get("md5sum"))
+            err_msg = template.download()
+            if err_msg is None:
+                image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
+                err_msg = image.deploy_template(
+                    template_path=template.path,
+                    disk_size=img.get("size"),
+                    networks=virtance.network,
+                    public_keys=virtance.keypairs,
+                    hostname=virtance.hostname,
+                    root_password=virtance.password_hash,
+                )
+        else:
+            try:
+                conn = libvrt.wvmStorage(STORAGE_IMAGE_POOL)
+                conn.create_volume(img.get("name"), img.get("size"), fmt="raw")
+                conn.close()
+            except libvirtError as err:
+                raise_error_msg(err)
+
+    if err_msg is not None:
+        raise_error_msg(err_msg)
 
     # Run VM
     try:
