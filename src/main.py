@@ -187,7 +187,7 @@ def virtance(name):
 @app.post("/virtances/{name}/status/", response_model=VirtanceStatus, status_code=status.HTTP_200_OK)
 def virtance_status(name, status: VirtanceStatus):
 
-    if status.action not in ["power_on", "power_off", "shutdown", "reboot", "suspend", "resume"]:
+    if status.action not in ["power_on", "power_off", "power_cycle", "shutdown", "suspend", "resume"]:
         raise_error_msg("Status does not exist.")
 
     try:
@@ -196,10 +196,10 @@ def virtance_status(name, status: VirtanceStatus):
             conn.start()
         if status.action == "power_off":
             conn.force_shutdown()
+        if status.action == "power_cycle":
+            conn.reboot()
         if status.action == "shutdown":
             conn.shutdown()
-        if status.action == "reboot":
-            conn.reboot()
         if status.action == "suspend":
             conn.suspend()
         if status.action == "resume":
