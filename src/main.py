@@ -81,9 +81,16 @@ def virtance_create(virtance: VirtanceCreate):
     return virtance
 
 
+@app.post("/virtances/{name}/rebuild/", response_model=VirtanceRebuild, status_code=status.HTTP_200_OK)
+def virtance_create(name, virtance: VirtanceRebuild):
+    # Stop VM
+    try:
+        conn = libvrt.wvmInstance(name)
+        if conn.get_state() != "shutoff":
+            conn.force_shutdown()
+    except libvirtError as err:
+        raise_error_msg(err)
 
-@app.post("/virtances/{name}/rebuild", response_model=VirtanceRebuild, status_code=status.HTTP_200_OK)
-def virtance_create(virtance: VirtanceRebuild):
     # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
@@ -112,7 +119,7 @@ def virtance_create(virtance: VirtanceRebuild):
 
     # Run VM
     try:
-        conn = libvrt.wvmInstance(virtance.name)
+        conn = libvrt.wvmInstance(name)
         conn.start()
         conn.close()
     except libvirtError as err:
