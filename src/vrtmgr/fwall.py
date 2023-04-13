@@ -24,52 +24,44 @@ class FirewallMgr(object):
         self.firewall_out_chain = f"{FIREWALL_OUT_NAME}{str(rules_id)}"
 
     def attach(self, rules_inbound, rules_outbound):
-        err_msg = None
-        if not self.is_locked():
-            self.set_state()
-            self.create_firewall()
-            self.create_rule("inbound", rules_inbound)
-            self.create_rule("outbound", rules_outbound)
-            self.save()
-        else:
-            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
-        return err_msg
+        if self.is_locked():
+            return f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+        self.set_state()
+        self.create_firewall()
+        self.create_rule("inbound", rules_inbound)
+        self.create_rule("outbound", rules_outbound)
+        self.save()
+        return None
 
     def detach(self):
-        err_msg = None
-        if not self.is_locked():
-            self.set_state()
-            self.remove_firewall()
-            self.save()
-        else:
-            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
-        return err_msg
+        if self.is_locked():
+            return f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+        self.set_state()
+        self.delete_firewall()
+        self.save()
+        return None
 
-    def add_rule(self, rules_inbound, rules_outbound):
-        err_msg = None
-        if not self.is_locked():
-            self.set_state()
-            if rules_inbound:
-                self.create_rule("inbound", rules_inbound)
-            if rules_outbound:
-                self.create_rule("outbound", rules_outbound)
-            self.save()
-        else:
-            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
-        return err_msg
+    def attach_rule(self, rules_inbound, rules_outbound):
+        if self.is_locked():
+            return f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+        self.set_state()
+        if rules_inbound:
+            self.create_rule("inbound", rules_inbound)
+        if rules_outbound:
+            self.create_rule("outbound", rules_outbound)
+        self.save()
+        return None
 
-    def delete_rule(self, rules_inbound, rules_outbound):
-        err_msg = None
-        if not self.is_locked():
-            self.set_state()
-            if rules_inbound:
-                self.remove_rule("inbound", rules_inbound)
-            if rules_outbound:
-                self.remove_rule("outbound", rules_outbound)
-            self.save()
-        else:
-            err_msg = f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
-        return err_msg
+    def detach_rule(self, rules_inbound, rules_outbound):
+        if self.is_locked():
+            return f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+        self.set_state()
+        if rules_inbound:
+            self.delete_rule("inbound", rules_inbound)
+        if rules_outbound:
+            self.delete_rule("outbound", rules_outbound)
+        self.save()
+        return None
 
     def set_state(self):
         f = open(FIREWALLD_STATE_FILE, "w")
@@ -229,7 +221,7 @@ class FirewallMgr(object):
                     if not self.query_rule_cfg(out_args):
                         self.fw_direct.addRule(self.ipv, self.table, self.chain, self.prio, out_args)
 
-    def remove_firewall(self):
+    def delete_firewall(self):
         ipv4_addrs = []
 
         # IPv4 Public
@@ -313,7 +305,7 @@ class FirewallMgr(object):
                     if not self.query_chain_rule_cfg(firewall_chain, args):
                         self.fw_direct.addRule(self.ipv, self.table, firewall_chain, self.prio, args)
 
-    def remove_rule(self, chain, rules):
+    def delete_rule(self, chain, rules):
         if chain == "inbound":
             firewall_chain = self.firewall_in_chain
         else:

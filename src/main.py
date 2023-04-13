@@ -5,6 +5,7 @@ from libvirt import libvirtError
 from difflib import get_close_matches
 from fastapi import status, FastAPI, Depends, Response
 
+from vrtmgr import fwall
 from vrtmgr import libvrt
 from vrtmgr import images
 from vrtmgr import network
@@ -14,7 +15,7 @@ from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
 from model import VirtanceCreate,VirtanceRebuild, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
-from model import VirtanceSnapshot, VirtanceSnapshotReponse
+from model import FirewallAttach, FirewallRule, FirewallDetach, VirtanceSnapshot, VirtanceSnapshotReponse
 
 
 app = FastAPI(dependencies=[Depends(basic_auth)])
@@ -878,4 +879,68 @@ def floating_ip_detach(floating_ip: FloatingIPs):
     if err_msg:
         raise_error_msg(err_msg)
     
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post("/firewall/", response_model=FirewallAttach, status_code=status.HTTP_200_OK)
+def firewall_attach(firewall: FirewallAttach):
+    err_msg = None
+
+    try:
+        fw = fwall.FirewallMgr(firewall.id, firewall.ipv4_public, firewall.ipv4_private)
+        err_msg = fw.attach(firewall.inbound, firewall.outbound)
+    except Exception as err:
+        raise_error_msg(err)
+
+    if err_msg:
+        raise_error_msg(err_msg)
+
+    return firewall
+
+
+@app.post("/firewall/{fw_id}/rule/", response_model=FirewallRule, status_code=status.HTTP_200_OK)
+def firewall_add_rule(fw_id, firewall: FirewallRule):
+    err_msg = None
+
+    try:
+        fw = fwall.FirewallMgr(fw_id)
+        err_msg = fw.attach_rule(firewall.inbound, firewall.outbound)
+    except Exception as err:
+        raise_error_msg(err)
+
+    if err_msg:
+        raise_error_msg(err_msg)
+
+    return firewall
+
+
+@app.delete("/firewall/{fw_id}/rule/", response_model=FirewallRule)
+def firewall_remove_rule(fw_id, firewall: FirewallRule):
+    err_msg = None
+
+    try:
+        fw = fwall.FirewallMgr(fw_id)
+        err_msg = fw.detach_rule(firewall.inbound, firewall.outbound)
+    except Exception as err:
+        raise_error_msg(err)
+
+    if err_msg:
+        raise_error_msg(err_msg)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.delete("/firewall/{fw_id}/", response_model=FirewallDetach)
+def firewall_detach(fw_id, firewall: FirewallDetach):
+    err_msg = None
+
+    try:
+        fw = fwall.FirewallMgr(fw_id, firewall.ipv4_public, firewall.ipv4_private)
+        err_msg = fw.detach()
+    except Exception as err:
+        raise_error_msg(err)
+
+    if err_msg:
+        raise_error_msg(err_msg)
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
