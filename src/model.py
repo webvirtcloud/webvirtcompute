@@ -1,5 +1,5 @@
+from typing import Optional
 from pydantic import BaseModel
-from typing import Optional, List, Dict
 
 
 class VirtanceCreate(BaseModel):
@@ -125,13 +125,13 @@ class FirewallAttach(BaseModel):
     id: int
     ipv4_public: str
     ipv4_private: str
-    inbound: List[Dict[str, str, int, str]]
-    outbound: List[Dict[str, str, int, str]]
+    inbound: list
+    outbound: list
 
 
 class FirewallRule(BaseModel):
-    inbound: List[Dict[str, str, int, str]]
-    outbound: List[Dict[str, str, int, str]]
+    inbound: list
+    outbound: list
 
 
 class FirewallDetach(BaseModel):
