@@ -410,9 +410,10 @@ def virtance_reset_password(name, reset_pass: ResetPassword):
 @app.delete("/virtances/{name}/")
 def virtance_detele(name):
     try:
-        dom = libvrt.wvmInstance(name)
-        dom.force_shutdown()
-        drives = dom.get_disk_device()
+        conn = libvrt.wvmInstance(name)
+        if conn.get_state() != "shutoff":
+            conn.force_shutdown()
+        drives = conn.get_disk_device()
         for drive in drives:
             if drive.get("dev") == "vda" or drive.get("dev") == "sda":
                 stg = libvrt.wvmStorage(drive.get("pool"))
@@ -420,8 +421,8 @@ def virtance_detele(name):
                 vol.delete()
                 stg.refresh()
                 stg.close()
-        dom.delete()
-        dom.close()
+        conn.delete()
+        conn.close()
     except libvirtError as err:
         raise_error_msg(err)
 
