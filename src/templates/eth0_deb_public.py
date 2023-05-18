@@ -26,4 +26,4 @@ iface eth0 inet6 static
     address {{ ipv6public.address }}
     netmask {{ ipv6public.prefix }}
     gateway {{ ipv6public.gateway }}
-{% if endif %}"""
+{% endif %}"""
