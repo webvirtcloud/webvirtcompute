@@ -3,7 +3,6 @@ data = """DEVICE=eth0
 TYPE=Ethernet
 ONBOOT=yes
 BOOTPROTO=none
-NM_CONTROLLED=yes
 IPADDR1={{ ipv4public.address }}
 PREFIX1={{ ipv4public.prefix }}
 GATEWAY={{ ipv4public.gateway }}
