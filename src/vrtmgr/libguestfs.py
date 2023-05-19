@@ -39,6 +39,8 @@ class GuestFSUtil(object):
 
     def get_distro(self):
         distro = self.inspect_distro()
+        if "redhat-based" in distro:
+            return "rhl"
         if "fedora" in distro:
             return "rhl"
         if "centos" in distro:
