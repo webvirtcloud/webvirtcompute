@@ -20,34 +20,25 @@ class Template(object):
 
     def download(self):
         err_msg = None
-        try_download = True
-        template_md5 = None
-        template_path = os.path.join(CACHE_DIR, os.path.basename(self.url))
+        self.path = os.path.join(CACHE_DIR, os.path.basename(self.url))
 
         # Check if cache dir exist
         if not os.path.isdir(CACHE_DIR):
             os.mkdir(CACHE_DIR)
 
-        if os.path.exists(template_path):
-            template_md5 = md5sum(template_path)
-            if template_md5 == self.md5sum:
-                try_download = False
+        if os.path.exists(self.path):
+            if self.md5sum == md5sum(self.path):
+                try:
+                    r = requests.get(self.url, stream=True)
+                    with open(self.path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=128):
+                            f.write(chunk)
+                except Exception as err:
+                    err_msg = err
 
-        if try_download:
-            try:
-                r = requests.get(self.url, stream=True)
-                with open(template_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=128):
-                        f.write(chunk)
-            except Exception as err:
-                err_msg = err
-
-            template_md5 = md5sum(template_path)
-
-        self.path = template_path
-
-        if self.md5sum != template_md5:
-            err_msg = "MD5 sum mismatch"
+                if err_msg is None:
+                    if self.md5sum != md5sum(self.path):
+                        err_msg = "MD5 sum mismatch"
 
         return err_msg
 

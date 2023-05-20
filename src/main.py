@@ -35,16 +35,20 @@ def virtance_create(virtance: VirtanceCreate):
         if img.get("primary") is True:
             template = images.Template(img.get("url"), img.get("md5sum"))
             err_msg = template.download()
-            if err_msg is None:
-                image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
-                err_msg = image.deploy_template(
-                    template_path=template.path,
-                    disk_size=img.get("size"),
-                    networks=virtance.network,
-                    public_keys=virtance.keypairs,
-                    hostname=virtance.hostname,
-                    root_password=virtance.password_hash,
-                )
+            if err_msg is not None:
+                raise_error_msg(err_msg)
+
+            image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
+            err_msg = image.deploy_template(
+                template_path=template.path,
+                disk_size=img.get("size"),
+                networks=virtance.network,
+                public_keys=virtance.keypairs,
+                hostname=virtance.hostname,
+                root_password=virtance.password_hash,
+            )
+            if err_msg is not None:
+                raise_error_msg(err_msg)
         else:
             try:
                 conn = libvrt.wvmStorage(STORAGE_IMAGE_POOL)
@@ -52,9 +56,6 @@ def virtance_create(virtance: VirtanceCreate):
                 conn.close()
             except libvirtError as err:
                 raise_error_msg(err)
-
-    if err_msg is not None:
-        raise_error_msg(err_msg)
 
     # Create XML
     try:
