@@ -26,8 +26,9 @@ class Template(object):
         if not os.path.isdir(CACHE_DIR):
             os.mkdir(CACHE_DIR)
 
+        # Chekc md5sum and download template if not missmatch
         if os.path.exists(self.path):
-            if self.md5sum == md5sum(self.path):
+            if self.md5sum != md5sum(self.path):
                 try:
                     r = requests.get(self.url, stream=True)
                     with open(self.path, "wb") as f:
