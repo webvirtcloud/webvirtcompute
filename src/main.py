@@ -362,7 +362,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
     return media
 
 
-@app.delete("/virtances/{name}/media/", response_model=VirtanceMedia)
+@app.delete("/virtances/{name}/media/")
 def virtance_media_umount(name, media: VirtanceMedia):
     if media.path is None:
             raise_error_msg("Path is required.")
@@ -868,7 +868,7 @@ def floating_ip_attach(floating_ip: FloatingIPs):
     return floating_ip
 
 
-@app.delete("/floating_ips/", response_model=FloatingIPs)
+@app.delete("/floating_ips/")
 def floating_ip_detach(floating_ip: FloatingIPs):
     err_msg = None
 
@@ -916,7 +916,7 @@ def firewall_add_rule(fw_id, firewall: FirewallRule):
     return firewall
 
 
-@app.delete("/firewall/{fw_id}/rule/", response_model=FirewallRule)
+@app.delete("/firewall/{fw_id}/rule/")
 def firewall_remove_rule(fw_id, firewall: FirewallRule):
     err_msg = None
 
@@ -932,7 +932,7 @@ def firewall_remove_rule(fw_id, firewall: FirewallRule):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.delete("/firewall/{fw_id}/", response_model=FirewallDetach)
+@app.delete("/firewall/{fw_id}/")
 def firewall_detach(fw_id, firewall: FirewallDetach):
     err_msg = None
 
