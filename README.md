@@ -26,7 +26,7 @@ sudo systemctl enable --now webvirtcompute
 ```
 ### Configuration ###
 
-WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You need to change default `token` variable.
+WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You need to change default `token` variable. You can generate token with `openssl rand -hex 32` command.
 
 ## Build ##
 ```bash
@@ -34,6 +34,10 @@ make -f Makefile.rockylinux8 compile
 make -f Makefile.rockylinux8 package
 ```
 You can find archive with binary in `release` directory.
+
+## Binary ##
+
+You can download already built binary for [rockylinux8](https://cloud-apps.webvirt.cloud/webvirtcompute-rockylinux8-amd64.tar.gz) and for [rockylinux9](https://cloud-apps.webvirt.cloud/webvirtcompute-rockylinux9-amd64.tar.gz).
 
 ## License ##
 
