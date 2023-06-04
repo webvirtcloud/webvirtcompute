@@ -30,6 +30,16 @@ def metrics(query: Optional[str] = "", start: Optional[str] = "", end: Optional[
 
 @app.post("/virtances/", response_model=VirtanceCreate, status_code=status.HTTP_201_CREATED)
 def virtance_create(virtance: VirtanceCreate):
+    # Check XML already exists and delete
+    try:
+        conn = libvrt.wvmInstance(virtance.name)
+        if conn.get_state() != "shutoff":
+            conn.force_shutdown()
+        conn.delete()
+        conn.close
+    except libvirtError as err:
+        pass
+    
     # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
@@ -57,7 +67,7 @@ def virtance_create(virtance: VirtanceCreate):
             except libvirtError as err:
                 raise_error_msg(err)
 
-    # Create XML
+    # Create VM from XML
     try:
         conn = libvrt.wvmCreate()
         conn.create_xml(
