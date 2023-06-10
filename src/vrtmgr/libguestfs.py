@@ -61,7 +61,7 @@ class GuestFSUtil(object):
 
         device = "/dev/sda1"
         if self.os_family == "alpn":
-            device = "/dev/sda3"
+            device = "/dev/sda2"
         return device
 
     def rancheros_config_path(self):
