@@ -5,6 +5,7 @@
 .venv
 .idea
 .vscode
+.vagrant
 dist
 build
 release
