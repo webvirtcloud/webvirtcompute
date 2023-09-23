@@ -136,14 +136,14 @@ class FirewallMgr(object):
         return check
 
     def rule_args(self, chain, rule):
-        opt = "-d"
         ports = rule.get("ports")
         action = rule.get("action")
         protocol = rule.get("protocol")
         addresses = rule.get("addresses")
+        opt = "-s" if chain == "inbound" else "-d"
 
-        if chain == "inbound":
-            opt = "-s"
+        if isinstance(addresses, list):
+            addresses = ', '.join(map(str, addresses))
 
         if action == "DROP":
             # Dirty hack for icmp request
@@ -160,8 +160,6 @@ class FirewallMgr(object):
                 args = ["-m", "conntrack", "--ctstate", "NEW", "-j", action]
 
         if action == "ACCEPT":
-            addresses = ', '.join(map(str, addresses))
-
             if protocol == "icmp":
                 args = ["-p", protocol, opt, addresses, "-j", action]
             if protocol == "tcp" or protocol == "udp":
