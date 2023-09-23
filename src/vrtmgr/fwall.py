@@ -136,14 +136,14 @@ class FirewallMgr(object):
         return check
 
     def rule_args(self, chain, rule):
-        src_dst = "-d"
-        port = rule.get("port")
+        opt = "-d"
+        ports = rule.get("ports")
         action = rule.get("action")
-        address = rule.get("address")
         protocol = rule.get("protocol")
+        addresses = rule.get("addresses")
 
         if chain == "inbound":
-            src_dst = "-s"
+            opt = "-s"
 
         if action == "DROP":
             # Dirty hack for icmp request
@@ -160,16 +160,23 @@ class FirewallMgr(object):
                 args = ["-m", "conntrack", "--ctstate", "NEW", "-j", action]
 
         if action == "ACCEPT":
+            addresses = ', '.join(map(str, addresses))
+
             if protocol == "icmp":
-                args = ["-p", protocol, src_dst, address, "-j", action]
+                args = ["-p", protocol, opt, addresses, "-j", action]
             if protocol == "tcp" or protocol == "udp":
-                if port:
-                    args = ["-p", protocol, src_dst, address, "--dport", str(port), "-j", action]
+                if ports:
+                    ports = str(ports)
+                    if "-" in ports: 
+                        ports = ports.replace("-", ":")
+                    args = [
+                        "-p", protocol, opt, addresses, "--match", "multiport", "--dports", ports, "-j", action
+                    ]
                 else:
-                    args = ["-p", protocol, src_dst, address, "-j", action]
+                    args = ["-p", protocol, opt, addresses, "-j", action]
             # Allow all traffic from address
             if not protocol and not port:
-                args = [src_dst, address, "-j", action]
+                args = [opt, addresses, "-j", action]
 
         return args
 
