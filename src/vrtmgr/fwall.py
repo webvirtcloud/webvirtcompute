@@ -197,7 +197,7 @@ class FirewallMgr(object):
                     if not self.query_chain_cfg(self.firewall_in_chain):
                         self.fw_direct.addChain(self.ipv, self.table, self.firewall_in_chain)
 
-            # Create firewall IN rule for instance
+            # Create firewall IN rule
             if not self.query_rule(in_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
                 ipt_cmd = f"iptables -t {self.table} -I {chain} {FIREWALL_INSERT_LINE} {' '.join(in_args)}"
@@ -214,7 +214,7 @@ class FirewallMgr(object):
                     if not self.query_chain_cfg(self.firewall_out_chain):
                         self.fw_direct.addChain(self.ipv, self.table, self.firewall_out_chain)
 
-            # Create firewall OUT rule for instance
+            # Create firewall OUT rule
             if not self.query_rule(out_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
                 ipt_cmd = f"iptables -t {self.table} -I {chain} {FIREWALL_INSERT_LINE} {' '.join(out_args)}"
@@ -237,7 +237,7 @@ class FirewallMgr(object):
             in_args = ["-d", ipaddr, "-j", self.firewall_in_chain]
             out_args = ["-s", ipaddr, "-j", self.firewall_out_chain]
 
-            # Remove firewall IN rule for instance
+            # Remove firewall IN rule
             if self.query_rule(in_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
                 ipt_cmd = f"iptables -t {self.table} -D {chain} {' '.join(in_args)}"
@@ -246,7 +246,7 @@ class FirewallMgr(object):
                     if self.query_rule_cfg(in_args):
                         self.fw_direct.removeRule(self.ipv, self.table, self.chain, self.prio, in_args)
 
-            # Remove firewall OUT rule for instance
+            # Remove firewall OUT rule
             if self.query_rule(out_args):
                 chain = self.chain + FIREWALL_CHAIN_PREFIX
                 ipt_cmd = f"iptables -t {self.table} -D {chain} {' '.join(out_args)}"
@@ -255,37 +255,31 @@ class FirewallMgr(object):
                     if self.query_rule_cfg(out_args):
                         self.fw_direct.removeRule(self.ipv, self.table, self.chain, self.prio, out_args)
 
-            # Check unused firewall rule
-            used_firewall_rules = False
+            # Remove firewall rules
             for rule in self.fw_direct.getAllRules():
-                if self.chain in rule and self.firewall_in_chain in rule[4][3]:
-                    used_firewall_rules = True
+                if self.firewall_in_chain in rule:
+                    ipt_cmd = f"iptables -t {self.table} -D {self.firewall_in_chain} {' '.join(rule[4])}"
+                    run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+                    if run_ipt_cmd == 0:
+                        self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
+                if self.firewall_out_chain in rule:
+                    ipt_cmd = f"iptables -t {self.table} -D {self.firewall_out_chain} {' '.join(rule[4])}"
+                    run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+                    if run_ipt_cmd == 0:
+                        self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
 
-            # If firewall doesn't have any rules with instances than remove sgfirewallroup rules and chains
-            if not used_firewall_rules:
-                for rule in self.fw_direct.getAllRules():
-                    if self.firewall_in_chain in rule:
-                        ipt_cmd = f"iptables -t {self.table} -D {self.firewall_in_chain} {' '.join(rule[4])}"
-                        run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-                        if run_ipt_cmd == 0:
-                            self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
-                    if self.firewall_out_chain in rule:
-                        ipt_cmd = f"iptables -t {self.table} -D {self.firewall_out_chain} {''.join(rule[4])}"
-                        run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-                        if run_ipt_cmd == 0:
-                            self.fw_direct.removeRule(rule[0], rule[1], rule[2], rule[3], rule[4])
-
-                for chain in self.fw_direct.getAllChains():
-                    if self.firewall_in_chain in chain:
-                        ipt_cmd = f"iptables -X {self.firewall_in_chain}"
-                        run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-                        if run_ipt_cmd == 0:
-                            self.fw_direct.removeChain(chain[0], chain[1], chain[2])
-                    if self.firewall_out_chain in chain:
-                        ipt_cmd = f"iptables -X {self.firewall_out_chain}"
-                        run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
-                        if run_ipt_cmd == 0:
-                            self.fw_direct.removeChain(chain[0], chain[1], chain[2])
+            # Remove firewall chains
+            for chain in self.fw_direct.getAllChains():
+                if self.firewall_in_chain in chain:
+                    ipt_cmd = f"iptables -X {self.firewall_in_chain}"
+                    run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+                    if run_ipt_cmd == 0:
+                        self.fw_direct.removeChain(chain[0], chain[1], chain[2])
+                if self.firewall_out_chain in chain:
+                    ipt_cmd = f"iptables -X {self.firewall_out_chain}"
+                    run_ipt_cmd = call(ipt_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
+                    if run_ipt_cmd == 0:
+                        self.fw_direct.removeChain(chain[0], chain[1], chain[2])
 
     def create_rule(self, chain, rules):
         if chain == "inbound":
