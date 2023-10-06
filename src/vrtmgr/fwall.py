@@ -74,18 +74,14 @@ class FirewallMgr(object):
         f.close()
 
     def read_state(self):
+        state = False
         if os.path.isfile(FIREWALLD_STATE_FILE):
             f = open(FIREWALLD_STATE_FILE, "r")
             f_data = f.read()
             f.close()
             if f_data:
-                state = bool(f_data)
-            else:
-                self.unset_state()
-                state = False
-            return state
-        else:
-            return False
+                state = f_data == "1"
+        return state
 
     def is_locked(self):
         if self.read_state():
@@ -160,21 +156,22 @@ class FirewallMgr(object):
                 args = ["-m", "conntrack", "--ctstate", "NEW", "-j", action]
 
         if action == "ACCEPT":
-            if protocol == "icmp":
-                args = ["-p", protocol, opt, addresses, "-j", action]
-            if protocol == "tcp" or protocol == "udp":
-                if ports:
-                    ports = str(ports)
-                    if "-" in ports: 
-                        ports = ports.replace("-", ":")
-                    args = [
-                        "-p", protocol, opt, addresses, "--match", "multiport", "--dports", ports, "-j", action
-                    ]
-                else:
+            if addresses:
+                if protocol == "icmp":
                     args = ["-p", protocol, opt, addresses, "-j", action]
-            # Allow all traffic from address
-            if not protocol and not port:
-                args = [opt, addresses, "-j", action]
+                if protocol == "tcp" or protocol == "udp":
+                    if ports and ports != "0":
+                        ports = str(ports)
+                        if "-" in ports: 
+                            ports = ports.replace("-", ":")
+                        args = [
+                            "-p", protocol, opt, addresses, "--match", "multiport", "--dports", ports, "-j", action
+                        ]
+                    else:
+                        args = ["-p", protocol, opt, addresses, "-j", action]
+                # Allow all traffic from address
+                if not protocol and not port:
+                    args = [opt, addresses, "-j", action]
 
         return args
 
