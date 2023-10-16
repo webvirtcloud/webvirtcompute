@@ -111,11 +111,10 @@ class NwFilterCreate(BaseModel):
 
 
 class FloatingIPs(BaseModel):
-    fixed_address: str
-    address: str
-    prefix: str
-    gateway: str
-
+    fixed_ip: str
+    floating_ip: str
+    floating_prefix: str
+    floating_gw: str
 
 class ResetPassword(BaseModel):
     password_hash: str

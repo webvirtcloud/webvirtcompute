@@ -867,8 +867,8 @@ def floating_ip_attach(floating_ip: FloatingIPs):
     err_msg = None
 
     try:
-        ip = network.FixedIP(floating_ip.fixed_address)
-        err_msg = ip.attach_floating_ip(floating_ip.address, floating_ip.prefix, floating_ip.gateway)
+        ip = network.FloatingIP(floating_ip.fixed_ip)
+        err_msg = ip.attach_ipaddr(floating_ip.floating_ip, floating_ip.floating_prefix, floating_ip.floating_gw)
     except Exception as err:
         raise_error_msg(err)
 
@@ -883,8 +883,8 @@ def floating_ip_detach(floating_ip: FloatingIPs):
     err_msg = None
 
     try:
-        ip = network.FixedIP(floating_ip.fixed_address)
-        err_msg = ip.detach_floating_ip(floating_ip.address, floating_ip.prefix)
+        ip = network.FloatingIP(floating_ip.fixed_ip)
+        err_msg = ip.detach_ipaddr(floating_ip.floating_ip, floating_ip.floating_prefix)
     except Exception as err:
         raise_error_msg(err)
 
