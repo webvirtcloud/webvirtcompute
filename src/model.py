@@ -114,7 +114,7 @@ class FloatingIPs(BaseModel):
     fixed_ip: str
     floating_ip: str
     floating_prefix: str
-    floating_gw: str
+    floating_gateway: str
 
 class ResetPassword(BaseModel):
     password_hash: str

@@ -868,7 +868,7 @@ def floating_ip_attach(floating_ip: FloatingIPs):
 
     try:
         ip = network.FloatingIP(floating_ip.fixed_ip)
-        err_msg = ip.attach_ipaddr(floating_ip.floating_ip, floating_ip.floating_prefix, floating_ip.floating_gw)
+        err_msg = ip.attach_ipaddr(floating_ip.floating_ip, floating_ip.floating_prefix, floating_ip.floating_gateway)
     except Exception as err:
         raise_error_msg(err)
 
