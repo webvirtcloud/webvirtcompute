@@ -14,7 +14,7 @@ from execption import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
 from model import VirtanceCreate,VirtanceRebuild, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
-from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIPs, ResetPassword
+from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIP, ResetPassword
 from model import FirewallAttach, FirewallRule, FirewallDetach, VirtanceSnapshot, VirtanceSnapshotReponse
 
 
@@ -862,8 +862,8 @@ def nwfilter_delete(name):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.post("/floating_ips/", response_model=FloatingIPs, status_code=status.HTTP_200_OK)
-def floating_ip_attach(floating_ip: FloatingIPs):
+@app.post("/floating_ip/", response_model=FloatingIP, status_code=status.HTTP_200_OK)
+def floating_ip_attach(floating_ip: FloatingIP):
     err_msg = None
 
     try:
@@ -878,8 +878,8 @@ def floating_ip_attach(floating_ip: FloatingIPs):
     return floating_ip
 
 
-@app.delete("/floating_ips/")
-def floating_ip_detach(floating_ip: FloatingIPs):
+@app.delete("/floating_ip/")
+def floating_ip_detach(floating_ip: FloatingIP):
     err_msg = None
 
     try:

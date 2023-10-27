@@ -110,7 +110,7 @@ class NwFilterCreate(BaseModel):
     xml: str
 
 
-class FloatingIPs(BaseModel):
+class FloatingIP(BaseModel):
     fixed_ip: str
     floating_ip: str
     floating_prefix: str
