@@ -72,7 +72,7 @@ class FloatingIP(object):
             fwd.add_rule()
 
     def remove_fw_rule(self, fwd):
-        if self.check_rule(fwd):
+        if self.check_fw_rule(fwd):
             fwd.remove_rule()
 
     def clear_iface_arp(self, float_addr, float_gw, dev):
