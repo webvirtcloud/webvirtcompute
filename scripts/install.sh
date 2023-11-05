@@ -20,7 +20,7 @@ fi
 
 # Check if release file is recognized
 if [[ -z $DISTRO_NAME ]]; then
-  echo -e "\nRelease file not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9.\n"
+  echo -e "\nDistro is not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9.\n"
   exit 1
 fi
 
@@ -44,6 +44,9 @@ cp /tmp/webvirtcompute/webvirtcompute.service /etc/systemd/system/webvirtcompute
 systemctl daemon-reload
 systemctl enable --now webvirtcompute
 echo -e "Installing webvirtcompute... - Done!\n"
+
+# Show token
+echo -e "\nYour webvirtcompue connection token is: \n\t\n$TOKEN\n\nPlease add it to admin panel when you add the compute node.\n"
 
 # Cleanup
 rm -rf /tmp/webvirtcompute*
