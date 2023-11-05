@@ -12,8 +12,8 @@ from vrtmgr import network
 from auth import basic_auth
 from execption import raise_error_msg
 from settings import METRICS_URL, STORAGE_IMAGE_POOL, STORAGE_BACKUP_POOL
-from model import VirtanceCreate,VirtanceRebuild, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import StorageCreate, StorageAction, VolumeCreate, VolumeAction, NwFilterCreate
+from model import VirtanceCreate, VirtanceRebuild, VirtanceStatus, VirtanceResize, VirtanceMedia
 from model import NetworkCreate, NetworkAction, SecretCreate, SecretValue, FloatingIP, ResetPassword
 from model import FirewallAttach, FirewallRule, FirewallDetach, VirtanceSnapshot, VirtanceSnapshotReponse
 
@@ -39,7 +39,7 @@ def virtance_create(virtance: VirtanceCreate):
         conn.close
     except libvirtError as err:
         pass
-    
+
     # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
@@ -71,12 +71,7 @@ def virtance_create(virtance: VirtanceCreate):
     try:
         conn = libvrt.wvmCreate()
         conn.create_xml(
-            virtance.name, 
-            virtance.vcpu, 
-            virtance.memory, 
-            virtance.images, 
-            virtance.network, 
-            uuid=virtance.uuid
+            virtance.name, virtance.vcpu, virtance.memory, virtance.images, virtance.network, uuid=virtance.uuid
         )
         conn.close()
     except libvirtError as err:
@@ -148,7 +143,7 @@ def virtances():
         conn = libvrt.wvmConnect()
         virtance_names = conn.get_instances()
         conn.close()
-        
+
         for name in virtance_names:
             dconn = libvrt.wvmInstance(name)
             virtances.append(
@@ -199,13 +194,12 @@ def virtance(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return {"status": status}
 
 
 @app.post("/virtances/{name}/status/", response_model=VirtanceStatus, status_code=status.HTTP_200_OK)
 def virtance_status(name, status: VirtanceStatus):
-
     if status.action not in ["power_on", "power_off", "power_cycle", "shutdown", "suspend", "resume"]:
         raise_error_msg("Status does not exist.")
 
@@ -239,7 +233,7 @@ def virtance(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return {"vnc_port": vnc_port, "vnc_password": vnc_password}
 
 
@@ -288,13 +282,13 @@ def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     random.shuffle(backup_image_pools)
     if len(backup_image_pools) == 0:
         raise_error_msg("Backup image pool does not exist.")
-  
+
     image = images.Image(image_name, STORAGE_IMAGE_POOL)
     data = image.create_copy(snapshot.name, backup_image_pools[0], compress=True)
-    
+
     if data.get("error"):
         raise_error_msg(data.get("error"))
-    
+
     return VirtanceSnapshotReponse(**data)
 
 
@@ -312,7 +306,7 @@ def virtance_restore(name, snapshot: VirtanceSnapshot):
             conn.force_shutdown()
         drive = conn.get_disk_device()[0]
         target_name = drive.get("name")
-        
+
         storages = conn.get_storages()
         backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
         for pool in backup_image_pools:
@@ -321,7 +315,7 @@ def virtance_restore(name, snapshot: VirtanceSnapshot):
                 backup_pool = pool
                 break
             stg.close()
-        
+
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -353,14 +347,14 @@ def virtance_media_info(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return {"media": media}
 
 
 @app.post("/virtances/{name}/media/", response_model=VirtanceMedia, status_code=status.HTTP_200_OK)
 def virtance_media_mount(name, media: VirtanceMedia):
     if media.image is None:
-            raise_error_msg("Image is required.")
+        raise_error_msg("Image is required.")
 
     try:
         conn = libvrt.wvmInstance(name)
@@ -375,7 +369,7 @@ def virtance_media_mount(name, media: VirtanceMedia):
 @app.delete("/virtances/{name}/media/")
 def virtance_media_umount(name, media: VirtanceMedia):
     if media.path is None:
-            raise_error_msg("Path is required.")
+        raise_error_msg("Path is required.")
 
     try:
         conn = libvrt.wvmInstance(name)
@@ -447,7 +441,7 @@ def host():
     cpu = conn.get_host_cpu_usage()
     memory = conn.get_host_mem_usage()
     conn.close()
-    
+
     return {"host": host, "memory": memory, "cpu": cpu}
 
 
@@ -456,34 +450,30 @@ def storages():
     conn = libvrt.wvmStorages()
     storages = conn.get_storages_info()
     conn.close()
-    
+
     return {"storages": storages}
 
 
 @app.post("/storages/", response_model=StorageCreate, status_code=status.HTTP_201_CREATED)
 def storages_list(pool: StorageCreate):
     conn = libvrt.wvmStorages()
-    
+
     if pool.type == "dir":
         if pool.target is None:
             raise_error_msg("Target field required for dir storage pool.")
         try:
-            conn.create_storage(
-                pool.type, pool.name, pool.source, pool.target
-            )
+            conn.create_storage(pool.type, pool.name, pool.source, pool.target)
         except libvirtError as err:
             raise_error_msg(err)
-    
+
     if pool.type == "logical":
         if pool.source is None:
             raise_error_msg("Source field required for dir storage pool.")
         try:
-            conn.create_storage(
-                pool.type, pool.name, pool.source, pool.target
-            )
+            conn.create_storage(pool.type, pool.name, pool.source, pool.target)
         except libvirtError as err:
             raise_error_msg(err)
-    
+
     if pool.type == "rbd":
         if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
             raise_error_msg("Source, pool, secret and host fields required for rbd storage pool.")
@@ -493,7 +483,7 @@ def storages_list(pool: StorageCreate):
             )
         except libvirtError as err:
             raise_error_msg(err)
-    
+
     if pool.type == "nfs":
         if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
             raise_error_msg("Pool, source, source and target fields required for nfs storage pool.")
@@ -503,7 +493,7 @@ def storages_list(pool: StorageCreate):
             raise_error_msg(err)
 
     conn.close()
-    
+
     return pool
 
 
@@ -524,7 +514,7 @@ def storage_info(pool):
         "autostart": conn.get_autostart(),
     }
     conn.close()
-    
+
     return {"storage": storage}
 
 
@@ -546,7 +536,7 @@ def storage_action(pool, stg: StorageAction):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return stg
 
 
@@ -602,7 +592,7 @@ def storage_volume_info(pool, volume):
 def storage_volume_action(pool, volume, val: VolumeAction):
     if val.action not in ["resize", "clone"]:
         raise_error_msg("Action not exist.")
-    
+
     try:
         conn = libvrt.wvmStorage(pool)
         conn.get_volume(volume)
@@ -647,7 +637,7 @@ def networks_list():
     conn = libvrt.wvmNetworks()
     networks = conn.get_networks_info()
     conn.close()
-    
+
     return {"networks": networks}
 
 
@@ -656,19 +646,12 @@ def network_create(net: NetworkCreate):
     conn = libvrt.wvmNetworks()
     try:
         conn.create_network(
-            net.name,
-            net.forward,
-            net.gateway,
-            net.mask,
-            net.dhcp,
-            net.bridge,
-            net.openvswitch,
-            net.fixed
+            net.name, net.forward, net.gateway, net.mask, net.dhcp, net.bridge, net.openvswitch, net.fixed
         )
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return net
 
 
@@ -722,7 +705,7 @@ def network_delete(name):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -753,7 +736,7 @@ def secrets_list():
             }
         )
     conn.close()
-    
+
     return {"secrets": secrets_list}
 
 
@@ -765,7 +748,7 @@ def secret_create(secret: SecretCreate):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return secret
 
 
@@ -822,7 +805,7 @@ def nwfilters_list():
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return {"nwfilters": nwfilters_list}
 
 
@@ -834,7 +817,7 @@ def nwfilter_ctreate(nwfilter: NwFilterCreate):
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
-    
+
     return nwfilter
 
 
@@ -890,7 +873,7 @@ def floating_ip_detach(floating_ip: FloatingIP):
 
     if err_msg:
         raise_error_msg(err_msg)
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
