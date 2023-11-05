@@ -46,6 +46,6 @@ systemctl enable --now webvirtcompute
 echo -e "Installing webvirtcompute... - Done!\n"
 
 # Cleanup
-rm -rf /tmp/webvirtcompute-$DISTRO_NAME$DISTRO_VERSION-amd64.tar.gz
+rm -rf /tmp/webvirtcompute*
 
 exit 0
