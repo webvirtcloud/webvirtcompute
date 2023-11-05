@@ -23,8 +23,6 @@ curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/script
 
 WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add to WebVirtCloud admin panel when you add new compute node.
 
-```bash
-
 ## Build ##
 ```bash
 make -f Makefile.rockylinux8 compile
