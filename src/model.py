@@ -116,6 +116,7 @@ class FloatingIP(BaseModel):
     floating_prefix: str
     floating_gateway: str
 
+
 class ResetPassword(BaseModel):
     password_hash: str
 

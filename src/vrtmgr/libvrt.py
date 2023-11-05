@@ -206,13 +206,13 @@ class wvmStorages(wvmConnect):
         for pool in self.get_storages():
             stg = self.get_storage(pool)
             try:
-                 stg.refresh()
+                stg.refresh()
             except Exception:
                 pass
             stg_active = bool(stg.isActive())
             stg_type = util.get_xml_data(stg.XMLDesc(0), element="type")
             if stg_active:
-                stg_volumes = len(stg.listVolumes())                
+                stg_volumes = len(stg.listVolumes())
             stg_size = stg.info()[1]
             storages.append(
                 {
@@ -478,11 +478,11 @@ class wvmNetworks(wvmConnect):
             openvswitch = bool(util.get_xml_data(net.XMLDesc(0), "virtualport", "type") == "openvswitch")
             networks.append(
                 {
-                    "name": network, 
-                    "active": net_active, 
-                    "device": net_bridge, 
+                    "name": network,
+                    "active": net_active,
+                    "device": net_bridge,
                     "forward": net_forwd,
-                    "openvswitch": openvswitch
+                    "openvswitch": openvswitch,
                 }
             )
         return networks
@@ -555,11 +555,9 @@ class wvmNetwork(wvmConnect):
             return self.net.bridgeName()
         except Exception:
             return None
-    
+
     def get_openvswitch(self):
-        return bool(
-            util.get_xml_data(self.XMLDesc(0), "virtualport", "type") == "openvswitch"
-        )
+        return bool(util.get_xml_data(self.XMLDesc(0), "virtualport", "type") == "openvswitch")
 
     def start(self):
         self.net.create()
@@ -638,7 +636,7 @@ class wvmInterfaces(wvmConnect):
         itype = util.get_xml_data(xml, element="type")
         state = iface.isActive()
         return {"name": name, "type": itype, "state": state, "mac": mac}
-    
+
     def get_iface_list(self):
         ifaces_list = []
         for iface in self.get_ifaces():

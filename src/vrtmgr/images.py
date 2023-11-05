@@ -26,12 +26,12 @@ class Template(object):
         # Check if cache dir exist
         if not os.path.isdir(CACHE_DIR):
             os.mkdir(CACHE_DIR)
-            
+
         # Check if image already downloaded
         if os.path.exists(self.path):
             if self.md5sum == md5sum(self.path):
                 image_exist = True
-        
+
         # Download image
         if image_exist is False:
             try:
@@ -41,7 +41,7 @@ class Template(object):
                         f.write(chunk)
             except Exception as err:
                 err_msg = err
-            
+
             if err_msg is None:
                 if self.md5sum != md5sum(self.path):
                     err_msg = "MD5 sum mismatch"
@@ -51,7 +51,7 @@ class Template(object):
 
 class Image(object):
     def __init__(self, name, pool):
-        self.name = name if '.img' in name else name + ".img"
+        self.name = name if ".img" in name else name + ".img"
         self.pool = pool
 
         conn = wvmStorage(self.pool)
@@ -67,19 +67,19 @@ class Image(object):
 
     def create_copy(self, name, pool, compress=False):
         err_msg = None
-        target_name = name if '.img' in name else name + ".img"
+        target_name = name if ".img" in name else name + ".img"
         target_size = 0
         target_disk_size = 0
         target_md5sum = None
-    
+
         conn = wvmStorage(pool)
         conn.refresh()
         taraget_path = f"{conn.get_target_path()}/{target_name}"
 
         if err_msg is None:
-            qemu_img_cmd = f'qemu-img convert -U -O qcow2 {self.image_path} {taraget_path}'
+            qemu_img_cmd = f"qemu-img convert -U -O qcow2 {self.image_path} {taraget_path}"
             if compress is True:
-                qemu_img_cmd = f'qemu-img convert -U -c -O qcow2 {self.image_path} {taraget_path}'
+                qemu_img_cmd = f"qemu-img convert -U -c -O qcow2 {self.image_path} {taraget_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 conn.refresh()
@@ -89,32 +89,35 @@ class Image(object):
 
                 target_md5sum = md5sum(taraget_path)
             else:
-                err_msg = 'Error convert image to snapshot'
+                err_msg = "Error convert image to snapshot"
 
         return {
-            "error": err_msg, "size": target_size,  "md5sum": target_md5sum,
-            "disk_size": target_disk_size, "file_name": target_name,
+            "error": err_msg,
+            "size": target_size,
+            "md5sum": target_md5sum,
+            "disk_size": target_disk_size,
+            "file_name": target_name,
         }
-    
+
     def restore_copy(self, name, pool, disk_size):
         err_msg = None
         target_disk_size = 0
-        target_name = name if '.img' in name else name + ".img"
-    
+        target_name = name if ".img" in name else name + ".img"
+
         conn = wvmStorage(pool)
         conn.refresh()
         taraget_path = f"{conn.get_target_path()}/{target_name}"
 
         if err_msg is None:
-            qemu_img_cmd = f'qemu-img convert -O raw {self.image_path} {taraget_path}'
+            qemu_img_cmd = f"qemu-img convert -O raw {self.image_path} {taraget_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 conn.refresh()
                 vol = conn.get_volume(target_name)
                 target_disk_size = vol.info()[1]
             else:
-                err_msg = 'Error convert image to snapshot'
-            
+                err_msg = "Error convert image to snapshot"
+
         if disk_size > target_disk_size:
             vol.resize(disk_size)
 

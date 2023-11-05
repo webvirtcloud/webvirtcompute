@@ -139,7 +139,7 @@ class FirewallMgr(object):
         opt = "-s" if chain == "inbound" else "-d"
 
         if isinstance(addresses, list):
-            addresses = ', '.join(map(str, addresses))
+            addresses = ", ".join(map(str, addresses))
 
         if action == "DROP":
             # Dirty hack for icmp request
@@ -162,11 +162,9 @@ class FirewallMgr(object):
                 if protocol == "tcp" or protocol == "udp":
                     if ports and ports != "0":
                         ports = str(ports)
-                        if "-" in ports: 
+                        if "-" in ports:
                             ports = ports.replace("-", ":")
-                        args = [
-                            "-p", protocol, opt, addresses, "--match", "multiport", "--dports", ports, "-j", action
-                        ]
+                        args = ["-p", protocol, opt, addresses, "--match", "multiport", "--dports", ports, "-j", action]
                     else:
                         args = ["-p", protocol, opt, addresses, "-j", action]
                 # Allow all traffic from address
