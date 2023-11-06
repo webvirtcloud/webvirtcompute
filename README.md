@@ -9,21 +9,53 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 * Rocky Linux 8
 * Rocky Linux 9
 
-## Installation ##
+## Configuring KVM host ##
 
-Before install you have to install and configue `libvirt` daemon. To install WebVirtCompute, you need to download already built binary.
+### Network ###
 
-### Install ###
+Before install you have to prepare `br-ext` and `br-int` bridges for public and private network accordingly.
+Like example below:
+
+```bash
+nmcli connection add type bridge ifname br-ext con-name br-ext ipv4.method disabled ipv6.method ignore
+nmcli connection add type bridge-slave ifname eno1 con-name eno1 master br-ext
+nmcli connection modify br-ext bridge.stp no
+nmcli connection modify br-ext 802-3-ethernet.mtu 1500
+nmcli connection up eno1
+nmcli connection up br-ext
+```
+
+### Libvirt ###
+
+```bash
+curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/libvirt.sh | sudo bash
+```
+#### Firewall ####
+
+```bash
+WEBVIRTBACKED_IP=<you backend IP>
+firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -m physdev --physdev-is-bridged -j ACCEPT
+firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -d 10.255.0.0/16 -j MASQUERADE
+firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:8080
+firewall-cmd --permanent --zone=trusted --add-source=169.254.0.0/16
+firewall-cmd --permanent --zone=trusted --add-interface=br-ext
+firewall-cmd --permanent --zone=trusted --add-interface=br-int
+firewall-cmd --reload
+```
+
+## WebVirtCompute ##
+
+### Install binary ###
 
 ```bash
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/install.sh | sudo bash
 ```
 
-### Configuration ###
+#### Configuration ####
 
 WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add to WebVirtCloud admin panel when you add new compute node.
 
-## Build ##
+### Build from source ###
 ```bash
 make -f Makefile.rockylinux8 compile
 make -f Makefile.rockylinux8 package

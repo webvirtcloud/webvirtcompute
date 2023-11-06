@@ -114,7 +114,7 @@
 - name: start netwrok pool public
   shell: virsh net-start public && virsh net-autostart public
 
-- name: create network pool privae
+- name: create network pool private
   shell:
     cmd: |
       cat <<EOF | virsh net-define /dev/stdin
