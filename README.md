@@ -9,6 +9,15 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 * Rocky Linux 8
 * Rocky Linux 9
 
+## Requirements ##
+
+* qemu
+* libvirt
+* firewalld
+* prometheus
+* libguestfs-tools
+* NetworkManager
+
 ## Configuring KVM host ##
 
 ### Network ###
@@ -27,16 +36,27 @@ nmcli connection up br-ext
 
 ### Libvirt ###
 
+This script will install and configure `libvirt` with `qemu:///system` URI. You can always change settings `libvirt` and `libguestfish` if that needed. Only create and setup `br-ext` and `br-int` bridges before run this script.
+
 ```bash
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/libvirt.sh | sudo bash
 ```
-#### Firewall ####
+
+### Prometheus ###
+
+This script will install and configure `prometheus` with `node_exporter` and `libvirt_exporter`. You can always change settings for `prometheus` if that needed. 
+
+```bash
+curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/prometheus.sh | sudo bash
+```
+
+### Firewall ###
 
 ```bash
 WEBVIRTBACKED_IP=<you backend IP>
 firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -m physdev --physdev-is-bridged -j ACCEPT
 firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -d 10.255.0.0/16 -j MASQUERADE
-firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:8080
+firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:80
 firewall-cmd --permanent --zone=trusted --add-source=169.254.0.0/16
 firewall-cmd --permanent --zone=trusted --add-interface=br-ext
 firewall-cmd --permanent --zone=trusted --add-interface=br-int
