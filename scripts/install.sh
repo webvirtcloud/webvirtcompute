@@ -25,7 +25,7 @@ if [[ -z $DISTRO_NAME ]]; then
 fi
 
 # Check if libvirt is installed
-if ! dnf list installed libvirt >/dev/null 2>&1; then
+if ! dnf list installed libvirt > /dev/null 2>&1; then
   echo -e "\nPackage libvirt is not installed. Please install and configure libvirt first!\n"
   exit 1
 fi

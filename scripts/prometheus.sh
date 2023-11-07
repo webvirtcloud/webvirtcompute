@@ -24,6 +24,12 @@ if [[ -z $DISTRO_NAME ]]; then
   exit 1
 fi
 
+# Check if libvirt is installed
+if ! dnf list installed libvirt > /dev/null 2>&1; then
+  echo -e "\nPackage libvirt is not installed. Please install and configure libvirt first!\n"
+  exit 1
+fi
+
 # Install prometheus
 echo -e "\nInstalling and configuring prometheus..."
 dnf install -y epel-release

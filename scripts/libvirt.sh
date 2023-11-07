@@ -23,6 +23,18 @@ if [[ -z $DISTRO_NAME ]]; then
   exit 1
 fi
 
+# Check if br-ext is configured
+if ! ip link show br-ext > /dev/null 2>&1; then
+  echo -e "\nBridge br-ext is not found. Please configure it first!\n"
+  exit 1
+fi
+
+# Check if br-int is configured
+if ! ip link show br-int > /dev/null 2>&1; then
+  echo -e "\nBridge br-int is not found. Please configure it first!\n"
+  exit 1
+fi
+
 # Install libvirt and libguestfish
 echo -e "\nInstalling libvirt and libguestfish..."
 dnf install -y epel-release
