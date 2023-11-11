@@ -1,6 +1,6 @@
 # WebVirtCompute #
 
-WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management. 
+WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for comute nodes and backend. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
 
 ## Distribution ##
 
@@ -18,23 +18,43 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 * libguestfs-tools
 * NetworkManager
 
-## Configuring KVM host ##
+## Hypervisor ## 
 
-### Network ###
+### Network Setup ###
 
-Before install you have to prepare `br-ext` and `br-int` bridges for public and private network accordingly.
-Like example below:
+Before install you have to prepare `br-ext` and `br-int` bridges for public and private network accordingly. 
+
+Exampale how to create and setup ```br-ext``` bridge on ```eno1``` interface:
 
 ```bash
-nmcli connection add type bridge ifname br-ext con-name br-ext ipv4.method disabled ipv6.method ignore
-nmcli connection add type bridge-slave ifname eno1 con-name eno1 master br-ext
-nmcli connection modify br-ext bridge.stp no
-nmcli connection modify br-ext 802-3-ethernet.mtu 1500
-nmcli connection up eno1
-nmcli connection up br-ext
+nmcli conn add type bridge ifname br-ext con-name br-ext
+nmcli conn add type bridge-slave ifname eno1 con-name eno1 master br-ext # NEED TO CHANGE eno1 ON YOUR INTERFACE NAME
+nmcli conn modify br-ext ipv4.method manual ipv4.addresses 10.255.0.1/16 # for floating IP feature - DO NOT CHANGE
+nmcli conn modify br-ext ipv4.method manual +ipv4.addresses 169.254.169.254/16 # for metadata service - DO NOT CHANGE
+nmcli conn modify br-ext ipv4.method manual +ipv4.addresses 192.168.50.10/24 # NEED TO CHANGE 192.168.50.10/24 ON YOUR CIDR
+nmcli conn modify br-ext ipv4.method manual ipv4.gateway 192.168.50.1 # NEED TO CHANGE 192.168.50.1 ON YOUR GATEWAY IP
+nmcli conn modify br-ext ipv4.method manual ipv4.dns 8.8.8.8,1.1.1.1
+nmcli conn modify br-ext bridge.stp no
+nmcli conn modify br-ext 802-3-ethernet.mtu 1500
+nmcli conn up eno1 # NEED TO CHANGE eno1 ON YOUR INTERFACE NAME
+nmcli conn up br-ext
 ```
 
-### Libvirt ###
+Exampale how to create and setup ```br-int``` bridge on ```eno2``` interface:
+
+```bash
+nmcli conn add type bridge ifname br-int con-name br-int ipv4.method disabled ipv6.method ignore
+nmcli conn add type bridge-slave ifname eno2 con-name eno2 master br-int # NEED TO CHANGE eno2 ON YOUR INTERFACE NAME
+nmcli conn modify br-int bridge.stp no
+nmcli conn modify br-int 802-3-ethernet.mtu 1500
+nmcli conn up eno2 # NEED TO CHANGE eno2 ON YOUR INTERFACE NAME
+nmcli conn up br-int
+```
+
+For bridge interface `br-int` we don't need to set IP addresses.
+
+
+### Libvirt setup ###
 
 This script will install and configure `libvirt` with `qemu:///system` URI. You can always change settings `libvirt` and `libguestfish` if that needed. Only create and setup `br-ext` and `br-int` bridges before run this script.
 
@@ -42,7 +62,7 @@ This script will install and configure `libvirt` with `qemu:///system` URI. You 
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/libvirt.sh | sudo bash
 ```
 
-### Prometheus ###
+### Prometheus setup ###
 
 This script will install and configure `prometheus` with `node_exporter` and `libvirt_exporter`. You can always change settings for `prometheus` if that needed. 
 
@@ -50,39 +70,49 @@ This script will install and configure `prometheus` with `node_exporter` and `li
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/prometheus.sh | sudo bash
 ```
 
-### Firewall ###
+### Firewall setup ###
+
+Enable firewalld service:
 
 ```bash
-WEBVIRTBACKED_IP=<you backend IP>
-firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -m physdev --physdev-is-bridged -j ACCEPT
-firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -d 10.255.0.0/16 -j MASQUERADE
-firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:80
-firewall-cmd --permanent --zone=trusted --add-source=169.254.0.0/16
-firewall-cmd --permanent --zone=trusted --add-interface=br-ext
-firewall-cmd --permanent --zone=trusted --add-interface=br-int
+systemctl enable --now firewalld
+```
+
+Base firewall rules:
+
+
+```bash
+WEBVIRTBACKED_IP=<you backend IP> # need put your backend IP
+firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -m physdev --physdev-is-bridged -j ACCEPT # Bridge traffic rule
+firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -d 10.255.0.0/16 -j MASQUERADE # Floating IP feature rule
+firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:80 # CLoud-init metadata service rule
+firewall-cmd --permanent --zone=trusted --add-source=169.254.0.0/16 # Move cloud-init metadata service to trusted zone
+firewall-cmd --permanent --zone=trusted --add-interface=br-ext # Move br-ext to trusted zone
+firewall-cmd --permanent --zone=trusted --add-interface=br-int # Move br-int to trusted zone
 firewall-cmd --reload
 ```
 
-## WebVirtCompute ##
-
-### Install binary ###
+### Install WebVirtCompute daemon ###
 
 ```bash
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/install.sh | sudo bash
 ```
 
-#### Configuration ####
+### Configuring daemon (optional) ###
 
 WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add to WebVirtCloud admin panel when you add new compute node.
 
+## WebVirtCompute ##
+
 ### Build from source ###
+
 ```bash
 make -f Makefile.rockylinux8 compile
 make -f Makefile.rockylinux8 package
 ```
 You can find archive with binary in `release` directory.
 
-## Binary ##
+### Download binary ###
 
 You can download already built binary for:
 
