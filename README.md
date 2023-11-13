@@ -1,6 +1,6 @@
 # WebVirtCompute #
 
-WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for comute nodes and backend. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
+WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for compute nodes and backend. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
 
 ## Distribution ##
 
@@ -22,9 +22,11 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 
 ### Network Setup ###
 
-Before install you have to prepare `br-ext` and `br-int` bridges for public and private network accordingly. 
+Before installation, you have to prepare `br-ext` and `br-int` bridges for public and private networks accordingly. 
 
-Exampale how to create and setup ```br-ext``` bridge on ```eno1``` interface:
+please note you will also need two networking interfaces; for example `eno1` & `eno2`
+
+Example how to create and setup ```br-ext``` bridge on ```eno1``` interface:
 
 ```bash
 nmcli conn add type bridge ifname br-ext con-name br-ext
@@ -56,7 +58,7 @@ For bridge interface `br-int` we don't need to set IP addresses.
 
 ### Libvirt setup ###
 
-This script will install and configure `libvirt` with `qemu:///system` URI. You can always change settings `libvirt` and `libguestfish` if that needed. Only create and setup `br-ext` and `br-int` bridges before run this script.
+This script will install and configure `libvirt` with `qemu:///system` URI. You can always change settings `libvirt` and `libguestfish` if that is needed. Only create and set up `br-ext` and `br-int` bridges before running this script.
 
 ```bash
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/libvirt.sh | sudo bash
@@ -64,7 +66,7 @@ curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/script
 
 ### Prometheus setup ###
 
-This script will install and configure `prometheus` with `node_exporter` and `libvirt_exporter`. You can always change settings for `prometheus` if that needed. 
+This script will install and configure `prometheus` with `node_exporter` and `libvirt_exporter`. You can always change settings for `prometheus` if that is needed. 
 
 ```bash
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/prometheus.sh | sudo bash
@@ -100,7 +102,7 @@ curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/script
 
 ### Configuring daemon (optional) ###
 
-WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add to WebVirtCloud admin panel when you add new compute node.
+WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add it to WebVirtCloud admin panel when you add a new compute node.
 
 ## WebVirtCompute ##
 
@@ -110,7 +112,7 @@ WebVirtCompute uses a configuration file to set up the daemon. The default confi
 make -f Makefile.rockylinux8 compile
 make -f Makefile.rockylinux8 package
 ```
-You can find archive with binary in `release` directory.
+You can find the archive with binary in `release` directory.
 
 ### Download binary ###
 
