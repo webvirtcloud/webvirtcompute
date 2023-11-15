@@ -34,7 +34,7 @@ fi
 echo -e "\nInstalling webvirtcompute..."
 wget -O /tmp/webvirtcompute-$DISTRO_NAME$DISTRO_VERSION-amd64.tar.gz https://cloud-apps.webvirt.cloud/webvirtcompute-$DISTRO_NAME$DISTRO_VERSION-amd64.tar.gz
 tar -xvf /tmp/webvirtcompute-$DISTRO_NAME$DISTRO_VERSION-amd64.tar.gz -C /tmp
-cp /tmp/webvirtcompute-$DISTRO_NAME$DISTRO_VERSION-amd64/webvirtcompute /usr/local/bin/webvirtcompute
+cp /tmp/webvirtcompute/webvirtcompute /usr/local/bin/webvirtcompute
 chmod +x /usr/local/bin/webvirtcompute
 restorecon -v /usr/local/bin/webvirtcompute
 mkdir /etc/webvirtcompute
