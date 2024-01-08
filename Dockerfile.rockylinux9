@@ -24,6 +24,7 @@ RUN dnf install -y epel-release && \
                    python3-libvirt \
                    python3-paramiko \
                    python3-firewall \
+                   python3-pyOpenSSL \
                    python3-libnmstate \
                    python3-libguestfs
 

@@ -168,7 +168,7 @@ class FirewallMgr(object):
                     else:
                         args = ["-p", protocol, opt, addresses, "-j", action]
                 # Allow all traffic from address
-                if not protocol and not port:
+                if not protocol and not ports:
                     args = [opt, addresses, "-j", action]
 
         return args

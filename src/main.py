@@ -37,7 +37,7 @@ def virtance_create(virtance: VirtanceCreate):
             conn.force_shutdown()
         conn.delete()
         conn.close
-    except libvirtError as err:
+    except libvirtError:
         pass
 
     # Download and deploy images template
