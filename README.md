@@ -18,6 +18,15 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 * libguestfs-tools
 * NetworkManager
 
+## For what is it? ##
+
+* It is a daemon for managing virtual machines based on FastAPI and libvirt.
+* It is designed to be used for compute nodes and backend.
+* It is a lightweight and fast daemon.
+* It is easy to install and configure.
+* It is only one binary file.
+* It is use TLS to secure the communication between the client and the daemon.
+
 ## Hypervisor ## 
 
 ### Network Setup ###
