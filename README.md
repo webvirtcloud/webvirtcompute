@@ -31,6 +31,40 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 
 ### Network Setup ###
 
+#### Ubuntu 22.04 (Beta) ####
+
+Install NetworkManager and firewalld:
+
+```bash
+sudo apt install -y network-manager firewalld
+```
+
+and update `/etc/netplan/00-installer-config.yaml`:
+
+```yaml
+network:
+  version: 2
+  renderer: NetworkManager
+```
+
+#### Debian 12 (Beta) ####
+
+Install NetworkManager and firewalld:
+
+```bash
+sudo apt install -y network-manager firewalld
+```
+
+and change `managed` to `true` in the file `/etc/NeworkManager/NetworkManager.conf`:
+
+```conf
+[main]
+plugins=ifupdown,keyfile
+
+[ifupdown]
+managed=true
+```
+
 Before installation, you have to prepare `br-ext` and `br-int` bridges for public and private networks accordingly. 
 
 please note you will also need two networking interfaces; for example `eno1` & `eno2`
