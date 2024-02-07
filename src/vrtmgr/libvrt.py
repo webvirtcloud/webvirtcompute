@@ -33,6 +33,11 @@ class wvmConnect(object):
     def get_domain_type(self):
         return "kvm" if self.is_kvm_supported() else "qemu"
 
+    def get_iommu_support(self):
+        if util.get_xml_data(self.get_cap_xml(), "host/iommu", "support") == "yes":
+            return True
+        return False
+
     def get_host_info(self):
         nodeinfo = self.wvm.getInfo()
         processor = util.get_xml_data(self.wvm.getSysinfo(0), "processor/entry[6]")
@@ -47,6 +52,11 @@ class wvmConnect(object):
 
     def get_host_type(self):
         return util.get_xml_data(self.get_cap_xml(), "guest/arch/domain", "type")
+
+    def get_macine_type(self):
+        if self.get_iommu_support():
+            return "q35"
+        return "pc"
 
     def get_host_mem_usage(self):
         host_memory = self.wvm.getInfo()[1] * (1024**2)
@@ -840,7 +850,7 @@ class wvmCreate(wvmConnect):
                 """
 
         xml += f"""<os>
-                    <type arch='{self.get_host_arch()}'>{self.get_os_type()}</type>
+                    <type arch='{self.get_host_arch()}' machine='{self.get_macine_type()}'>{self.get_os_type()}</type>
                     <boot dev='cdrom'/>
                     <boot dev='hd'/>
                     <smbios mode='sysinfo'/>
@@ -888,7 +898,7 @@ class wvmCreate(wvmConnect):
         xml += """<disk type='file' device='cdrom'>
                    <driver name='qemu' type='raw'/>
                    <source file=''/>
-                   <target dev='hda' bus='ide'/>
+                   <target dev='hda' bus='sata'/>
                    <readonly/>
                   </disk>
                 """
@@ -1279,9 +1289,8 @@ class wvmInstance(wvmConnect):
         disk = """
             <disk type='file' device='cdrom'>
                 <driver name='qemu'/>
-                <target dev='hda' bus='ide'/>
+                <target dev='hda' bus='sata'/>
                 <readonly/>
-                <serial>0</serial>
             </disk>
          """
 
@@ -1324,9 +1333,8 @@ class wvmInstance(wvmConnect):
         disk = """
             <disk type='file' device='cdrom'>
                 <driver name='qemu' type='raw'/>
-                <target dev='hda' bus='ide'/>
+                <target dev='hda' bus='sata'/>
                 <readonly/>
-                <serial>0</serial>
               </disk>
         """
 
