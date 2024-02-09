@@ -43,6 +43,9 @@ echo -e "Installing libvirt and libguestfish... - Done!\n"
 
 echo -e "\nConfiguring libvirt..."
 
+# Enable SASL for qemu
+sed -i 's/#vnc_sasl/vnc_sasl/g' /etc/libvirt/qemu.conf
+
 # Allow VNC connections to qemu
 sed -i 's/#vnc_listen/vnc_listen/g' /etc/libvirt/qemu.conf
 
