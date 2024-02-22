@@ -119,7 +119,7 @@ class Image(object):
                 err_msg = "Error convert image to snapshot"
 
         if err_msg is None:
-            if taraget_disk_size > disk_size:
+            if target_disk_size > disk_size:
                 err_msg = "Image disk size is bigger than disk size"
        
         if err_msg is None:
