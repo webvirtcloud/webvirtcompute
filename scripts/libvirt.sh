@@ -8,7 +8,7 @@ TOKEN=$(echo -n $(date) | sha256sum | cut -d ' ' -f1)
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
   if [[ $ID == "rocky" ]]; then
-    DISTRO_NAME="rockylinux "
+    DISTRO_NAME="rockylinux"
   elif [[ $ID == "centos" ]]; then
     DISTRO_NAME="centos"
   elif [[ $ID == "almalinux" ]]; then
