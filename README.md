@@ -143,6 +143,12 @@ firewall-cmd --reload
 curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/install.sh | sudo bash
 ```
 
+### Update WebVirtCompute daemon ###
+
+```bash
+curl https://raw.githubusercontent.com/webvirtcloud/webvirtcompute/master/scripts/update.sh | sudo bash
+```
+
 ### Configuring daemon (optional) ###
 
 WebVirtCompute uses a configuration file to set up the daemon. The default configuration file is located at `/etc/webvirtcompute/webvirtcompute.ini`. You have to copy `token` and add it to WebVirtCloud admin panel when you add a new compute node.
