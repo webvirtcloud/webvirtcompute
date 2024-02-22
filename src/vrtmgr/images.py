@@ -118,8 +118,13 @@ class Image(object):
             else:
                 err_msg = "Error convert image to snapshot"
 
-        if disk_size > target_disk_size:
-            vol.resize(disk_size)
+        if err_msg is None:
+            if taraget_disk_size > disk_size:
+                err_msg = "Image disk size is bigger than disk size"
+       
+        if err_msg is None:
+            if disk_size > target_disk_size:
+                vol.resize(disk_size)
 
         conn.close()
 
@@ -133,6 +138,10 @@ class Image(object):
         if run_qemu_img_cmd == 0:
             err_msg = self._run(disk_size, networks, public_keys, hostname, root_password, cloud=cloud)
 
+        return err_msg
+
+    def deploy_image(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
+        err_msg = self._run(disk_size, networks, public_keys, hostname, root_password, cloud=cloud)
         return err_msg
 
     def _run(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):

@@ -2,6 +2,7 @@
 WebVirtCloud daemon for managing VM's filesystem.
 
 """
+
 import configparser
 from optparse import OptionParser
 
