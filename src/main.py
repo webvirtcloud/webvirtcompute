@@ -40,11 +40,13 @@ def virtance_create(virtance: VirtanceCreate):
     except libvirtError:
         pass
 
-    # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
+            # Copy and deploy backup or snapshot image
             if img.get("type") == "snapshot" or img.get("type") == "backup":
                 backup_pool = None
+                file_name = img.get("file_name")
+                image_name = file_name if ".img" in file_name else file_name + ".img"
                 
                 try:
                     conn = libvrt.wvmConnect()
@@ -52,7 +54,7 @@ def virtance_create(virtance: VirtanceCreate):
                     backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
                     for pool in backup_image_pools:
                         stg = libvrt.wvmStorage(pool)
-                        if snapshot.name in stg.get_volumes():
+                        if image_name in stg.get_volumes():
                             backup_pool = pool
                             break
                         stg.close()
@@ -79,7 +81,8 @@ def virtance_create(virtance: VirtanceCreate):
                 )
                 if err_msg is not None:
                     raise_error_msg(err_msg)
-            
+
+            # Download and deploy template image
             if img.get("type") == "distribution" or img.get("type") == "application":
                 image_url = f'{img.get("public_url")}{img.get("file_name")}'
                 template = images.Template(image_url, img.get("md5sum"))
@@ -138,65 +141,27 @@ def virtance_create(name, virtance: VirtanceRebuild):
     except libvirtError as err:
         raise_error_msg(err)
 
-    # Download and deploy images template
     for img in virtance.images:
         if img.get("primary") is True:
-            if img.get("type") == "snapshot" or img.get("type") == "backup":
-                backup_pool = None
-                
-                try:
-                    conn = libvrt.wvmConnect()
-                    storages = conn.get_storages()
-                    backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
-                    for pool in backup_image_pools:
-                        stg = libvrt.wvmStorage(pool)
-                        if snapshot.name in stg.get_volumes():
-                            backup_pool = pool
-                            break
-                        stg.close()
+            # Download and deploy template image
+            image_url = f'{img.get("public_url")}{img.get("file_name")}'
+            template = images.Template(image_url, img.get("md5sum"))
+            err_msg = template.download()
+            if err_msg is not None:
+                raise_error_msg(err_msg)
 
-                    conn.close()
-                except libvirtError as err:
-                    raise_error_msg(err)
-
-                if backup_pool is None:
-                    raise_error_msg("Backup storage pool not found.")
-
-                image = images.Image(img.get("file_name"), backup_pool)
-                data = image.restore_copy(img.get("name"), STORAGE_IMAGE_POOL, disk_size=img.get("size"))
-
-                if data.get("error"):
-                    raise_error_msg(data.get("error"))
-
-                err_msg = image.deploy_image(
-                    disk_size=img.get("size"),
-                    networks=virtance.network,
-                    public_keys=virtance.keypairs,
-                    hostname=virtance.hostname,
-                    root_password=virtance.password_hash,
-                )
-                if err_msg is not None:
-                    raise_error_msg(err_msg)
-            
-            if img.get("type") == "distribution" or img.get("type") == "application":
-                image_url = f'{img.get("public_url")}{img.get("file_name")}'
-                template = images.Template(image_url, img.get("md5sum"))
-                err_msg = template.download()
-                if err_msg is not None:
-                    raise_error_msg(err_msg)
-
-                image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
-            
-                err_msg = image.deploy_template(
-                    template_path=template.path,
-                    disk_size=img.get("size"),
-                    networks=virtance.network,
-                    public_keys=virtance.keypairs,
-                    hostname=virtance.hostname,
-                    root_password=virtance.password_hash,
-                )
-                if err_msg is not None:
-                    raise_error_msg(err_msg)
+            image = images.Image(img.get("name"), STORAGE_IMAGE_POOL)
+        
+            err_msg = image.deploy_template(
+                template_path=template.path,
+                disk_size=img.get("size"),
+                networks=virtance.network,
+                public_keys=virtance.keypairs,
+                hostname=virtance.hostname,
+                root_password=virtance.password_hash,
+            )
+            if err_msg is not None:
+                raise_error_msg(err_msg)
         else:
             try:
                 conn = libvrt.wvmStorage(STORAGE_IMAGE_POOL)
