@@ -2,12 +2,14 @@
 
 WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for compute nodes and backend. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
 
-## Distribution ##
+## Supported Distribution ##
 
 * AlmaLinux 8
 * AlmaLinux 9
 * Rocky Linux 8
 * Rocky Linux 9
+* Debian 12 (Beta)
+* Ubuntu 22.04 (Beta)
 
 ## Requirements ##
 
@@ -31,7 +33,7 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 
 ### Network Setup ###
 
-#### Ubuntu 22.04 (Beta) ####
+#### Only for Ubuntu 22.04 (Beta) ####
 
 Install NetworkManager and firewalld:
 
@@ -47,7 +49,7 @@ network:
   renderer: NetworkManager
 ```
 
-#### Debian 12 (Beta) ####
+#### Only for Debian 12 (Beta) ####
 
 Install NetworkManager and firewalld:
 
@@ -64,6 +66,8 @@ plugins=ifupdown,keyfile
 [ifupdown]
 managed=true
 ```
+
+#### For all supported distributions ####
 
 Before installation, you have to prepare `br-ext` and `br-int` bridges for public and private networks accordingly. 
 
