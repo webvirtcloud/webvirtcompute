@@ -1,4 +1,4 @@
-# Copyright 2022 WebVirtCloud
+# Copyright 2024 WebVirtCloud
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DISTRO ?= almalinux8
+DISTRO ?= rhel8
 IMAGE ?= webvirtcompute
 TAG ?= $(DISTRO)
 
@@ -55,5 +55,5 @@ test:
 
 .PHONY: clean
 clean:
-	@rm -rf release src/build src/dist src/__pycache__ src/webvirtcompute.spec
+	@rm -rf src/build src/dist src/__pycache__ src/webvirtcompute.spec
 	@echo "==> Cleaned"

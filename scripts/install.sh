@@ -9,11 +9,11 @@ TOKEN=$(echo -n $(date) | sha256sum | cut -d ' ' -f1)
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
   if [[ $ID == "rocky" ]]; then
-    DISTRO_NAME="rockylinux"
+    DISTRO_NAME="rhel"
   elif [[ $ID == "centos" ]]; then
-    DISTRO_NAME="centos"
+    DISTRO_NAME="rhel"
   elif [[ $ID == "almalinux" ]]; then
-    DISTRO_NAME="almalinux"
+    DISTRO_NAME="rhel"
   fi
     DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
 fi
