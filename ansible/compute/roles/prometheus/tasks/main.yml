@@ -7,7 +7,7 @@
 
 - name: download libvirt exporter
   unarchive:
-    src: https://github.com/retspen/libvirt-exporter/releases/download/0.1.0/prometheus-libvirt-exporter-0.0.1.linux-amd64.tar.gz
+    src: https://cloud-apps.webvirt.cloud/prometheus-libvirt-exporter-rhel8-amd64.tar.gz
     dest: /tmp
     remote_src: yes
 
