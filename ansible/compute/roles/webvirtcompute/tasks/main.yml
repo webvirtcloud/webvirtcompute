@@ -1,7 +1,7 @@
 ---
 - name: download webvirtcompute app
   unarchive:
-    src: https://cloud-apps.webvirt.cloud/webvirtcompute-rockylinux8-amd64.tar.gz
+    src: https://cloud-apps.webvirt.cloud/webvirtcompute-rhel8-amd64.tar.gz
     dest: /tmp
     remote_src: yes
 
