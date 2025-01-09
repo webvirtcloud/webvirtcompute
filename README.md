@@ -162,8 +162,9 @@ WebVirtCompute uses a configuration file to set up the daemon. The default confi
 ### Build from source ###
 
 ```bash
-make -f Makefile.rockylinux8 compile
-make -f Makefile.rockylinux8 package
+make -f Makefile.rhel8 build
+make -f Makefile.rhel8 compile
+make -f Makefile.rhel8 package
 ```
 You can find the archive with binary in `release` directory.
 
