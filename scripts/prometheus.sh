@@ -49,7 +49,7 @@ EOF
 systemctl daemon-reload
 systemctl enable --now prometheus-libvirt-exporter
 systemctl enable --now prometheus-node-exporter
-systemctl enbale --now prometheus
+systemctl enable --now prometheus
 echo -e "Installing and configuring prometheus... - Done!\n"
 
 # Clean up
