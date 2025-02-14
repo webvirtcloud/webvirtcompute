@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
   
   config.vm.define "compute" do |node|
     node.vm.box = "almalinux/8"
-    node.vm.box_version = "5.0.0"
+  #  node.vm.box_version = "5.0.0"
     node.vm.hostname = "wvc-compute"
     node.vm.synced_folder ".", "/vagrant", type: "nfs",
       nfs_udp: false, 
@@ -46,8 +46,8 @@ Vagrant.configure("2") do |config|
 
     node.vm.provision "shell", run: "once", inline: <<-SHELL
       dnf install -y python3.9 cloud-utils-growpart
-      growpart /dev/vda 1
-      xfs_growfs /dev/vda1
+      growpart /dev/vda 4
+      xfs_growfs /dev/vda4
     SHELL
   
     node.vm.provision "ansible" do |ansible|
