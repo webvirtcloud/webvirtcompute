@@ -3,23 +3,26 @@ set -e
 DISTRO_NAME=""
 DISTRO_VERSION=""
 OS_RELEASE="/etc/os-release"
-TOKEN=$(echo -n $(date) | sha256sum | cut -d ' ' -f1)
+PKG_MANAGER="dnf"
 
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
-  if [[ $ID == "rocky" ]]; then
-    DISTRO_NAME="rockylinux"
-  elif [[ $ID == "centos" ]]; then
-    DISTRO_NAME="centos"
-  elif [[ $ID == "almalinux" ]]; then
-    DISTRO_NAME="almalinux"
+  DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
+  if [[ $ID == "rocky" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
+    DISTRO_NAME="rhel"
+  elif [[ $ID == "centos" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
+    DISTRO_NAME="rhel"
+  elif [[ $ID == "almalinux" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
+    DISTRO_NAME="rhel"
+  elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
+    DISTRO_NAME="debian"
+    PKG_MANAGER="apt"
   fi
-    DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
 fi
 
 # Check if release file is recognized
 if [[ -z $DISTRO_NAME ]]; then
-  echo -e "\nDistro is not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9.\n"
+  echo -e "\nDistro is not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12.\n"
   exit 1
 fi
 
@@ -35,11 +38,27 @@ if ! ip link show br-int > /dev/null 2>&1; then
   exit 1
 fi
 
-# Install libvirt and libguestfish
-echo -e "\nInstalling libvirt and libguestfish..."
-dnf install -y epel-release
-dnf install -y tuned libvirt qemu-kvm xmlstarlet cyrus-sasl-md5 qemu-guest-agent libguestfs-tools libguestfs-rescue libguestfs-winsupport libguestfs-bash-completion
-echo -e "Installing libvirt and libguestfish... - Done!\n"
+if [[ $DISTRO_NAME == "debian" ]]; then
+  if ! dpkg -l | grep -q "network-manager"; then
+    echo -e "\nPackage network-manger is not installed. Please install and configure network-manager first!\n"
+    exit 1
+  fi
+  if ! dpkg -l | grep -q "firewalld"; then
+    echo -e "\nPackage firewalld is not installed. Please install firewall first!\n"
+    exit 1
+  fi
+fi
+
+# Install libvirt and dependencies based on distro
+echo -e "\nInstalling libvirt and dependencies..."
+if [[ $DISTRO_NAME == "rhel" ]]; then
+  dnf install -y epel-release
+  dnf install -y tuned libvirt qemu-kvm xmlstarlet cyrus-sasl-md5 qemu-guest-agent libguestfs-tools libguestfs-rescue libguestfs-winsupport libguestfs-bash-completion
+elif [[ $DISTRO_NAME == "debian" ]]; then
+  apt update
+  apt install -y tuned libvirt-daemon-system qemu-kvm xmlstarlet sasl2-bin qemu-guest-agent libguestfs-tools libguestfs-rescue guestfs-tools
+fi
+echo -e "Installing libvirt and dependencies... - Done!\n"
 
 echo -e "\nConfiguring libvirt..."
 
@@ -49,8 +68,10 @@ sed -i 's/#vnc_sasl/vnc_sasl/g' /etc/libvirt/qemu.conf
 # Allow VNC connections to qemu
 sed -i 's/#vnc_listen/vnc_listen/g' /etc/libvirt/qemu.conf
 
-# Enable virt-host profile
-tuned-adm profile virtual-host
+# Enable virt-host profile if applicable
+if command -v tuned-adm &> /dev/null; then
+  tuned-adm profile virtual-host
+fi
 
 # Add sysctl parameters
 cat << EOF >> /etc/sysctl.d/99-bridge.conf
@@ -65,30 +86,35 @@ EOF
 # Apply sysctl parameters
 sysctl --system
 
-# Enable and start libvirtd
-systemctl enable --now libvirtd-tcp.socket
-systemctl enable --now libvirt-guests
-systemctl stop libvirtd-ro.socket
-systemctl stop libvirtd.socket
-systemctl stop libvirtd.service
+# Enable and start libvirtd - handle different service names/sockets
+if [[ $DISTRO_NAME == "debian" ]]; then
+  systemctl enable --now libvirtd.service
+  systemctl enable --now libvirt-guests.service
+else
+  systemctl enable --now libvirtd-tcp.socket
+  systemctl enable --now libvirt-guests
+  systemctl stop libvirtd-ro.socket
+  systemctl stop libvirtd.socket
+  systemctl stop libvirtd.service
+fi
 
 # Create storage pool for images
 virsh pool-define-as images dir - - - - "/var/lib/libvirt/images"
 virsh pool-build images && virsh pool-start images && virsh pool-autostart images
 
 # Create storage pool for ISOs
-mkdir /var/lib/libvirt/isos
+mkdir -p /var/lib/libvirt/isos
 virsh pool-define-as isos dir - - - - "/var/lib/libvirt/isos"
 virsh pool-build isos && virsh pool-start isos && virsh pool-autostart isos
 
 # Create storage pool for backups
-mkdir /var/lib/libvirt/backups
+mkdir -p /var/lib/libvirt/backups
 virsh pool-define-as backups dir - - - - "/var/lib/libvirt/backups"
 virsh pool-build backups && virsh pool-start backups && virsh pool-autostart backups
 
-# Remove network pool default
-virsh net-destroy default
-virsh net-undefine default
+# Try to remove network pool default if it exists
+virsh net-destroy default || true
+virsh net-undefine default || true
 
 # Create network pool public
 cat <<EOF | virsh net-define /dev/stdin
@@ -134,13 +160,14 @@ cat <<EOF | virsh nwfilter-define /dev/stdin
 EOF
 echo -e "Configuring libvirt... - Done!\n"
 
-
-# Dowload recovery image
+# Download recovery image
 echo -e "\nDownloading recovery image..."
 wget -O /var/lib/libvirt/isos/finnix-125.iso https://www.finnix.org/releases/125/finnix-125.iso
 echo -e "Downloading recovery image... - Done!\n"
 
 # Enable firewall
 systemctl enable --now firewalld
+
+echo -e "\nLibvirt installation and configuring is complete!\n"
 
 exit 0

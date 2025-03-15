@@ -67,6 +67,8 @@ plugins=ifupdown,keyfile
 managed=true
 ```
 
+> **Warning:** To apply the settings, restart the server.
+
 #### For all supported distributions ####
 
 Before installation, you have to prepare `br-ext` and `br-int` bridges for public and private networks accordingly. 
