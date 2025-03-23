@@ -18,13 +18,14 @@ if [[ -f $OS_RELEASE ]]; then
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
     PKG_MANAGER="apt"
+  elif [[ $ID == "ubuntu" ]] && [[ $VERSION_ID == "20.04" || $VERSION_ID == "21.04" ]]; then
+    DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1$2}')
+    DISTRO_NAME="ubuntu"
+    PKG_MANAGER="apt"
+  else
+    echo -e "\nUnsupported distribution or version! Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12, Ubuntu 22.04 and Ubuntu 24.04.\n"
+    exit 1
   fi
-fi
-
-# Check if release file is recognized
-if [[ -z $DISTRO_NAME ]]; then
-  echo -e "\nDistro is not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12.\n"
-  exit 1
 fi
 
 # Check if libvirt is installed
@@ -33,7 +34,7 @@ if [[ $DISTRO_NAME == "rhel" ]]; then
     echo -e "\nPackage libvirt is not installed. Please install and configure libvirt first!\n"
     exit 1
   fi
-elif [[ $DISTRO_NAME == "debian" ]]; then
+elif [[ $DISTRO_NAME == "debian" ]] || [[ $DISTRO_NAME == "ubuntu" ]]; then
   if ! dpkg -l | grep -q "libvirt-daemon-system"; then
     echo -e "\nPackage libvirt-daemon-system is not installed. Please install and configure libvirt first!\n"
     exit 1

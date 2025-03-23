@@ -1,13 +1,11 @@
 set -e
 
 DISTRO_NAME=""
-DISTRO_VERSION=""
 OS_RELEASE="/etc/os-release"
 PKG_MANAGER="dnf"
 
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
-  DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
   if [[ $ID == "rocky" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
     DISTRO_NAME="rhel"
   elif [[ $ID == "centos" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
@@ -17,13 +15,13 @@ if [[ -f $OS_RELEASE ]]; then
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
     PKG_MANAGER="apt"
+  elif [[ $ID == "ubuntu" ]] && [[ $VERSION_ID == "22.04" ]] || [[ $VERSION_ID == "24.04" ]]; then
+    DISTRO_NAME="ubuntu"
+    PKG_MANAGER="apt"
+  else
+    echo -e "\nUnsupported distribution or version! Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12, Ubuntu 22.04 and Ubuntu 24.04.\n"
+    exit 1
   fi
-fi
-
-# Check if release file is recognized
-if [[ -z $DISTRO_NAME ]]; then
-  echo -e "\nDistro is not recognized. Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12.\n"
-  exit 1
 fi
 
 # Check if br-ext is configured
@@ -38,7 +36,7 @@ if ! ip link show br-int > /dev/null 2>&1; then
   exit 1
 fi
 
-if [[ $DISTRO_NAME == "debian" ]]; then
+if [[ $DISTRO_NAME == "debian" ]] || [[ $DISTRO_NAME == "ubuntu" ]]; then
   if ! dpkg -l | grep -q "network-manager"; then
     echo -e "\nPackage network-manger is not installed. Please install and configure network-manager first!\n"
     exit 1
@@ -54,7 +52,7 @@ echo -e "\nInstalling libvirt and dependencies..."
 if [[ $DISTRO_NAME == "rhel" ]]; then
   dnf install -y epel-release
   dnf install -y tuned libvirt qemu-kvm xmlstarlet cyrus-sasl-md5 qemu-guest-agent libguestfs-tools libguestfs-rescue libguestfs-winsupport libguestfs-bash-completion
-elif [[ $DISTRO_NAME == "debian" ]]; then
+elif [[ $DISTRO_NAME == "debian" ]] || [[ $DISTRO_NAME == "ubuntu" ]]; then
   apt update
   apt install -y tuned libvirt-daemon-system qemu-kvm xmlstarlet sasl2-bin qemu-guest-agent libguestfs-tools libguestfs-rescue guestfs-tools
 fi
