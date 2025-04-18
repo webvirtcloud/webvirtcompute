@@ -33,12 +33,12 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 
 ### Network Setup ###
 
-#### Only for Ubuntu 22.04 (Beta) ####
+#### Only for Ubuntu 22.04, 24.04 (Beta) ####
 
 Install NetworkManager and firewalld:
 
 ```bash
-sudo apt install -y curl network-manager firewalld
+sudo apt install -y network-manager firewalld
 ```
 
 and update `/etc/netplan/00-installer-config.yaml`:

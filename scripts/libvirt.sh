@@ -103,7 +103,9 @@ virsh pool-build backups && virsh pool-start backups && virsh pool-autostart bac
 
 # Try to remove network pool default if it exists
 if virsh net-info default > /dev/null 2>&1; then
-  virsh net-destroy default || true
+  if virsh net-info default | grep -q "Active"; then
+    virsh net-destroy default || true
+  fi
   virsh net-undefine default || true
 fi
 
