@@ -15,7 +15,7 @@ if [[ -f $OS_RELEASE ]]; then
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
     PKG_MANAGER="apt"
-  elif [[ $ID == "ubuntu" ]] && [[ $VERSION_ID == "20.04" || $VERSION_ID == "21.04" ]]; then
+  elif [[ $ID == "ubuntu" ]] && [[ $VERSION_ID == "22.04" || $VERSION_ID == "24.04" ]]; then
     DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1$2}')
     DISTRO_NAME="ubuntu"
     PKG_MANAGER="apt"
