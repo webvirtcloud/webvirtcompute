@@ -9,12 +9,9 @@ TOKEN=$(echo -n $(date) | sha256sum | cut -d ' ' -f1)
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
   DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
-  if [[ $ID == "rocky" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
+  if [[ "$ID" =~ ^(rhel|rocky|centos|almalinux)$ ]] && [[ $VERSION_ID == [89]* ]]; then
     DISTRO_NAME="rhel"
-  elif [[ $ID == "centos" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
-    DISTRO_NAME="rhel"
-  elif [[ $ID == "almalinux" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
-    DISTRO_NAME="rhel"
+    PKG_MANAGER="dnf"
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
     PKG_MANAGER="apt"

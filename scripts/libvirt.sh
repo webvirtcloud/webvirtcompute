@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 DISTRO_NAME=""
@@ -6,12 +7,9 @@ PKG_MANAGER="dnf"
 
 if [[ -f $OS_RELEASE ]]; then
   source $OS_RELEASE
-  if [[ $ID == "rocky" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
+  if [[ "$ID" =~ ^(rhel|rocky|centos|almalinux)$ ]] && [[ $VERSION_ID == [89]* ]]; then
     DISTRO_NAME="rhel"
-  elif [[ $ID == "centos" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
-    DISTRO_NAME="rhel"
-  elif [[ $ID == "almalinux" ]] && [[ $VERSION_ID == "8" || $VERSION_ID == "9" ]]; then
-    DISTRO_NAME="rhel"
+    PKG_MANAGER="dnf"
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
     PKG_MANAGER="apt"
