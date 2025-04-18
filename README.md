@@ -4,8 +4,10 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 
 ## Supported Distribution ##
 
+* RedHat 8, 9
 * AlmaLinux 8, 9
 * Rocky Linux 8, 9
+* CentOS Stream 8, 9
 * Debian 12 (Beta)
 * Ubuntu 22.04, 24.04 (Beta)
 
@@ -172,13 +174,11 @@ You can find the archive with binary in `release` directory.
 
 You can download already built binary for:
 
-* [almalinux8](https://cloud-apps.webvirt.cloud/webvirtcompute-almalinux8-amd64.tar.gz) 
-* [rockylinux8](https://cloud-apps.webvirt.cloud/webvirtcompute-rockylinux8-amd64.tar.gz)
-* [almalinux9](https://cloud-apps.webvirt.cloud/webvirtcompute-almalinux9-amd64.tar.gz) 
-* [rockylinux9](https://cloud-apps.webvirt.cloud/webvirtcompute-rockylinux9-amd64.tar.gz)
-* [debian12](https://cloud-apps.webvirt.cloud/webvirtcompute-debian12-amd64.tar.gz)
-* [ubuntu22.04](https://cloud-apps.webvirt.cloud/webvirtcompute-ubuntu2204-amd64.tar.gz)
-* [ubuntu24.04](https://cloud-apps.webvirt.cloud/webvirtcompute-ubuntu2404-amd64.tar.gz)
+* [RHEL 8 family](https://cloud-apps.webvirt.cloud/webvirtcompute-rhel8-amd64.tar.gz) 
+* [RHEL 9 family](https://cloud-apps.webvirt.cloud/webvirtcompute-rhel9-amd64.tar.gz) 
+* [Debian 12](https://cloud-apps.webvirt.cloud/webvirtcompute-debian12-amd64.tar.gz)
+* [Ubuntu 22.04](https://cloud-apps.webvirt.cloud/webvirtcompute-ubuntu2204-amd64.tar.gz)
+* [Ubuntu 24.04](https://cloud-apps.webvirt.cloud/webvirtcompute-ubuntu2404-amd64.tar.gz)
 
 ## License ##
 
