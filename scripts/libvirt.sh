@@ -102,8 +102,10 @@ virsh pool-define-as backups dir - - - - "/var/lib/libvirt/backups"
 virsh pool-build backups && virsh pool-start backups && virsh pool-autostart backups
 
 # Try to remove network pool default if it exists
-virsh net-destroy default || true
-virsh net-undefine default || true
+if virsh net-info default > /dev/null 2>&1; then
+  virsh net-destroy default || true
+  virsh net-undefine default || true
+fi
 
 # Create network pool public
 cat <<EOF | virsh net-define /dev/stdin

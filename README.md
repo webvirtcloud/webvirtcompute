@@ -38,7 +38,7 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 Install NetworkManager and firewalld:
 
 ```bash
-sudo apt install -y network-manager firewalld
+sudo apt install -y curl network-manager firewalld
 ```
 
 and update `/etc/netplan/00-installer-config.yaml`:
@@ -54,7 +54,7 @@ network:
 Install NetworkManager and firewalld:
 
 ```bash
-sudo apt install -y network-manager firewalld
+sudo apt install -y curl network-manager firewalld
 ```
 
 and change `managed` to `true` in the file `/etc/NeworkManager/NetworkManager.conf`:
