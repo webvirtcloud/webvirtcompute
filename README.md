@@ -1,6 +1,6 @@
 # WebVirtCompute #
 
-WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for compute nodes and backend. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
+WebVirtCompute is a daemon for deploying and managing virtual machines based on FastAPI and libvirt. It is designed to be used for compute nodes and controller. This project provides a REST API to manage virtual machines and their resources, making it easy to automate virtual machine management.
 
 ## Supported Distribution ##
 
@@ -23,7 +23,7 @@ WebVirtCompute is a daemon for deploying and managing virtual machines based on 
 ## For what is it? ##
 
 * It is a daemon for managing virtual machines based on FastAPI and libvirt.
-* It is designed to be used for compute nodes and backend.
+* It is designed to be used for compute nodes and controller.
 * It is a lightweight and fast daemon.
 * It is easy to install and configure.
 * It is only one binary file.
@@ -133,10 +133,10 @@ Base firewall rules:
 
 
 ```bash
-WEBVIRTBACKED_IP=<you backend IP> # need put your backend IP
+CONTROLLER_IP=<Controller IP> # put controller IP here
 firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 1 -m physdev --physdev-is-bridged -j ACCEPT # Bridge traffic rule
 firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -d 10.255.0.0/16 -j MASQUERADE # Floating IP feature rule
-firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $WEBVIRTBACKED_IP:80 # CLoud-init metadata service rule
+firewall-cmd --permanent --direct --add-rule ipv4 nat PREROUTING 0 -i br-ext '!' -s 169.254.0.0/16 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination $CONTROLLER_IP:80 # CLoud-init metadata service rule
 firewall-cmd --permanent --zone=trusted --add-source=169.254.0.0/16 # Move cloud-init metadata service to trusted zone
 firewall-cmd --permanent --zone=trusted --add-interface=br-ext # Move br-ext to trusted zone
 firewall-cmd --permanent --zone=trusted --add-interface=br-int # Move br-int to trusted zone
