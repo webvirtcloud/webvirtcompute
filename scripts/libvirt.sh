@@ -83,16 +83,9 @@ EOF
 sysctl --system
 
 # Enable and start libvirtd - handle different service names/sockets
-if [[ $DISTRO_NAME == "debian" ]]; then
-  systemctl enable --now libvirtd.service
-  systemctl enable --now libvirt-guests.service
-else
-  systemctl enable --now libvirtd-tcp.socket
-  systemctl enable --now libvirt-guests
-  systemctl stop libvirtd-ro.socket
-  systemctl stop libvirtd.socket
-  systemctl stop libvirtd.service
-fi
+systemctl enable --now libvirtd
+systemctl enable --now libvirt-guests
+systemctl disable --now libvirtd-tcp.socket
 
 # Create storage pool for images
 virsh pool-define-as images dir - - - - "/var/lib/libvirt/images"
