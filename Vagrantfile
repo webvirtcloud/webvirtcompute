@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
       libvirt.nested = true
       libvirt.machine_virtual_size = 256
       libvirt.qemu_use_session = false
-    end
+    end 
 
     node.vm.provision "shell", run: "once", inline: <<-SHELL
       dnf install -y python3.9 cloud-utils-growpart
@@ -51,7 +51,7 @@ Vagrant.configure("2") do |config|
     SHELL
   
     node.vm.provision "ansible" do |ansible|
-      ansible.playbook = "ansible/compute/playbook.yml"
+      ansible.playbook = "scripts/dev/ansible/playbook.yml"
       ansible.extra_vars = {
         ansible_python_interpreter: "/usr/bin/python3.9"
       }
