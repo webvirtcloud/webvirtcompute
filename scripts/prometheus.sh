@@ -45,7 +45,7 @@ if [[ $DISTRO_NAME == "rhel" ]]; then
   dnf install -y golang-github-prometheus golang-github-prometheus-node-exporter
 elif [[ $DISTRO_NAME == "debian" ]] || [[ $DISTRO_NAME == "ubuntu" ]]; then
   apt update
-  apt install -y prometheus prometheus-node-exporter
+  DEBIAN_FRONTEND=noninteractive apt install -y prometheus prometheus-node-exporter
 fi
 
 # Download and install libvirt exporter

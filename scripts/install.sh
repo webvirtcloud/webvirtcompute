@@ -11,14 +11,11 @@ if [[ -f $OS_RELEASE ]]; then
   DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1}')
   if [[ "$ID" =~ ^(rhel|rocky|centos|almalinux)$ ]] && [[ $VERSION_ID == [89]* ]]; then
     DISTRO_NAME="rhel"
-    PKG_MANAGER="dnf"
   elif [[ $ID == "debian" ]] && [[ $VERSION_ID == "12" ]]; then
     DISTRO_NAME="debian"
-    PKG_MANAGER="apt"
   elif [[ $ID == "ubuntu" ]] && [[ $VERSION_ID == "22.04" ]] || [[ $VERSION_ID == "24.04" ]]; then
     DISTRO_VERSION=$(echo "$VERSION_ID" | awk -F. '{print $1$2}')
     DISTRO_NAME="ubuntu"
-    PKG_MANAGER="apt"
   else
     echo -e "\nUnsupported distribution or version! Supported releases: Rocky Linux 8-9, CentOS 8-9, AlmaLinux 8-9, Debian 12, Ubuntu 22.04 and Ubuntu 24.04.\n"
     exit 1
