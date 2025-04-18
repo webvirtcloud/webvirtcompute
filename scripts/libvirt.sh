@@ -52,7 +52,7 @@ if [[ $DISTRO_NAME == "rhel" ]]; then
   dnf install -y wget tuned libvirt qemu-kvm xmlstarlet cyrus-sasl-md5 qemu-guest-agent libguestfs-tools libguestfs-rescue libguestfs-winsupport libguestfs-bash-completion
 elif [[ $DISTRO_NAME == "debian" ]] || [[ $DISTRO_NAME == "ubuntu" ]]; then
   apt update
-  apt install -y wget tuned libvirt-daemon-system qemu-kvm xmlstarlet sasl2-bin qemu-guest-agent libguestfs-tools libguestfs-rescue guestfs-tools
+  DEBIAN_FRONTEND=noninteractive apt install -y wget tuned libvirt-daemon-system qemu-kvm xmlstarlet sasl2-bin qemu-guest-agent libguestfs-tools libguestfs-rescue guestfs-tools
 fi
 echo -e "Installing libvirt and dependencies... - Done!\n"
 
