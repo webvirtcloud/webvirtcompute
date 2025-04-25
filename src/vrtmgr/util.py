@@ -1,8 +1,9 @@
-import random
-import libvirt
 import hashlib
-from xml.etree import ElementTree
+import random
 from string import ascii_letters, digits
+from xml.etree import ElementTree
+
+import libvirt
 
 
 def is_kvm_available(xml):
@@ -18,7 +19,11 @@ def randomMAC():
     # qemu MAC
     oui = [0x52, 0x54, 0x00]
 
-    mac = oui + [random.randint(0x00, 0xFF), random.randint(0x00, 0xFF), random.randint(0x00, 0xFF)]
+    mac = oui + [
+        random.randint(0x00, 0xFF),
+        random.randint(0x00, 0xFF),
+        random.randint(0x00, 0xFF),
+    ]
     return ":".join(map(lambda x: "%02x" % x, mac))
 
 
@@ -34,7 +39,9 @@ def randomUUID():
     """Generate a random UUID."""
 
     u = [random.randint(0, 255) for dummy in range(0, 16)]
-    return "-".join(["%02x" * 4, "%02x" * 2, "%02x" * 2, "%02x" * 2, "%02x" * 6]) % tuple(u)
+    return "-".join(
+        ["%02x" * 4, "%02x" * 2, "%02x" * 2, "%02x" * 2, "%02x" * 6]
+    ) % tuple(u)
 
 
 def get_max_vcpus(conn, type=None):
@@ -125,5 +132,10 @@ def gen_password(length=24, symbols=False):
     simple_symbols = ""
     if symbols:
         simple_symbols = "!@#$%^&*()_+[]-=:;{}?|<>"
-    password = "".join([random.choice(ascii_letters + simple_symbols + digits) for dummy in range(length)])
+    password = "".join(
+        [
+            random.choice(ascii_letters + simple_symbols + digits)
+            for dummy in range(length)
+        ]
+    )
     return password

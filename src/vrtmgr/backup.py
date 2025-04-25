@@ -1,12 +1,13 @@
 import os
+from subprocess import DEVNULL, STDOUT, call
+
 import paramiko
-from subprocess import call, STDOUT, DEVNULL
 
-from settings import BACKUP_USER, BACKUP_KEY_FILE
-from .util import md5sum
-from .libvrt import wvmConnect
+from settings import BACKUP_KEY_FILE, BACKUP_USER
+
 from .libguestfs import GuestFSUtil
-
+from .libvrt import wvmConnect
+from .util import md5sum
 
 ROOT_DIR = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
 
@@ -60,7 +61,17 @@ class Backup(object):
 
         return err_msg
 
-    def deploy(self, template_name, template_md5sum, networks, cloud, public_key, hostname, root_password, disk_size):
+    def deploy(
+        self,
+        template_name,
+        template_md5sum,
+        networks,
+        cloud,
+        public_key,
+        hostname,
+        root_password,
+        disk_size,
+    ):
         err_msg = "MD5 sum mismatch"
         backup_image_md5 = None
 

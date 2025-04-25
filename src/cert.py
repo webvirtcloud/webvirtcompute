@@ -1,7 +1,7 @@
 import os
 import secrets
-from OpenSSL import crypto
 
+from OpenSSL import crypto
 
 TMPDIR = os.getenv("TMPDIR", "/tmp")
 

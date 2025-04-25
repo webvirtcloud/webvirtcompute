@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import libvirt
 import logging
 from http import cookies
-from xml.etree import ElementTree
 from optparse import OptionParser
-from websockify import WebSocketProxy
-from websockify import ProxyRequestHandler
+from xml.etree import ElementTree
+
+import libvirt
+from websockify import ProxyRequestHandler, WebSocketProxy
 
 
 def get_xml_data(xml, path=None, element=None):
@@ -28,15 +28,35 @@ def get_xml_data(xml, path=None, element=None):
 
 
 parser = OptionParser()
-parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="Verbose mode", default=False)
+parser.add_option(
+    "-v",
+    "--verbose",
+    dest="verbose",
+    action="store_true",
+    help="Verbose mode",
+    default=False,
+)
 
-parser.add_option("-d", "--debug", dest="debug", action="store_true", help="Debug mode", default=False)
+parser.add_option(
+    "-d", "--debug", dest="debug", action="store_true", help="Debug mode", default=False
+)
 
-parser.add_option("-H", "--host", dest="host", action="store", help="Listen host", default="0.0.0.0")
+parser.add_option(
+    "-H", "--host", dest="host", action="store", help="Listen host", default="0.0.0.0"
+)
 
-parser.add_option("-p", "--port", dest="port", action="store", help="Listen port", default=6080)
+parser.add_option(
+    "-p", "--port", dest="port", action="store", help="Listen port", default=6080
+)
 
-parser.add_option("-c", "--cert", dest="cert", action="store", help="Certificate file path", default="cert.pem")
+parser.add_option(
+    "-c",
+    "--cert",
+    dest="cert",
+    action="store",
+    help="Certificate file path",
+    default="cert.pem",
+)
 
 (options, args) = parser.parse_args()
 
@@ -58,10 +78,14 @@ def get_conn_data(token):
             if token == dom.UUIDString():
                 xml = dom.XMLDesc()
                 console_type = get_xml_data(xml, "devices/graphics", "type")
-                port = get_xml_data(xml, f"devices/graphics[@type='{console_type}']", "port")
+                port = get_xml_data(
+                    xml, f"devices/graphics[@type='{console_type}']", "port"
+                )
         conn.close()
     except libvirt.libvirtError as err:
-        logging.error(f"Fail to retrieve console connection infos for token {token} : {err}")
+        logging.error(
+            f"Fail to retrieve console connection infos for token {token} : {err}"
+        )
         raise
     return port
 
@@ -91,7 +115,9 @@ class CompatibilityMixIn(object):
 
         # Start proxying
         try:
-            self.vmsg(f"{console_host}:{console_port}: Websocket client or Target closed")
+            self.vmsg(
+                f"{console_host}:{console_port}: Websocket client or Target closed"
+            )
             self.do_proxy(tsock)
         except Exception:
             raise

@@ -1,7 +1,9 @@
-from subprocess import call, STDOUT, DEVNULL
+from subprocess import DEVNULL, STDOUT, call
+
 from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
-from .libguestfs import GuestFSUtil
+
 from .excpetions import IPRedirectError
+from .libguestfs import GuestFSUtil
 from .libredirect import FwRedirect, NetManager
 
 
@@ -15,7 +17,9 @@ class FloatingIP(object):
             nmc = NetManager(floating_ip)
             fwd = FwRedirect(floating_ip, self.fixed_ip)
             dev = BRIDGE_EXT
-            self.add_fw_redirect(fwd, floating_ip, floating_prefix, floating_gw, nmc, dev)
+            self.add_fw_redirect(
+                fwd, floating_ip, floating_prefix, floating_gw, nmc, dev
+            )
         except IPRedirectError as err:
             err_msg = err
 
@@ -89,7 +93,9 @@ class FloatingIP(object):
                 self.clear_iface_arp(float_addr, float_gw, dev)
             else:
                 self.remove_iface_addr(nmc, float_addr, dev, prefix=float_pref)
-                raise IPRedirectError(f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec.")
+                raise IPRedirectError(
+                    f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+                )
         else:
             raise IPRedirectError("Error adding IP address to the network device.")
 
@@ -100,6 +106,8 @@ class FloatingIP(object):
                 self.remove_fw_rule(fwd)
             else:
                 self.add_iface_addr(float_addr, nmc, dev, prefix=float_pref)
-                raise IPRedirectError(f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec.")
+                raise IPRedirectError(
+                    f"Firewall closed connection by timeout {FIREWALLD_STATE_TIMEOUT}sec."
+                )
         else:
             raise IPRedirectError("Error deleting IP address from the network device.")
