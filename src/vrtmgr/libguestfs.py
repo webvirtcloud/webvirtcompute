@@ -14,10 +14,13 @@ from templates import (
     eth0_rhl_public,
     eth0_win_private,
     eth0_win_public,
+    eth0_ubt_private,
+    eth0_ubt_public,
     eth1_deb,
     eth1_fed,
     eth1_rhl,
     eth1_win,
+    eth1_ubt,
     eth2_deb,
 )
 
@@ -49,6 +52,46 @@ class GuestFSUtil(object):
         except Exception as e:
             logger.error(f"Failed to initialize libguestfs for {drive}: {str(e)}")
             raise
+
+    def _update_ip_prefix(self, ip_dict):
+        """
+        Helper method to calculate network prefix length from IP and netmask
+        and update the dictionary with the prefix value.
+
+        Args:
+            ip_dict (dict): Dictionary containing 'address' and 'netmask' keys
+
+        Returns:
+            dict: The updated dictionary with 'prefix' key
+        """
+        if ip_dict and ip_dict.get("address") and ip_dict.get("netmask"):
+            ip_iface = IPv4Interface(
+                f"{ip_dict.get('address')}/{ip_dict.get('netmask')}"
+            )
+            ip_dict.update({"prefix": ip_iface.network.prefixlen})
+        return ip_dict
+
+    def _update_network_prefixes(
+        self, ipv4public=None, ipv4compute=None, ipv4private=None
+    ):
+        """
+        Helper method to calculate and update network prefix lengths for multiple IP dictionaries.
+
+        Args:
+            ipv4public (dict): Public IP information
+            ipv4compute (dict): Compute IP information
+            ipv4private (dict): Private IP information
+
+        Returns:
+            tuple: Updated dictionaries
+        """
+        if ipv4public:
+            ipv4public = self._update_ip_prefix(ipv4public)
+        if ipv4compute:
+            ipv4compute = self._update_ip_prefix(ipv4compute)
+        if ipv4private:
+            ipv4private = self._update_ip_prefix(ipv4private)
+        return ipv4public, ipv4compute, ipv4private
 
     def inspect_distro(self):
         """
@@ -154,7 +197,9 @@ class GuestFSUtil(object):
         return f_path
 
     def deb_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        data = ""
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(
+            ipv4public, ipv4compute
+        )
         if cloud == "public":
             template = Template(eth0_deb_public.data)
             data = template.render(
@@ -166,6 +211,7 @@ class GuestFSUtil(object):
         return data
 
     def deb_eth1_data(self, ipv4private):
+        ipv4private = self._update_ip_prefix(ipv4private)
         template = Template(eth1_deb.data)
         data = template.render(ipv4private=ipv4private)
         return data
@@ -175,15 +221,31 @@ class GuestFSUtil(object):
         data = template.render(ipv4private=ipv4private)
         return data
 
+    def ubt_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        data = ""
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(
+            ipv4public, ipv4compute
+        )
+        if cloud == "public":
+            template = Template(eth0_ubt_public.data)
+            data = template.render(
+                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
+            )
+        if cloud == "private":
+            template = Template(eth0_ubt_private.data)
+            data = template.render(ipv4public=ipv4public)
+        return data
+
+    def ubt_eth1_data(self, ipv4private):
+        ipv4private = self._update_ip_prefix(ipv4private)
+        template = Template(eth1_ubt.data)
+        data = template.render(ipv4private=ipv4private)
+        return data
+
     def rhl_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(
-            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(
+            ipv4public, ipv4compute
         )
-        ipv4_compute_iface = IPv4Interface(
-            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
-        )
-        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
-        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_rhl_public.data)
             data = template.render(
@@ -200,14 +262,9 @@ class GuestFSUtil(object):
         return data
 
     def fed_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(
-            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(
+            ipv4public, ipv4compute
         )
-        ipv4_compute_iface = IPv4Interface(
-            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
-        )
-        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
-        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_fed_public.data)
             data = template.render(
@@ -219,23 +276,15 @@ class GuestFSUtil(object):
         return data
 
     def fed_eth1_data(self, ipv4private):
-        ipv4_private_iface = IPv4Interface(
-            f"{ipv4private.get('address')}/{ipv4private.get('netmask')}"
-        )
-        ipv4private.update({"prefix": ipv4_private_iface.network.prefixlen})
+        ipv4private = self._update_ip_prefix(ipv4private)
         template = Template(eth1_fed.data)
         data = template.render(ipv4private=ipv4private)
         return data
 
     def win_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(
-            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(
+            ipv4public, ipv4compute
         )
-        ipv4_compute_iface = IPv4Interface(
-            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
-        )
-        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
-        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_win_public.data)
             data = template.render(
