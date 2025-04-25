@@ -3,10 +3,6 @@ import guestfs
 from jinja2 import Template
 from ipaddress import IPv4Interface
 
-from templates import eth1_rnch
-from templates import eth0_rnch_public
-from templates import eth0_rnch_private
-
 from templates import eth1_win
 from templates import eth0_win_public
 from templates import eth0_win_private
@@ -14,6 +10,10 @@ from templates import eth0_win_private
 from templates import eth1_rhl
 from templates import eth0_rhl_public
 from templates import eth0_rhl_private
+
+from templates import eth1_fed
+from templates import eth0_fed_public
+from templates import eth0_fed_private
 
 from templates import eth1_deb
 from templates import eth2_deb
@@ -42,30 +42,24 @@ class GuestFSUtil(object):
         if "redhat-based" in distro:
             return "rhl"
         if "fedora" in distro:
-            return "rhl"
-        if "centos" in distro:
-            return "rhl"
-        if "ubuntu" in distro:
-            return "deb"
+            return "fed"
         if "debian" in distro:
             return "deb"
+        if "ubuntu" in distro:
+            return "deb"
+        if "alpine" in distro:
+            return "alp"
         if "windows" in distro:
             return "win"
-        if "rancheros" in distro:
-            return "rnch"
-        if "alpine" in distro:
-            return "alpn"
+        return "unknown"
 
     def root_device(self):
-        self.os_family = self.get_distro()
-
         device = "/dev/sda1"
-        if self.os_family == "alpn":
+        self.os_family = self.get_distro()
+        if self.os_family == "alp":
+            self.os_family = "deb"
             device = "/dev/sda2"
         return device
-
-    def rancheros_config_path(self):
-        return "/var/lib/rancher/conf/cloud-config.yml"
 
     def cloud_init_path(self):
         return "/var/lib/cloud"
@@ -93,24 +87,31 @@ class GuestFSUtil(object):
 
     def nic_file_path(self, nic_type="public"):
         f_path = ""
-        if self.os_family == "deb" or self.os_family == "alpn":
+        if self.os_family == "deb":
             f_path = "/etc/network/interfaces"
         if self.os_family == "rhl":
             if nic_type == "public":
                 f_path = "/etc/sysconfig/network-scripts/ifcfg-eth0"
             if nic_type == "private":
                 f_path = "/etc/sysconfig/network-scripts/ifcfg-eth1"
+        if self.os_family == "fed":
+            if nic_type == "public":
+                f_path = "/etc/NetworkManager/system-connections/eth0.nmconnection"
+            if nic_type == "private":
+                f_path = "/etc/NetworkManager/system-connections/eth1.nmconnection"
         if self.os_family == "win":
-            f_path = "/Windows/System32/GroupPolicy/Machine/Scripts/Startup/cloudinit.cmd"
-        if self.os_family == "rnch":
-            f_path = self.rancheros_config_path()
+            f_path = (
+                "/Windows/System32/GroupPolicy/Machine/Scripts/Startup/cloudinit.cmd"
+            )
         return f_path
 
     def deb_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
         data = ""
         if cloud == "public":
             template = Template(eth0_deb_public.data)
-            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
+            data = template.render(
+                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
+            )
         if cloud == "private":
             template = Template(eth0_deb_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -127,13 +128,19 @@ class GuestFSUtil(object):
         return data
 
     def rhl_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
+        ipv4_public_iface = IPv4Interface(
+            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        )
+        ipv4_compute_iface = IPv4Interface(
+            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
+        )
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
         ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_rhl_public.data)
-            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
+            data = template.render(
+                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
+            )
         if cloud == "private":
             template = Template(eth0_rhl_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -144,14 +151,48 @@ class GuestFSUtil(object):
         data = template.render(ipv4private=ipv4private)
         return data
 
+    def fed_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
+        ipv4_public_iface = IPv4Interface(
+            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        )
+        ipv4_compute_iface = IPv4Interface(
+            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
+        )
+        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
+        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
+        if cloud == "public":
+            template = Template(eth0_fed_public.data)
+            data = template.render(
+                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
+            )
+        if cloud == "private":
+            template = Template(eth0_fed_private.data)
+            data = template.render(ipv4public=ipv4public)
+        return data
+
+    def fed_eth1_data(self, ipv4private):
+        ipv4_private_iface = IPv4Interface(
+            f"{ipv4private.get('address')}/{ipv4private.get('netmask')}"
+        )
+        ipv4private.update({"prefix": ipv4_private_iface.network.prefixlen})
+        template = Template(eth1_fed.data)
+        data = template.render(ipv4private=ipv4private)
+        return data
+
     def win_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
+        ipv4_public_iface = IPv4Interface(
+            f"{ipv4public.get('address')}/{ipv4public.get('netmask')}"
+        )
+        ipv4_compute_iface = IPv4Interface(
+            f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}"
+        )
         ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
         ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
         if cloud == "public":
             template = Template(eth0_win_public.data)
-            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
+            data = template.render(
+                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
+            )
         if cloud == "private":
             template = Template(eth0_win_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -162,76 +203,62 @@ class GuestFSUtil(object):
         data = template.render(ipv4private=ipv4private)
         return data
 
-    def rnch_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4_public_iface = IPv4Interface(f"{ipv4public.get('address')}/{ipv4public.get('netmask')}")
-        ipv4_compute_iface = IPv4Interface(f"{ipv4compute.get('address')}/{ipv4compute.get('netmask')}")
-        ipv4public.update({"prefix": ipv4_public_iface.network.prefixlen})
-        ipv4compute.update({"prefix": ipv4_compute_iface.network.prefixlen})
-        if cloud == "public":
-            template = Template(eth0_rnch_public.data)
-            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
-        if cloud == "private":
-            template = Template(eth0_rnch_private.data)
-            data = template.render(ipv4public=ipv4public)
-        return data
-
-    def rnch_eth1_data(self, ipv4private):
-        ipv4_private_iface = IPv4Interface(f"{ipv4private.get('address')}/{ipv4private.get('netmask')}")
-        ipv4private.update({"prefix": ipv4_private_iface.network.prefixlen})
-        template = Template(eth1_rnch.data)
-        data = template.render(ipv4private=ipv4private)
-        return data
-
     def public_nic_setup(self, ipv4public, ipv4compute, ipv6public):
-        if self.os_family == "deb" or self.os_family == "alpn":
+        if self.os_family == "deb":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.deb_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
+            network_file_data = self.deb_eth0_data(
+                ipv4public, ipv4compute, ipv6public=ipv6public
+            )
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rhl":
+        elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.rhl_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
+            network_file_data = self.rhl_eth0_data(
+                ipv4public, ipv4compute, ipv6public=ipv6public
+            )
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "win":
+        elif self.os_family == "fed":
             nic_f_path = self.nic_file_path()
-            network_file_data = self.win_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
-            self.gfs.write(nic_f_path, network_file_data)
-        if self.os_family == "rnch":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rnch_eth0_data(ipv4public, ipv4compute, ipv6public=ipv6public)
+            network_file_data = self.fed_eth0_data(
+                ipv4public, ipv4compute, ipv6public=ipv6public
+            )
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "win":
+            nic_f_path = self.nic_file_path()
+            network_file_data = self.win_eth0_data(
+                ipv4public, ipv4compute, ipv6public=ipv6public
+            )
+            self.gfs.write(nic_f_path, network_file_data)
 
     def private_nic_setup(self, ipv4private):
-        if self.os_family == "deb" or self.os_family == "alpn":
+        if self.os_family == "deb":
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
             priv_nic_data = self.deb_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rhl":
+        elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path(nic_type="private")
             network_file_data = self.rhl_eth1_data(ipv4private)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "win":
+        elif self.os_family == "fed":
+            nic_f_path = self.nic_file_path(nic_type="private")
+            network_file_data = self.fed_eth1_data(ipv4private)
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "win":
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
             priv_nic_data = self.win_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
-        if self.os_family == "rnch":
-            nic_f_path = self.nic_file_path()
-            pub_nic_data = self.gfs.cat(nic_f_path)
-            priv_nic_data = self.rnch_eth1_data(ipv4private)
-            network_file_data = pub_nic_data + priv_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
 
     def vpc_gw_nic_setup(self, ipv4vpc):
-        if self.os_family == "deb" or self.os_family == "alpn":
+        if self.os_family == "deb":
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
             vpc_nic_data = self.deb_eth2_data(ipv4vpc)
@@ -245,20 +272,15 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rhl":
+        elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "win":
+        elif self.os_family == "win":
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-        if self.os_family == "rnch":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rnch_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
 
     def private_cloud_nic_setup(self, ipv4public):
         if self.os_family == "deb":
@@ -266,20 +288,20 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rhl":
+        elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "win":
+        elif self.os_family == "fed":
+            nic_f_path = self.nic_file_path()
+            network_file_data = self.fed_eth0_data(ipv4public, cloud="private")
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "win":
             nic_f_path = self.nic_file_path()
             network_file_data = self.win_eth0_data(ipv4public, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
-        if self.os_family == "rnch":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rnch_eth0_data(ipv4public, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
 
     def setup_networking(self, networks, cloud="public"):
         ipv6public = networks.get("v6")
@@ -300,25 +322,29 @@ class GuestFSUtil(object):
             self.ipv4_vpc(ipv4vpc)
 
     def change_ipv4fixed(self, ipv4compute):
-        if self.os_family == "deb" or self.os_family == "alpn":
+        if self.os_family == "deb":
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
             new_line_nic_file = f"address {ipv4compute.get('address')}"
-            network_file_data = re.sub(r"^address 10\.255\..*?", new_line_nic_file, nic_file)
+            network_file_data = re.sub(
+                r"^address 10\.255\..*?", new_line_nic_file, nic_file
+            )
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rhl":
+        elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"^IPADDR2={ipv4compute.get('address')}"
+            new_line_nic_file = f"IPADDR2={ipv4compute.get('address')}"
             network_file_data = re.sub("^IPADDR2=.*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
-        if self.os_family == "rnch":
-            nic_f_path = self.rancheros_config_path()
+        elif self.os_family == "fed":
+            nic_f_path = self.nic_file_path()
             nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"address: {ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
-            network_file_data = re.sub(r"^address: 10\.255\..*?", new_line_nic_file, nic_file)
+            new_line_nic_file = (
+                f"address2={ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
+            )
+            network_file_data = re.sub("^address2=.*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
 
@@ -326,9 +352,6 @@ class GuestFSUtil(object):
         shadow_file_updated = ""
         if self.os_family == "win":
             pass
-        elif self.os_family == "rnch":
-            new_pass_line = rf'- sed -i "s/^rancher:\*:/rancher:{password_hash}:/g" /etc/shadow'
-            shadow_file_updated = re.sub('^- sed -i "s/^rancher:.*?', new_pass_line, shadow_file)
         else:
             root_shadow_line = f"root:{password_hash}:"
             shadow_file_updated = re.sub("^root:.*?:", root_shadow_line, shadow_file)
@@ -341,16 +364,6 @@ class GuestFSUtil(object):
             str_pswd = f"net user Administrator {pass_hash}\r\n"
             f_data += str_pswd
             self.gfs.write(nic_f_path, f_data)
-        elif self.os_family == "rnch":
-            config_fl_path = self.rancheros_config_path()
-            config_data = self.gfs.cat(config_fl_path)
-            if r"rancher:\*:" in config_data:
-                config_data_updated = self.change_root_passwd(pass_hash, config_data)
-            else:
-                account_data = rf'\nruncmd:\n- sed -i "s/^rancher:\*:/rancher:{pass_hash}:/g" /etc/shadow\n'
-                config_data_updated = config_data + account_data
-            self.gfs.write(config_fl_path, config_data_updated)
-            self.gfs.chmod(int("0644", 8), config_fl_path)
         else:
             shadow_fl_path = self.shadow_file_path()
             file_shadow = self.gfs.cat(shadow_fl_path)
@@ -362,13 +375,6 @@ class GuestFSUtil(object):
         if keys_string:
             if self.os_family == "win":
                 pass
-            elif self.os_family == "rnch":
-                f_path = self.rancheros_config_path()
-                f_data = self.gfs.cat(f_path)
-                key_data = f'\nssh_authorized_keys:\n- "{keys_string}"\n'
-                config_data = f_data + key_data
-                self.gfs.write(f_path, config_data)
-                self.gfs.chmod(int("0640", 8), f_path)
             else:
                 root_ssh_folder_path = self.root_ssh_dir_path()
                 root_fl_auth_key_path = self.root_auth_keys_path()
@@ -379,14 +385,7 @@ class GuestFSUtil(object):
                 self.gfs.chmod(int("0600", 8), root_fl_auth_key_path)
 
     def set_hostname(self, hostname):
-        if self.os_family == "rnch":
-            f_path = self.rancheros_config_path()
-            f_data = self.gfs.cat(f_path)
-            key_data = f'\nhostname: "{hostname}"\n'
-            config_data = f_data + key_data
-            self.gfs.write(f_path, config_data)
-            self.gfs.chmod(int("0640", 8), f_path)
-        elif self.os_family == "win":
+        if self.os_family == "win":
             nic_f_path = self.nic_file_path()
             f_data = self.gfs.cat(nic_f_path)
             h_data = rf"wmic computersystem where name='%COMPUTERNAME%' call rename name='{hostname}'\r\n"
@@ -398,8 +397,6 @@ class GuestFSUtil(object):
 
     def clean_cloud_init(self):
         if self.os_family == "win":
-            pass
-        elif self.os_family == "rnch":
             pass
         else:
             path = self.cloud_init_path()
