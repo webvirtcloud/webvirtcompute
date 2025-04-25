@@ -302,129 +302,118 @@ class GuestFSUtil(object):
         data = template.render(ipv4private=ipv4private)
         return data
 
+    def _get_network_impl(self, method_name):
+        """
+        Helper method to get the appropriate network implementation method for the current OS family.
+
+        Args:
+            method_name (str): Base name of the method to call
+
+        Returns:
+            callable: The appropriate method for this OS family
+        """
+        handlers = {
+            "deb": getattr(self, f"deb_{method_name}"),
+            "ubt": getattr(self, f"ubt_{method_name}"),
+            "rhl": getattr(self, f"rhl_{method_name}"),
+            "fed": getattr(self, f"fed_{method_name}"),
+            "win": getattr(self, f"win_{method_name}"),
+        }
+        return handlers.get(self.os_family)
+
+    def _write_network_file(self, file_path, content):
+        """
+        Helper method to write network configuration to a file and set permissions.
+
+        Args:
+            file_path (str): Path to the network configuration file
+            content (str): Content to write to the file
+        """
+        self.gfs.write(file_path, content)
+        if self.os_family != "win":
+            self.gfs.chmod(int("0644", 8), file_path)
+
     def public_nic_setup(self, ipv4public, ipv4compute, ipv6public):
-        if self.os_family == "deb":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.deb_eth0_data(
-                ipv4public, ipv4compute, ipv6public=ipv6public
-            )
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "ubt":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.ubt_eth0_data(
-                ipv4public, ipv4compute, ipv6public=ipv6public
-            )
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "rhl":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rhl_eth0_data(
-                ipv4public, ipv4compute, ipv6public=ipv6public
-            )
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "fed":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.fed_eth0_data(
-                ipv4public, ipv4compute, ipv6public=ipv6public
-            )
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "win":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.win_eth0_data(
-                ipv4public, ipv4compute, ipv6public=ipv6public
-            )
-            self.gfs.write(nic_f_path, network_file_data)
+        """
+        Configure the public network interface.
+
+        Args:
+            ipv4public (dict): Public IPv4 configuration
+            ipv4compute (dict): Compute IPv4 configuration
+            ipv6public (dict): IPv6 configuration
+        """
+        nic_f_path = self.nic_file_path()
+        impl = self._get_network_impl("eth0_data")
+
+        if impl:
+            network_file_data = impl(ipv4public, ipv4compute, ipv6public=ipv6public)
+            self._write_network_file(nic_f_path, network_file_data)
 
     def private_nic_setup(self, ipv4private):
-        if self.os_family == "deb":
-            nic_f_path = self.nic_file_path()
-            pub_nic_data = self.gfs.cat(nic_f_path)
-            priv_nic_data = self.deb_eth1_data(ipv4private)
-            network_file_data = pub_nic_data + priv_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "ubt":
-            nic_f_path = self.nic_file_path()
-            pub_nic_data = self.gfs.cat(nic_f_path)
-            priv_nic_data = self.ubt_eth1_data(ipv4private)
-            network_file_data = pub_nic_data + priv_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "rhl":
-            nic_f_path = self.nic_file_path(nic_type="private")
-            network_file_data = self.rhl_eth1_data(ipv4private)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "fed":
-            nic_f_path = self.nic_file_path(nic_type="private")
-            network_file_data = self.fed_eth1_data(ipv4private)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "win":
-            nic_f_path = self.nic_file_path()
-            pub_nic_data = self.gfs.cat(nic_f_path)
-            priv_nic_data = self.win_eth1_data(ipv4private)
-            network_file_data = pub_nic_data + priv_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
+        """
+        Configure the private network interface.
+
+        Args:
+            ipv4private (dict): Private IPv4 configuration
+        """
+        nic_f_path = self.nic_file_path(
+            nic_type="private" if self.os_family in ["rhl", "fed"] else "public"
+        )
+        impl = self._get_network_impl("eth1_data")
+
+        if impl:
+            if self.os_family in ["deb", "ubt", "win"]:
+                # For these OS types, we append to the existing config
+                pub_nic_data = self.gfs.cat(nic_f_path)
+                priv_nic_data = impl(ipv4private)
+                network_file_data = pub_nic_data + priv_nic_data
+            else:
+                # For rhl and fed, we create a new file
+                network_file_data = impl(ipv4private)
+
+            self._write_network_file(nic_f_path, network_file_data)
 
     def vpc_gw_nic_setup(self, ipv4vpc):
+        """
+        Configure the VPC gateway network interface.
+
+        Args:
+            ipv4vpc (dict): VPC IPv4 configuration
+        """
         if self.os_family == "deb":
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
             vpc_nic_data = self.deb_eth2_data(ipv4vpc)
             network_file_data = pub_nic_data + vpc_nic_data
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
+            self._write_network_file(nic_f_path, network_file_data)
 
     def vpc_nic_setup(self, ipv4vpc):
-        if self.os_family == "deb":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.deb_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "ubt":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.ubt_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "rhl":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rhl_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "fed":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.fed_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "win":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.win_eth0_data(ipv4vpc, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
+        """
+        Configure the VPC network interface.
+
+        Args:
+            ipv4vpc (dict): VPC IPv4 configuration
+        """
+        nic_f_path = self.nic_file_path()
+        impl = self._get_network_impl("eth0_data")
+
+        if impl:
+            network_file_data = impl(ipv4vpc, None, None, cloud="private")
+            self._write_network_file(nic_f_path, network_file_data)
 
     def private_cloud_nic_setup(self, ipv4public):
-        if self.os_family == "deb":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.deb_eth0_data(ipv4public, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "rhl":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.rhl_eth0_data(ipv4public, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "fed":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.fed_eth0_data(ipv4public, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "win":
-            nic_f_path = self.nic_file_path()
-            network_file_data = self.win_eth0_data(ipv4public, cloud="private")
-            self.gfs.write(nic_f_path, network_file_data)
+        """
+        Configure the network interface for a private cloud setup.
+
+        Args:
+            ipv4public (dict): Public IPv4 configuration
+        """
+        nic_f_path = self.nic_file_path()
+        impl = self._get_network_impl("eth0_data")
+
+        if impl:
+            network_file_data = impl(ipv4public, None, None, cloud="private")
+            self._write_network_file(nic_f_path, network_file_data)
 
     def setup_networking(self, networks, cloud="public"):
         """
@@ -465,40 +454,43 @@ class GuestFSUtil(object):
                 raise
 
     def change_ipv4fixed(self, ipv4compute):
-        if self.os_family == "deb":
-            nic_f_path = self.nic_file_path()
-            nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"address {ipv4compute.get('address')}"
+        """
+        Change the fixed IPv4 address in the network configuration.
+
+        Args:
+            ipv4compute (dict): Compute IPv4 configuration
+        """
+        if not ipv4compute or self.os_family == "win":
+            return
+
+        nic_f_path = self.nic_file_path()
+        nic_file = self.gfs.cat(nic_f_path)
+
+        os_handlers = {
+            "deb": {
+                "pattern": r"^address 10\.255\..*?",
+                "replacement": f"address {ipv4compute.get('address')}",
+            },
+            "ubt": {
+                "pattern": r"^- 10\.255\..*?",
+                "replacement": f"- {ipv4compute.get('address')}/{ipv4compute.get('prefix')}",
+            },
+            "rhl": {
+                "pattern": r"^IPADDR2=.*?",
+                "replacement": f"IPADDR2={ipv4compute.get('address')}",
+            },
+            "fed": {
+                "pattern": r"^address2=.*?",
+                "replacement": f"address2={ipv4compute.get('address')}/{ipv4compute.get('prefix')}",
+            },
+        }
+
+        if self.os_family in os_handlers:
+            handler = os_handlers[self.os_family]
             network_file_data = re.sub(
-                r"^address 10\.255\..*?", new_line_nic_file, nic_file
+                handler["pattern"], handler["replacement"], nic_file
             )
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "ubt":
-            nic_f_path = self.nic_file_path()
-            nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = (
-                f"- {ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
-            )
-            network_file_data = re.sub(r"^- 10\.255\..*?", new_line_nic_file, nic_file)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "rhl":
-            nic_f_path = self.nic_file_path()
-            nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = f"IPADDR2={ipv4compute.get('address')}"
-            network_file_data = re.sub("^IPADDR2=.*?", new_line_nic_file, nic_file)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
-        elif self.os_family == "fed":
-            nic_f_path = self.nic_file_path()
-            nic_file = self.gfs.cat(nic_f_path)
-            new_line_nic_file = (
-                f"address2={ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
-            )
-            network_file_data = re.sub("^address2=.*?", new_line_nic_file, nic_file)
-            self.gfs.write(nic_f_path, network_file_data)
-            self.gfs.chmod(int("0644", 8), nic_f_path)
+            self._write_network_file(nic_f_path, network_file_data)
 
     def change_root_passwd(self, password_hash, shadow_file):
         shadow_file_updated = ""
