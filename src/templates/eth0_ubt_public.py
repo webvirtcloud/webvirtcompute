@@ -11,6 +11,7 @@ data = """network:
         - {{ ipv6public.address }}/{{ ipv6public.prefix }}
 {% endif %}
       nameservers:
+        search: []
         addresses: [{{ ipv4public.dns1 }}, {{ ipv4public.dns2 }}]
 {% if ipv6public %}
         addresses: [{{ ipv6public.dns1 }}, {{ ipv6public.dns2 }}]

@@ -122,7 +122,7 @@ class GuestFSUtil(object):
         """
         distro = self.inspect_distro()
 
-        if "redhat-based" in distro:
+        if "redhat-based" in distro or "centos" in distro:
             return "rhl"
         if "fedora" in distro:
             return "fed"
@@ -180,6 +180,8 @@ class GuestFSUtil(object):
         f_path = ""
         if self.os_family == "deb":
             f_path = "/etc/network/interfaces"
+        if self.os_family == "ubt":
+            f_path = "/etc/netplan/01-netcfg.yaml"
         if self.os_family == "rhl":
             if nic_type == "public":
                 f_path = "/etc/sysconfig/network-scripts/ifcfg-eth0"
@@ -308,6 +310,13 @@ class GuestFSUtil(object):
             )
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "ubt":
+            nic_f_path = self.nic_file_path()
+            network_file_data = self.ubt_eth0_data(
+                ipv4public, ipv4compute, ipv6public=ipv6public
+            )
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
         elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(
@@ -334,6 +343,13 @@ class GuestFSUtil(object):
             nic_f_path = self.nic_file_path()
             pub_nic_data = self.gfs.cat(nic_f_path)
             priv_nic_data = self.deb_eth1_data(ipv4private)
+            network_file_data = pub_nic_data + priv_nic_data
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "ubt":
+            nic_f_path = self.nic_file_path()
+            pub_nic_data = self.gfs.cat(nic_f_path)
+            priv_nic_data = self.ubt_eth1_data(ipv4private)
             network_file_data = pub_nic_data + priv_nic_data
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
@@ -369,9 +385,19 @@ class GuestFSUtil(object):
             network_file_data = self.deb_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "ubt":
+            nic_f_path = self.nic_file_path()
+            network_file_data = self.ubt_eth0_data(ipv4vpc, cloud="private")
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
         elif self.os_family == "rhl":
             nic_f_path = self.nic_file_path()
             network_file_data = self.rhl_eth0_data(ipv4vpc, cloud="private")
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "fed":
+            nic_f_path = self.nic_file_path()
+            network_file_data = self.fed_eth0_data(ipv4vpc, cloud="private")
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
         elif self.os_family == "win":
@@ -446,6 +472,15 @@ class GuestFSUtil(object):
             network_file_data = re.sub(
                 r"^address 10\.255\..*?", new_line_nic_file, nic_file
             )
+            self.gfs.write(nic_f_path, network_file_data)
+            self.gfs.chmod(int("0644", 8), nic_f_path)
+        elif self.os_family == "ubt":
+            nic_f_path = self.nic_file_path()
+            nic_file = self.gfs.cat(nic_f_path)
+            new_line_nic_file = (
+                f"- {ipv4compute.get('address')}/{ipv4compute.get('prefix')}"
+            )
+            network_file_data = re.sub(r"^- 10\.255\..*?", new_line_nic_file, nic_file)
             self.gfs.write(nic_f_path, network_file_data)
             self.gfs.chmod(int("0644", 8), nic_f_path)
         elif self.os_family == "rhl":

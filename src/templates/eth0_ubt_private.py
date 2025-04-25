@@ -7,6 +7,7 @@ data = """network:
       addresses:
         - {{ ipv4public.address }}/{{ ipv4public.prefix }}
       nameservers:
+        search: []
         addresses: [{{ ipv4public.dns1 }}, {{ ipv4public.dns2 }}]
       routes:
         - to: default
