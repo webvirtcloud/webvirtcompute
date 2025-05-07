@@ -3,17 +3,15 @@ exclude = [
     ".git",
     ".idea",
     ".venv",
-    ".mysql",
     ".vscode",
     ".ruff_cache",
+    "__pycahce__",
     "configs",
     "scritps",
     "release",
-    "__pycahce__",
 ]
 line-length = 120
 indent-width = 4
-target-version = "py310,py311"
 
 [format]
 quote-style = "double"
