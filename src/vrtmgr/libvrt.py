@@ -270,9 +270,7 @@ class wvmStorages(wvmConnect):
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_rbd(
-        self, stg_type, name, pool, user, secret, host, host2, host3
-    ):
+    def create_storage_rbd(self, stg_type, name, pool, user, secret, host, host2, host3):
         xml = f"""
                 <pool type='{stg_type}'>
                 <name>{name}</name>
@@ -294,9 +292,7 @@ class wvmStorages(wvmConnect):
         stg.create(0)
         stg.setAutostart(1)
 
-    def create_storage_netfs(
-        self, stg_type, name, netfs_host, source, source_format, target
-    ):
+    def create_storage_netfs(self, stg_type, name, netfs_host, source, source_format, target):
         xml = f"""
                 <pool type='{stg_type}'>
                 <name>{name}</name>
@@ -509,10 +505,7 @@ class wvmNetworks(wvmConnect):
             net_active = bool(net.isActive())
             net_bridge = net.bridgeName()
             net_forwd = util.get_xml_data(net.XMLDesc(0), "forward", "mode")
-            openvswitch = bool(
-                util.get_xml_data(net.XMLDesc(0), "virtualport", "type")
-                == "openvswitch"
-            )
+            openvswitch = bool(util.get_xml_data(net.XMLDesc(0), "virtualport", "type") == "openvswitch")
             networks.append(
                 {
                     "name": network,
@@ -527,9 +520,7 @@ class wvmNetworks(wvmConnect):
     def define_network(self, xml):
         self.wvm.networkDefineXML(xml)
 
-    def create_network(
-        self, name, forward, gateway, mask, dhcp, bridge, openvswitch, fixed=False
-    ):
+    def create_network(self, name, forward, gateway, mask, dhcp, bridge, openvswitch, fixed=False):
         xml = f"""
             <network>
                 <name>{name}</name>"""
@@ -596,9 +587,7 @@ class wvmNetwork(wvmConnect):
             return None
 
     def get_openvswitch(self):
-        return bool(
-            util.get_xml_data(self.XMLDesc(0), "virtualport", "type") == "openvswitch"
-        )
+        return bool(util.get_xml_data(self.XMLDesc(0), "virtualport", "type") == "openvswitch")
 
     def start(self):
         self.net.create()
@@ -963,24 +952,16 @@ class wvmCreate(wvmConnect):
 
                 if network.get("v4", {}).get("public", {}).get("primary"):
                     xml += f"""<parameter name='IP' value='{
-                        network.get("v4", {})
-                        .get("public", {})
-                        .get("primary", {})
-                        .get("address")
+                        network.get("v4", {}).get("public", {}).get("primary", {}).get("address")
                     }'/>"""
 
                 if network.get("v4", {}).get("public", {}).get("secondary"):
                     xml += f"""<parameter name='IP' value='{
-                        network.get("v4", {})
-                        .get("public", {})
-                        .get("secondary", {})
-                        .get("address")
+                        network.get("v4", {}).get("public", {}).get("secondary", {}).get("address")
                     }'/>"""
 
                 if network.get("v6"):
-                    xml += f"""<parameter name='IPV6' value='{
-                        network.get("v6", {}).get("address")
-                    }'/>"""
+                    xml += f"""<parameter name='IPV6' value='{network.get("v6", {}).get("address")}'/>"""
 
                 xml += """</filterref>"""
 
@@ -1004,9 +985,9 @@ class wvmCreate(wvmConnect):
                 xml += """<filterref filter='clean-traffic'>"""
 
                 if network.get("v4", {}).get("private", {}):
-                    xml += f"""<parameter name='IP' value='{
-                        network.get("v4", {}).get("private", {}).get("address")
-                    }'/>"""
+                    xml += (
+                        f"""<parameter name='IP' value='{network.get("v4", {}).get("private", {}).get("address")}'/>"""
+                    )
 
                 xml += """</filterref>"""
 
@@ -1261,17 +1242,13 @@ class wvmInstance(wvmConnect):
                     guest_mac = dev.get("address")
                 if dev.tag == "source":
                     pool_name = dev.get("network")
-                    guest_nic = (
-                        dev.get("network") or dev.get("bridge") or dev.get("dev")
-                    )
+                    guest_nic = dev.get("network") or dev.get("bridge") or dev.get("dev")
 
             if pool_name:
                 pool = self.get_network(pool_name)
                 ip_addr = get_mac_ipaddr(pool.XMLDesc(), guest_mac)
 
-            result.append(
-                {"ip": ip_addr, "mac": guest_mac, "nic": guest_nic, "pool": pool_name}
-            )
+            result.append({"ip": ip_addr, "mac": guest_mac, "nic": guest_nic, "pool": pool_name})
 
         return result
 
@@ -1288,12 +1265,7 @@ class wvmInstance(wvmConnect):
                     if dev.tag == "driver":
                         disk_format = dev.get("type")
                     if dev.tag == "source":
-                        disk_img = (
-                            dev.get("file")
-                            or dev.get("dev")
-                            or dev.get("name")
-                            or dev.get("volume")
-                        )
+                        disk_img = dev.get("file") or dev.get("dev") or dev.get("name") or dev.get("volume")
                     if dev.tag == "target":
                         disk_dev = dev.get("dev")
 
@@ -1536,9 +1508,7 @@ class wvmInstance(wvmConnect):
     def get_console_listen_addr(self):
         listen_addr = util.get_xml_data(self.XMLDesc(), "devices/graphics", "listen")
         if listen_addr is None:
-            listen_addr = util.get_xml_data(
-                self.XMLDesc(), "devices/graphics/listen", "address"
-            )
+            listen_addr = util.get_xml_data(self.XMLDesc(), "devices/graphics/listen", "address")
             if listen_addr is None:
                 return "127.0.0.1"
         return listen_addr
@@ -1569,20 +1539,14 @@ class wvmInstance(wvmConnect):
     def get_console_port(self, console_type=None):
         if console_type is None:
             console_type = self.get_console_type()
-        return util.get_xml_data(
-            self.XMLDesc(), f"devices/graphics[@type='{console_type}']", "port"
-        )
+        return util.get_xml_data(self.XMLDesc(), f"devices/graphics[@type='{console_type}']", "port")
 
     def get_console_websocket_port(self):
         console_type = self.get_console_type()
-        return util.get_xml_data(
-            self.XMLDesc(), f"devices/graphics[@type='{console_type}']", "websocket"
-        )
+        return util.get_xml_data(self.XMLDesc(), f"devices/graphics[@type='{console_type}']", "websocket")
 
     def get_console_passwd(self):
-        return util.get_xml_data(
-            self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE), "devices/graphics", "passwd"
-        )
+        return util.get_xml_data(self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE), "devices/graphics", "passwd")
 
     def set_console_passwd(self, passwd):
         xml = self.XMLDesc(libvirt.VIR_DOMAIN_XML_SECURE)
@@ -1806,9 +1770,7 @@ class wvmInstance(wvmConnect):
                     elm.set("file", clone_path)
 
                     vol = self.get_volume_by_path(source_file)
-                    vol_format = util.get_xml_data(
-                        vol.XMLDesc(), "target/format", "type"
-                    )
+                    vol_format = util.get_xml_data(vol.XMLDesc(), "target/format", "type")
 
                     if vol_format == "qcow2" and meta_prealloc:
                         meta_prealloc = True

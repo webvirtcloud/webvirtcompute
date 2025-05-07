@@ -39,9 +39,7 @@ def randomUUID():
     """Generate a random UUID."""
 
     u = [random.randint(0, 255) for dummy in range(0, 16)]
-    return "-".join(
-        ["%02x" * 4, "%02x" * 2, "%02x" * 2, "%02x" * 2, "%02x" * 6]
-    ) % tuple(u)
+    return "-".join(["%02x" * 4, "%02x" * 2, "%02x" * 2, "%02x" * 2, "%02x" * 6]) % tuple(u)
 
 
 def get_max_vcpus(conn, type=None):
@@ -132,10 +130,5 @@ def gen_password(length=24, symbols=False):
     simple_symbols = ""
     if symbols:
         simple_symbols = "!@#$%^&*()_+[]-=:;{}?|<>"
-    password = "".join(
-        [
-            random.choice(ascii_letters + simple_symbols + digits)
-            for dummy in range(length)
-        ]
-    )
+    password = "".join([random.choice(ascii_letters + simple_symbols + digits) for dummy in range(length)])
     return password

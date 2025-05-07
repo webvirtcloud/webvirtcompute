@@ -78,13 +78,9 @@ class Image(object):
         taraget_path = f"{conn.get_target_path()}/{target_name}"
 
         if err_msg is None:
-            qemu_img_cmd = (
-                f"qemu-img convert -U -O qcow2 {self.image_path} {taraget_path}"
-            )
+            qemu_img_cmd = f"qemu-img convert -U -O qcow2 {self.image_path} {taraget_path}"
             if compress is True:
-                qemu_img_cmd = (
-                    f"qemu-img convert -U -c -O qcow2 {self.image_path} {taraget_path}"
-                )
+                qemu_img_cmd = f"qemu-img convert -U -c -O qcow2 {self.image_path} {taraget_path}"
             run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_qemu_img_cmd == 0:
                 conn.refresh()
@@ -147,28 +143,18 @@ class Image(object):
     ):
         err_msg = "Error convert template to image"
 
-        qemu_img_cmd = (
-            f"qemu-img convert -f qcow2 -O raw {template_path} {self.image_path}"
-        )
+        qemu_img_cmd = f"qemu-img convert -f qcow2 -O raw {template_path} {self.image_path}"
         run_qemu_img_cmd = call(qemu_img_cmd.split(), stdout=DEVNULL, stderr=STDOUT)
         if run_qemu_img_cmd == 0:
-            err_msg = self._run(
-                disk_size, networks, public_keys, hostname, root_password, cloud=cloud
-            )
+            err_msg = self._run(disk_size, networks, public_keys, hostname, root_password, cloud=cloud)
 
         return err_msg
 
-    def deploy_image(
-        self, disk_size, networks, public_keys, hostname, root_password, cloud="public"
-    ):
-        err_msg = self._run(
-            disk_size, networks, public_keys, hostname, root_password, cloud=cloud
-        )
+    def deploy_image(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
+        err_msg = self._run(disk_size, networks, public_keys, hostname, root_password, cloud=cloud)
         return err_msg
 
-    def _run(
-        self, disk_size, networks, public_keys, hostname, root_password, cloud="public"
-    ):
+    def _run(self, disk_size, networks, public_keys, hostname, root_password, cloud="public"):
         err_msg = None
         public_key_string = None
 
