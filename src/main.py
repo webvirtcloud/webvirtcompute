@@ -3,8 +3,9 @@ from difflib import get_close_matches
 from typing import Optional
 
 import requests
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import Depends, FastAPI, Response, status, Request
 from libvirt import libvirtError
+from .version import __version__
 
 from auth import basic_auth
 from execption import raise_error_msg
@@ -35,6 +36,13 @@ from settings import METRICS_URL, STORAGE_BACKUP_POOL, STORAGE_IMAGE_POOL
 from vrtmgr import fwall, images, libvrt, network
 
 app = FastAPI(dependencies=[Depends(basic_auth)])
+
+
+@app.middleware("http")
+async def add_version_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-API-Version"] = __version__
+    return response
 
 
 @app.get("/metrics/", status_code=status.HTTP_200_OK)
