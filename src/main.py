@@ -49,9 +49,7 @@ def metrics(
     return responce
 
 
-@app.post(
-    "/virtances/", response_model=VirtanceCreate, status_code=status.HTTP_201_CREATED
-)
+@app.post("/virtances/", response_model=VirtanceCreate, status_code=status.HTTP_201_CREATED)
 def virtance_create(virtance: VirtanceCreate):
     # Check XML already exists and delete
     try:
@@ -74,9 +72,7 @@ def virtance_create(virtance: VirtanceCreate):
                 try:
                     conn = libvrt.wvmConnect()
                     storages = conn.get_storages()
-                    backup_image_pools = get_close_matches(
-                        STORAGE_BACKUP_POOL, storages, n=len(storages)
-                    )
+                    backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
                     for pool in backup_image_pools:
                         stg = libvrt.wvmStorage(pool)
                         if image_name in stg.get_volumes():
@@ -92,9 +88,7 @@ def virtance_create(virtance: VirtanceCreate):
                     raise_error_msg("Backup storage pool not found.")
 
                 image = images.Image(img.get("file_name"), backup_pool)
-                data = image.restore_copy(
-                    img.get("name"), STORAGE_IMAGE_POOL, disk_size=img.get("size")
-                )
+                data = image.restore_copy(img.get("name"), STORAGE_IMAGE_POOL, disk_size=img.get("size"))
 
                 if data.get("error"):
                     raise_error_msg(data.get("error"))
@@ -163,11 +157,7 @@ def virtance_create(virtance: VirtanceCreate):
     return virtance
 
 
-@app.post(
-    "/virtances/{name}/rebuild/",
-    response_model=VirtanceRebuild,
-    status_code=status.HTTP_200_OK,
-)
+@app.post("/virtances/{name}/rebuild/", response_model=VirtanceRebuild, status_code=status.HTTP_200_OK)
 def virtance_create(name, virtance: VirtanceRebuild):
     # Stop VM
     try:
@@ -333,11 +323,7 @@ def virtance(name):
     return {"vnc_port": vnc_port, "vnc_password": vnc_password}
 
 
-@app.post(
-    "/virtances/{name}/resize/",
-    response_model=VirtanceResize,
-    status_code=status.HTTP_200_OK,
-)
+@app.post("/virtances/{name}/resize/", response_model=VirtanceResize, status_code=status.HTTP_200_OK)
 def virtance_resize(name, resize: VirtanceResize):
     try:
         conn = libvrt.wvmInstance(name)
@@ -359,11 +345,7 @@ def virtance_resize(name, resize: VirtanceResize):
     return resize
 
 
-@app.post(
-    "/virtances/{name}/snapshot/",
-    response_model=VirtanceSnapshotReponse,
-    status_code=status.HTTP_200_OK,
-)
+@app.post("/virtances/{name}/snapshot/", response_model=VirtanceSnapshotReponse, status_code=status.HTTP_200_OK)
 def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     image_name = None
 
@@ -382,9 +364,7 @@ def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     if image_name is None:
         raise_error_msg("Image name does not exist.")
 
-    backup_image_pools = get_close_matches(
-        STORAGE_BACKUP_POOL, storages, n=len(storages)
-    )
+    backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
     random.shuffle(backup_image_pools)
     if len(backup_image_pools) == 0:
         raise_error_msg("Backup image pool does not exist.")
@@ -398,11 +378,7 @@ def virtance_snapshot(name, snapshot: VirtanceSnapshot):
     return VirtanceSnapshotReponse(**data)
 
 
-@app.post(
-    "/virtances/{name}/restore/",
-    response_model=VirtanceSnapshot,
-    status_code=status.HTTP_200_OK,
-)
+@app.post("/virtances/{name}/restore/", response_model=VirtanceSnapshot, status_code=status.HTTP_200_OK)
 def virtance_restore(name, snapshot: VirtanceSnapshot):
     target_name = None
     backup_pool = None
@@ -418,9 +394,7 @@ def virtance_restore(name, snapshot: VirtanceSnapshot):
         target_name = drive.get("name")
 
         storages = conn.get_storages()
-        backup_image_pools = get_close_matches(
-            STORAGE_BACKUP_POOL, storages, n=len(storages)
-        )
+        backup_image_pools = get_close_matches(STORAGE_BACKUP_POOL, storages, n=len(storages))
         for pool in backup_image_pools:
             stg = libvrt.wvmStorage(pool)
             if snapshot.name in stg.get_volumes():
@@ -436,9 +410,7 @@ def virtance_restore(name, snapshot: VirtanceSnapshot):
         raise_error_msg("Snapshot not found.")
 
     image = images.Image(snapshot.name, backup_pool)
-    data = image.restore_copy(
-        target_name, STORAGE_IMAGE_POOL, disk_size=snapshot.disk_size
-    )
+    data = image.restore_copy(target_name, STORAGE_IMAGE_POOL, disk_size=snapshot.disk_size)
 
     if data.get("error"):
         raise_error_msg(data.get("error"))
@@ -499,11 +471,7 @@ def virtance_media_umount(name, media: VirtanceMedia):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.post(
-    "/virtances/{name}/reset_password/",
-    response_model=ResetPassword,
-    status_code=status.HTTP_200_OK,
-)
+@app.post("/virtances/{name}/reset_password/", response_model=ResetPassword, status_code=status.HTTP_200_OK)
 def virtance_reset_password(name, reset_pass: ResetPassword):
     err_msg = None
 
@@ -576,9 +544,7 @@ def storages():
     return {"storages": storages}
 
 
-@app.post(
-    "/storages/", response_model=StorageCreate, status_code=status.HTTP_201_CREATED
-)
+@app.post("/storages/", response_model=StorageCreate, status_code=status.HTTP_201_CREATED)
 def storages_list(pool: StorageCreate):
     conn = libvrt.wvmStorages()
 
@@ -599,15 +565,8 @@ def storages_list(pool: StorageCreate):
             raise_error_msg(err)
 
     if pool.type == "rbd":
-        if (
-            pool.source is None
-            and pool.pool is None
-            and pool.secret is None
-            and pool.host is None
-        ):
-            raise_error_msg(
-                "Source, pool, secret and host fields required for rbd storage pool."
-            )
+        if pool.source is None and pool.pool is None and pool.secret is None and pool.host is None:
+            raise_error_msg("Source, pool, secret and host fields required for rbd storage pool.")
         try:
             conn.create_storage_rbd(
                 pool.type,
@@ -623,19 +582,10 @@ def storages_list(pool: StorageCreate):
             raise_error_msg(err)
 
     if pool.type == "nfs":
-        if (
-            pool.host is None
-            and pool.source is None
-            and pool.format is None
-            and pool.target is None
-        ):
-            raise_error_msg(
-                "Pool, source, source and target fields required for nfs storage pool."
-            )
+        if pool.host is None and pool.source is None and pool.format is None and pool.target is None:
+            raise_error_msg("Pool, source, source and target fields required for nfs storage pool.")
         try:
-            conn.create_storage_netfs(
-                pool.type, pool.name, pool.host, pool.source, pool.format, pool.target
-            )
+            conn.create_storage_netfs(pool.type, pool.name, pool.host, pool.source, pool.format, pool.target)
         except libvirtError as err:
             raise_error_msg(err)
 
@@ -669,9 +619,7 @@ def storage_info(pool):
     return {"storage": storage}
 
 
-@app.post(
-    "/storages/{pool}/", response_model=StorageAction, status_code=status.HTTP_200_OK
-)
+@app.post("/storages/{pool}/", response_model=StorageAction, status_code=status.HTTP_200_OK)
 def storage_action(pool, stg: StorageAction):
     if stg.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
@@ -802,9 +750,7 @@ def networks_list():
     return {"networks": networks}
 
 
-@app.post(
-    "/networks/", response_model=NetworkCreate, status_code=status.HTTP_201_CREATED
-)
+@app.post("/networks/", response_model=NetworkCreate, status_code=status.HTTP_201_CREATED)
 def network_create(net: NetworkCreate):
     conn = libvrt.wvmNetworks()
     try:
@@ -844,9 +790,7 @@ def network_info(name):
     return {"network": network}
 
 
-@app.post(
-    "/networks/{name}/", response_model=NetworkAction, status_code=status.HTTP_200_OK
-)
+@app.post("/networks/{name}/", response_model=NetworkAction, status_code=status.HTTP_200_OK)
 def network_action(name, val: NetworkAction):
     if val.action not in ["start", "stop", "autostart", "manualstart"]:
         raise_error_msg("Action not exist.")
@@ -942,9 +886,7 @@ def secret_info(uuid):
     return {"secret": secret}
 
 
-@app.post(
-    "/secrets/{uuid}/", response_model=SecretValue, status_code=status.HTTP_200_OK
-)
+@app.post("/secrets/{uuid}/", response_model=SecretValue, status_code=status.HTTP_200_OK)
 def secret_value(uuid, secret: SecretValue):
     try:
         conn = libvrt.wvmSecrets()
@@ -975,9 +917,7 @@ def nwfilters_list():
         conn = libvrt.wvmNWfilter()
         nwfilters = conn.get_nwfilters()
         for nwfilter in nwfilters:
-            nwfilters_list.append(
-                {"name": nwfilter, "xml": conn.get_nwfilter_xml(nwfilter)}
-            )
+            nwfilters_list.append({"name": nwfilter, "xml": conn.get_nwfilter_xml(nwfilter)})
         conn.close()
     except libvirtError as err:
         raise_error_msg(err)
@@ -985,9 +925,7 @@ def nwfilters_list():
     return {"nwfilters": nwfilters_list}
 
 
-@app.post(
-    "/nwfilters/", response_model=NwFilterCreate, status_code=status.HTTP_201_CREATED
-)
+@app.post("/nwfilters/", response_model=NwFilterCreate, status_code=status.HTTP_201_CREATED)
 def nwfilter_ctreate(nwfilter: NwFilterCreate):
     try:
         conn = libvrt.wvmNWfilter()

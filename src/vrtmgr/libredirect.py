@@ -6,17 +6,12 @@ from subprocess import DEVNULL, STDOUT, call
 import gi
 from firewall.client import FirewallClient
 
-from settings import (
-    BRIDGE_EXT,
-    FIREWALL_CHAIN_PREFIX,
-    FIREWALLD_STATE_FILE,
-    FIREWALLD_STATE_TIMEOUT,
-)
+from settings import BRIDGE_EXT, FIREWALL_CHAIN_PREFIX, FIREWALLD_STATE_FILE, FIREWALLD_STATE_TIMEOUT
 
 from .exceptions import IPRedirectError
 
 gi.require_version("NM", "1.0")
-from gi.repository import NM
+from gi.repository import NM  # noqa: E402
 
 
 class FwRedirect(object):
@@ -83,9 +78,7 @@ class FwRedirect(object):
         return True
 
     def check_rule_in_xml(self):
-        res = self.fw_direct.queryRule(
-            self.ipv4, self.table, self.chain, self.prio, self.args
-        )
+        res = self.fw_direct.queryRule(self.ipv4, self.table, self.chain, self.prio, self.args)
         return res
 
     def add_rule(self):
@@ -94,9 +87,7 @@ class FwRedirect(object):
             run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_cmd == 0:
                 if not self.check_rule_in_xml():
-                    self.fw_direct.addRule(
-                        self.ipv4, self.table, self.chain, self.prio, self.args
-                    )
+                    self.fw_direct.addRule(self.ipv4, self.table, self.chain, self.prio, self.args)
                     self.save()
 
     def remove_rule(self):
@@ -105,9 +96,7 @@ class FwRedirect(object):
             run_cmd = call(cmd.split(), stdout=DEVNULL, stderr=STDOUT)
             if run_cmd == 0:
                 if self.check_rule_in_xml():
-                    self.fw_direct.removeRule(
-                        self.ipv4, self.table, self.chain, self.prio, self.args
-                    )
+                    self.fw_direct.removeRule(self.ipv4, self.table, self.chain, self.prio, self.args)
                     self.save()
 
 

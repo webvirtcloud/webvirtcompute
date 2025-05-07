@@ -4,7 +4,10 @@ WebVirtCloud daemon for managing VM's filesystem.
 """
 
 import configparser
+import sys
 from optparse import OptionParser
+
+from .version import __version__
 
 # HostVirtMgr options
 parser = OptionParser()
@@ -16,7 +19,19 @@ parser.add_option(
     help="Config file path",
     default="webvirtcompute.ini",
 )
+parser.add_option(
+    "-v",
+    "--version",
+    dest="version",
+    action="store_true",
+    help="Show version",
+    default=False,
+)
 (options, args) = parser.parse_args()
+
+if options.version:
+    print(__version__)
+    sys.exit(0)
 
 # Config file
 conf = configparser.ConfigParser()
@@ -30,9 +45,7 @@ PORT = conf.getint("daemon", "port", fallback=8884)
 HOST = conf.get("daemon", "host", fallback="0.0.0.0")
 
 # Metrics settings
-METRICS_URL = conf.get(
-    "metrics", "url", fallback="http://localhost:9090/api/v1/query_range"
-)
+METRICS_URL = conf.get("metrics", "url", fallback="http://localhost:9090/api/v1/query_range")
 
 # Cache path
 CACHE_DIR = conf.get("cache", "directory", fallback="/var/lib/libvirt/template_cache")
@@ -65,6 +78,4 @@ FIREWALL_CHAIN_PREFIX = conf.get("firewall", "chain_prefix", fallback="")
 
 # Firewalld settings
 FIREWALLD_STATE_TIMEOUT = conf.getint("firewall", "state_timeout", fallback=120)
-FIREWALLD_STATE_FILE = conf.get(
-    "firewall", "state_file", fallback="/var/run/firewalld/locked"
-)
+FIREWALLD_STATE_FILE = conf.get("firewall", "state_file", fallback="/var/run/firewalld/locked")

@@ -12,15 +12,15 @@ from templates import (
     eth0_fed_public,
     eth0_rhl_private,
     eth0_rhl_public,
-    eth0_win_private,
-    eth0_win_public,
     eth0_ubt_private,
     eth0_ubt_public,
+    eth0_win_private,
+    eth0_win_public,
     eth1_deb,
     eth1_fed,
     eth1_rhl,
-    eth1_win,
     eth1_ubt,
+    eth1_win,
     eth2_deb,
 )
 
@@ -65,15 +65,11 @@ class GuestFSUtil(object):
             dict: The updated dictionary with 'prefix' key
         """
         if ip_dict and ip_dict.get("address") and ip_dict.get("netmask"):
-            ip_iface = IPv4Interface(
-                f"{ip_dict.get('address')}/{ip_dict.get('netmask')}"
-            )
+            ip_iface = IPv4Interface(f"{ip_dict.get('address')}/{ip_dict.get('netmask')}")
             ip_dict.update({"prefix": ip_iface.network.prefixlen})
         return ip_dict
 
-    def _update_network_prefixes(
-        self, ipv4public=None, ipv4compute=None, ipv4private=None
-    ):
+    def _update_network_prefixes(self, ipv4public=None, ipv4compute=None, ipv4private=None):
         """
         Helper method to calculate and update network prefix lengths for multiple IP dictionaries.
 
@@ -193,20 +189,14 @@ class GuestFSUtil(object):
             if nic_type == "private":
                 f_path = "/etc/NetworkManager/system-connections/eth1.nmconnection"
         if self.os_family == "win":
-            f_path = (
-                "/Windows/System32/GroupPolicy/Machine/Scripts/Startup/cloudinit.cmd"
-            )
+            f_path = "/Windows/System32/GroupPolicy/Machine/Scripts/Startup/cloudinit.cmd"
         return f_path
 
     def deb_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4public, ipv4compute, _ = self._update_network_prefixes(
-            ipv4public, ipv4compute
-        )
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(ipv4public, ipv4compute)
         if cloud == "public":
             template = Template(eth0_deb_public.data)
-            data = template.render(
-                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
-            )
+            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
         if cloud == "private":
             template = Template(eth0_deb_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -225,14 +215,10 @@ class GuestFSUtil(object):
 
     def ubt_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
         data = ""
-        ipv4public, ipv4compute, _ = self._update_network_prefixes(
-            ipv4public, ipv4compute
-        )
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(ipv4public, ipv4compute)
         if cloud == "public":
             template = Template(eth0_ubt_public.data)
-            data = template.render(
-                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
-            )
+            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
         if cloud == "private":
             template = Template(eth0_ubt_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -245,14 +231,10 @@ class GuestFSUtil(object):
         return data
 
     def rhl_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4public, ipv4compute, _ = self._update_network_prefixes(
-            ipv4public, ipv4compute
-        )
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(ipv4public, ipv4compute)
         if cloud == "public":
             template = Template(eth0_rhl_public.data)
-            data = template.render(
-                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
-            )
+            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
         if cloud == "private":
             template = Template(eth0_rhl_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -264,14 +246,10 @@ class GuestFSUtil(object):
         return data
 
     def fed_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4public, ipv4compute, _ = self._update_network_prefixes(
-            ipv4public, ipv4compute
-        )
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(ipv4public, ipv4compute)
         if cloud == "public":
             template = Template(eth0_fed_public.data)
-            data = template.render(
-                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
-            )
+            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
         if cloud == "private":
             template = Template(eth0_fed_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -284,14 +262,10 @@ class GuestFSUtil(object):
         return data
 
     def win_eth0_data(self, ipv4public, ipv4compute, ipv6public=None, cloud="public"):
-        ipv4public, ipv4compute, _ = self._update_network_prefixes(
-            ipv4public, ipv4compute
-        )
+        ipv4public, ipv4compute, _ = self._update_network_prefixes(ipv4public, ipv4compute)
         if cloud == "public":
             template = Template(eth0_win_public.data)
-            data = template.render(
-                ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public
-            )
+            data = template.render(ipv4public=ipv4public, ipv4compute=ipv4compute, ipv6public=ipv6public)
         if cloud == "private":
             template = Template(eth0_win_private.data)
             data = template.render(ipv4public=ipv4public)
@@ -356,9 +330,7 @@ class GuestFSUtil(object):
         Args:
             ipv4private (dict): Private IPv4 configuration
         """
-        nic_f_path = self.nic_file_path(
-            nic_type="private" if self.os_family in ["rhl", "fed"] else "public"
-        )
+        nic_f_path = self.nic_file_path(nic_type="private" if self.os_family in ["rhl", "fed"] else "public")
         impl = self._get_network_impl("eth1_data")
 
         if impl:
@@ -446,9 +418,7 @@ class GuestFSUtil(object):
                 if ipv4vpc:
                     self.vpc_nic_setup(ipv4vpc)
                 else:
-                    logger.warning(
-                        "No VPC network configuration provided for private cloud setup"
-                    )
+                    logger.warning("No VPC network configuration provided for private cloud setup")
             except Exception as e:
                 logger.error(f"Error setting up private network: {str(e)}")
                 raise
@@ -487,9 +457,7 @@ class GuestFSUtil(object):
 
         if self.os_family in os_handlers:
             handler = os_handlers[self.os_family]
-            network_file_data = re.sub(
-                handler["pattern"], handler["replacement"], nic_file
-            )
+            network_file_data = re.sub(handler["pattern"], handler["replacement"], nic_file)
             self._write_network_file(nic_f_path, network_file_data)
 
     def change_root_passwd(self, password_hash, shadow_file):
