@@ -3,7 +3,6 @@ data = """[connection]
 id=eth1
 type=ethernet
 interface-name=eth1
-autoconnect-priority=-999
 
 [ethernet]
 

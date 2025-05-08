@@ -122,8 +122,10 @@ class GuestFSUtil(object):
             return "rhl"
         if "fedora" in distro:
             return "fed"
-        if "debian" in distro or "ubuntu" in distro:
+        if "debian" in distro:
             return "deb"
+        if "ubuntu" in distro:
+            return "ubt"
         if "alpine" in distro:
             return "alp"
         if "windows" in distro:
@@ -304,8 +306,14 @@ class GuestFSUtil(object):
             content (str): Content to write to the file
         """
         self.gfs.write(file_path, content)
-        if self.os_family != "win":
-            self.gfs.chmod(int("0644", 8), file_path)
+        if self.os_family in "fed":
+            mode = int("0600", 8)
+        elif self.os_family != "win":
+            mode = int("0644", 8)
+        else:
+            # Windows does not require special permissions for the network file
+            return
+        self.gfs.chmod(mode, file_path)
 
     def public_nic_setup(self, ipv4public, ipv4compute, ipv6public):
         """

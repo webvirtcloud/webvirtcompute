@@ -3,7 +3,6 @@ data = """[connection]
 id=eth0
 type=ethernet
 interface-name=eth0
-autoconnect-priority=-999
 
 [ethernet]
 
@@ -14,15 +13,12 @@ gateway={{ ipv4public.gateway }}
 dns={{ ipv4public.dns1 }};{{ ipv4public.dns2 }};
 method=manual
 
-[ipv6]
 {% if ipv6public %}
+[ipv6]
 address1={{ ipv6public.address }}/{{ ipv6public.prefix }}
 gateway={{ ipv6public.gateway }}
 dns={{ ipv6public.dns1 }};{{ ipv6public.dns2 }};
 method=manual
-{% else}
-addr-gen-mode=default
-method=auto
 {% endif %}
 
 [proxy]
