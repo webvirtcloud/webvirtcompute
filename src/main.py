@@ -5,7 +5,6 @@ from typing import Optional
 import requests
 from fastapi import Depends, FastAPI, Response, status, Request
 from libvirt import libvirtError
-from .version import __version__
 
 from auth import basic_auth
 from execption import raise_error_msg
@@ -32,7 +31,7 @@ from model import (
     VolumeAction,
     VolumeCreate,
 )
-from settings import METRICS_URL, STORAGE_BACKUP_POOL, STORAGE_IMAGE_POOL
+from settings import METRICS_URL, STORAGE_BACKUP_POOL, STORAGE_IMAGE_POOL, __version__
 from vrtmgr import fwall, images, libvrt, network
 
 app = FastAPI(dependencies=[Depends(basic_auth)])

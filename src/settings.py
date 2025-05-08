@@ -7,7 +7,7 @@ import configparser
 import sys
 from optparse import OptionParser
 
-from .version import __version__
+from version import __version__
 
 # HostVirtMgr options
 parser = OptionParser()

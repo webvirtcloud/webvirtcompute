@@ -2,7 +2,7 @@ from subprocess import DEVNULL, STDOUT, call
 
 from settings import BRIDGE_EXT, FIREWALLD_STATE_TIMEOUT
 
-from .excpetions import IPRedirectError
+from .exceptions import IPRedirectError
 from .libguestfs import GuestFSUtil
 from .libredirect import FwRedirect, NetManager
 

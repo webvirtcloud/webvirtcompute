@@ -1,3 +1,2 @@
 -r production.txt
-ruff
 flake8
